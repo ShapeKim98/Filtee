@@ -25,7 +25,7 @@ private struct FTSelectButtonStyle: ButtonStyle {
             .font(.pretendard(.body2(weight)))
             .foregroundStyle(textColor)
             .padding(.horizontal, 17)
-            .padding(.vertical, 5.5)
+            .frame(height: 28)
             .background(backgroundColor)
             .clipRectangle(9999)
             .overlay {
