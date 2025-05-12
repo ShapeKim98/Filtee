@@ -40,27 +40,27 @@ extension View {
 
 #Preview {
     ScrollView {
-        VStack {
+        VStack(alignment: .leading) {
             Text("새싹아 일어나 어서 일어나서 코딩 해야지")
-                .font(.pretendard(.title))
+                .font(.pretendard(.title()))
             
             Text("새싹아 일어나 어서 일어나서 코딩 해야지")
-                .font(.pretendard(.body1))
+                .font(.pretendard(.body1()))
             
             Text("새싹아 일어나 어서 일어나서 코딩 해야지")
-                .font(.pretendard(.body2))
+                .font(.pretendard(.body2()))
             
             Text("새싹아 일어나 어서 일어나서 코딩 해야지")
-                .font(.pretendard(.body3))
+                .font(.pretendard(.body3()))
             
             Text("새싹아 일어나 어서 일어나서 코딩 해야지")
-                .font(.pretendard(.caption1))
+                .font(.pretendard(.caption1()))
             
             Text("새싹아 일어나 어서 일어나서 코딩 해야지")
-                .font(.pretendard(.caption2))
+                .font(.pretendard(.caption2()))
             
             Text("새싹아 일어나 어서 일어나서 코딩 해야지")
-                .font(.pretendard(.caption3))
+                .font(.pretendard(.caption3()))
             
             Text("새싹을 담은 필터")
                 .font(.mulgyeol(.title1))

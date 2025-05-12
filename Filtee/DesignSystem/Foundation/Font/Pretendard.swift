@@ -8,21 +8,24 @@
 import SwiftUI
 
 enum Pretendard: TFFontConvertible {
-    case title
-    case body1
-    case body2
-    case body3
-    case caption1
-    case caption2
-    case caption3
+    case title(Weight = .bold)
+    case body1(Weight = .medium)
+    case body2(Weight = .medium)
+    case body3(Weight = .medium)
+    case caption1(Weight = .regular)
+    case caption2(Weight = .regular)
+    case caption3(Weight = .regular)
     
     private var name: String {
         switch self {
-        case .title: return "Pretendard-Bold"
-        case .body1, .body2, .body3:
-            return "Pretendard-Medium"
-        case .caption1, .caption2, .caption3:
-            return "Pretendard-Regular"
+        case .title(let weight),
+             .body1(let weight),
+             .body2(let weight),
+             .body3(let weight),
+             .caption1(let weight),
+             .caption2(let weight),
+             .caption3(let weight):
+            return "Pretendard-\(weight.rawValue)"
         }
     }
     
@@ -60,5 +63,13 @@ enum Pretendard: TFFontConvertible {
     
     var kerning: CGFloat {
         return -0.01
+    }
+}
+
+extension Pretendard {
+    enum Weight: String {
+        case bold = "Bold"
+        case medium = "Medium"
+        case regular = "Regular"
     }
 }
