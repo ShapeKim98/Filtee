@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum Mulgyeol: TFFontConvertible {
+enum Mulgyeol: FilteeFontConvertible {
     case title1
     case body1
     case caption1

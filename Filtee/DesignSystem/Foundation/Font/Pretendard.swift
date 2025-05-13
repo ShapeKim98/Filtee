@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum Pretendard: TFFontConvertible {
+enum Pretendard: FilteeFontConvertible {
     case title(Weight = .bold)
     case body1(Weight = .medium)
     case body2(Weight = .medium)

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-private struct TFFontModifier<F: TFFontConvertible>: ViewModifier {
+private struct FilteeFontModifier<F: FilteeFontConvertible>: ViewModifier {
     private let font: F
     
     init(_ font: F) {
@@ -28,12 +28,12 @@ private struct TFFontModifier<F: TFFontConvertible>: ViewModifier {
 
 extension View {
     @ViewBuilder
-    func font(_ font: TFFont) -> some View {
+    func font(_ font: FilteeFont) -> some View {
         switch font {
         case .pretendard(let pretendard):
-            modifier(TFFontModifier(pretendard))
+            modifier(FilteeFontModifier(pretendard))
         case .mulgyeol(let mulgyeol):
-            modifier(TFFontModifier(mulgyeol))
+            modifier(FilteeFontModifier(mulgyeol))
         }
     }
 }

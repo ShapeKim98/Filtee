@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-private struct FTSelectButtonStyle: ButtonStyle {
+private struct FilteeSelectButtonStyle: ButtonStyle {
     private let isSelected: Bool
     
     init(isSelected: Bool) {
@@ -35,9 +35,9 @@ private struct FTSelectButtonStyle: ButtonStyle {
     }
 }
 
-extension ButtonStyle where Self == FTSelectButtonStyle {
-    static func selected(_ isSelected: Bool) -> Self {
-        FTSelectButtonStyle(isSelected: isSelected)
+extension ButtonStyle where Self == FilteeSelectButtonStyle {
+    static func filteeSelected(_ isSelected: Bool) -> Self {
+        FilteeSelectButtonStyle(isSelected: isSelected)
     }
 }
 
@@ -46,11 +46,11 @@ extension ButtonStyle where Self == FTSelectButtonStyle {
         Button("Selected") {
             
         }
-        .buttonStyle(.selected(true))
+        .buttonStyle(.filteeSelected(true))
         
         Button("UnSelected") {
             
         }
-        .buttonStyle(.selected(false))
+        .buttonStyle(.filteeSelected(false))
     }
 }

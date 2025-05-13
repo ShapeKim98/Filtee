@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-private struct FTBlurReplaceModifier: ViewModifier {
+private struct FilteeBlurReplaceModifier: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 17.0, *) {
             content
@@ -21,6 +21,6 @@ private struct FTBlurReplaceModifier: ViewModifier {
 
 extension View {
     func filteeBlurReplace() -> some View {
-        modifier(FTBlurReplaceModifier())
+        modifier(FilteeBlurReplaceModifier())
     }
 }

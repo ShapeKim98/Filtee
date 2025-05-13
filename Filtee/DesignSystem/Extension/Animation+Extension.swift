@@ -8,6 +8,6 @@
 import SwiftUI
 
 extension Animation {
-    static let ftSpring = Animation.bouncy(duration: 0.3)
+    static let filteeSpring = Animation.bouncy(duration: 0.3)
 }
 

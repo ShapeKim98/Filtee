@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-private struct FTTextFieldStyle: TextFieldStyle {
+private struct FilteeTextFieldStyle: TextFieldStyle {
     typealias Configuration = TextField<Self._Label>
     
     private let state: TextFieldState
@@ -67,7 +67,7 @@ private struct FTTextFieldStyle: TextFieldStyle {
                     .foregroundStyle(.gray75)
             }
         }
-        .animation(.ftSpring, value: state == .loading)
+        .animation(.filteeSpring, value: state == .loading)
         .frame(height: 42)
         .padding(.horizontal, 12)
         .background(.clear)
@@ -80,13 +80,13 @@ private struct FTTextFieldStyle: TextFieldStyle {
     }
 }
 
-extension TextFieldStyle where Self == FTTextFieldStyle {
+extension TextFieldStyle where Self == FilteeTextFieldStyle {
     static func filtee(
-        _ state: FTTextFieldStyle.TextFieldState,
+        _ state: FilteeTextFieldStyle.TextFieldState,
         title: String? = nil,
         subtitle: String? = nil
     ) -> Self {
-        FTTextFieldStyle(
+        FilteeTextFieldStyle(
             state: state,
             title: title,
             subTitle: subtitle
@@ -94,7 +94,7 @@ extension TextFieldStyle where Self == FTTextFieldStyle {
     }
 }
 
-extension FTTextFieldStyle {
+extension FilteeTextFieldStyle {
     enum TextFieldState: Equatable {
         case `default`
         case typed

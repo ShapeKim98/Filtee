@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum TFFont {
+enum FilteeFont {
     case pretendard(Pretendard)
     case mulgyeol(Mulgyeol)
 }
