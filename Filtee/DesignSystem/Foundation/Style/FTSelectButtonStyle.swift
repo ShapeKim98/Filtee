@@ -28,10 +28,10 @@ private struct FTSelectButtonStyle: ButtonStyle {
             .frame(height: 28)
             .background(backgroundColor)
             .clipRectangle(9999)
-            .overlay {
-                RoundedRectangle(cornerRadius: 9999, style: .continuous)
-                    .stroke(.deepTurquoise, lineWidth: 1)
-            }
+            .roundedRectangleStroke(
+                radius: 9999,
+                color: .blackTurquoise
+            )
     }
 }
 

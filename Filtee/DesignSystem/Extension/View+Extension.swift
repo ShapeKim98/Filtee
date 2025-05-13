@@ -8,7 +8,10 @@
 import SwiftUI
 
 extension View {
-    @ViewBuilder func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+    @ViewBuilder func `if`<Content: View>(
+        _ condition: Bool,
+        transform: (Self) -> Content
+    ) -> some View {
         if condition {
             transform(self)
         } else {
@@ -16,8 +19,21 @@ extension View {
         }
     }
     
-    @ViewBuilder
     func clipRectangle(_ radius: CGFloat) -> some View {
-        self.clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+        self.clipShape(RoundedRectangle(
+            cornerRadius: radius,
+            style: .continuous
+        ))
+    }
+    
+    func roundedRectangleStroke(
+        radius: CGFloat,
+        color: Color,
+        lineWidth: CGFloat = 1
+    ) -> some View {
+        self.overlay {
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .stroke(color, lineWidth: lineWidth)
+        }
     }
 }
