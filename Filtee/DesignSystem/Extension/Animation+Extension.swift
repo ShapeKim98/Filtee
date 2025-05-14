@@ -9,5 +9,7 @@ import SwiftUI
 
 extension Animation {
     static let filteeSpring = Animation.bouncy(duration: 0.3)
+    
+    static let filteeDefault = Animation.easeInOut(duration: 0.3)
 }
 

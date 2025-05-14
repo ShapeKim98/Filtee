@@ -32,6 +32,7 @@ private struct FilteeSelectButtonStyle: ButtonStyle {
                 radius: 9999,
                 color: .blackTurquoise
             )
+            .animation(.filteeDefault, value: isSelected)
     }
 }
 

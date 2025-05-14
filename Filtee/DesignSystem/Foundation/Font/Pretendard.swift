@@ -69,6 +69,7 @@ enum Pretendard: FilteeFontConvertible {
 extension Pretendard {
     enum Weight: String {
         case bold = "Bold"
+        case semiBold = "SemiBold"
         case medium = "Medium"
         case regular = "Regular"
     }
