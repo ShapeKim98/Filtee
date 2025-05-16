@@ -36,4 +36,10 @@ extension View {
                 .stroke(color, lineWidth: lineWidth)
         }
     }
+    
+    func filteeBackground() -> some View {
+        self.background {
+            BlurEffectView(style: .systemChromeMaterial)
+        }
+    }
 }

@@ -72,4 +72,6 @@ extension View {
                 .font(.mulgyeol(.caption1))
         }
     }
+    .frame(maxWidth: .infinity)
+    .filteeBackground()
 }
