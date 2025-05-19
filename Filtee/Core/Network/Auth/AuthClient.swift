@@ -7,17 +7,13 @@
 
 import SwiftUICore
 
-struct AuthClient: NetworkClientConfigurable, Sendable {
-    typealias E = AuthEndpoint
-    
-    init(refresh: @escaping @Sendable () async throws -> Void) {
-        self.refresh = refresh
-    }
-    
+struct AuthClient: Sendable {
     var refresh: @Sendable () async throws -> Void
 }
 
-extension AuthClient: EnvironmentKey {
+extension AuthClient: EnvironmentKey, NetworkClientConfigurable {
+    typealias E = AuthEndpoint
+    
     static let defaultValue: AuthClient = {
         return AuthClient(
             refresh: {
@@ -26,9 +22,17 @@ extension AuthClient: EnvironmentKey {
                 guard let refreshToken else { throw FilteeError.tokenNotFound }
                 
                 do {
-                    let response: TokenResponse = try await requestNonToken(.refresh(refreshToken))
-                    await keychainManager.save(response.accessToken, key: .accessToken)
-                    await keychainManager.save(response.refreshToken, key: .refreshToken)
+                    let response: TokenResponse = try await requestNonToken(
+                        .refresh(refreshToken)
+                    )
+                    await keychainManager.save(
+                        response.accessToken,
+                        key: .accessToken
+                    )
+                    await keychainManager.save(
+                        response.refreshToken,
+                        key: .refreshToken
+                    )
                 } catch {
                     await keychainManager.delete(.accessToken)
                     await keychainManager.delete(.refreshToken)
