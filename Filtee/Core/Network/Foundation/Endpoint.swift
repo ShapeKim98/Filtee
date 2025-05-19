@@ -17,7 +17,7 @@ protocol Endpoint: URLRequestConvertible {
     var decoder: JSONDecoder { get }
     var encoder: ParameterEncoder? { get }
     var parameters: (Encodable & Sendable)? { get }
-//    func error(_ statusCode: Int?, data: Data) -> Error
+    func errorBody(data: Data) throws -> Error
 }
 
 extension Endpoint {
@@ -37,9 +37,13 @@ extension Endpoint {
         return request
     }
     
-//    func error(_ statusCode: Int?, data: Data) -> Error {
-//        return
-//    }
+    func errorBody(data: Data) throws -> Error {
+        let error = try decoder.decode(
+            CommonResponse.self,
+            from: data
+        )
+        throw error.toModel()
+    }
 }
 
 enum FilteeError: Error {

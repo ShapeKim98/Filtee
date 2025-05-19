@@ -46,7 +46,10 @@ extension NetworkClientConfigurable {
             ) = error {
                 throw retryError
             }
-            throw error
+            guard let data = response.data else {
+                throw error
+            }
+            throw try endPoint.errorBody(data: data)
         }
     }
     
@@ -81,7 +84,10 @@ extension NetworkClientConfigurable {
                 // 빈 응답을 성공으로 처리
                 return
             }
-            throw error
+            guard let data = response.data else {
+                throw error
+            }
+            throw try endPoint.errorBody(data: data)
         }
     }
     
@@ -103,7 +109,10 @@ extension NetworkClientConfigurable {
         case .success(let value):
             return value
         case .failure(let error):
-            throw error
+            guard let data = response.data else {
+                throw error
+            }
+            throw try endPoint.errorBody(data: data)
         }
     }
     
@@ -129,7 +138,10 @@ extension NetworkClientConfigurable {
                 // 빈 응답을 성공으로 처리
                 return
             }
-            throw error
+            guard let data = response.data else {
+                throw error
+            }
+            throw try endPoint.errorBody(data: data)
         }
     }
 }

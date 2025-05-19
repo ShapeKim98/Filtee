@@ -7,7 +7,7 @@
 
 import SwiftUICore
 
-struct AuthClient: Sendable {
+struct AuthClient {
     var refresh: @Sendable () async throws -> Void
 }
 
