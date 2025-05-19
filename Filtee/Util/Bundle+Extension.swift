@@ -15,4 +15,16 @@ extension Bundle {
     var sesacKey: String {
         infoDictionary?["SESAC_KEY"] as? String ?? ""
     }
+    
+    var kakaoNativeAppKey: String {
+        infoDictionary?["KAKAO_NATIVE_APP_KEY"] as? String ?? ""
+    }
+    
+    var appleKeyId: String {
+        infoDictionary?["APPLE_KEY_ID"] as? String ?? ""
+    }
+    
+    var teamId: String {
+        infoDictionary?["TEAM_ID"] as? String ?? ""
+    }
 }
