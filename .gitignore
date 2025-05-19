@@ -148,6 +148,7 @@ ShowPot/ShowPot/Resource/Configuration/ShowPot-Release.xcconfig
 
 ### Auth Key
 *.p8
+**/*.p8
 
 ### xcconfig ###
 *.xcconfig
