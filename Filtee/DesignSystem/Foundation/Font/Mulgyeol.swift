@@ -11,12 +11,15 @@ enum Mulgyeol: FilteeFontConvertible {
     case title1
     case body1
     case caption1
+    case custom(_ weight: String, _ size: CGFloat)
     
     private var name: String {
         switch self {
         case .title1, .body1:
             return "OTHakgyoansimMulgyeolB"
         case .caption1: return "OTHakgyoansimMulgyeolR"
+        case let .custom(weight, _):
+            return "OTHakgyoansimMulgyeol\(weight)"
         }
     }
     
@@ -25,6 +28,8 @@ enum Mulgyeol: FilteeFontConvertible {
         case .title1: return 32
         case .body1: return 20
         case .caption1: return 14
+        case let .custom(_, size):
+            return size
         }
     }
     
@@ -41,6 +46,8 @@ enum Mulgyeol: FilteeFontConvertible {
         case .title1: return 32
         case .body1: return 20
         case .caption1: return 14
+        case let .custom(_, size):
+            return size
         }
     }
     

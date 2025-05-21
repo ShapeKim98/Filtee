@@ -14,25 +14,32 @@ protocol NetworkClientConfigurable {
     
     static func request<T: Decodable & Sendable>(_ endPoint: E) async throws -> T
     static func request(_ endPoint: E) async throws
-    static func requestNonToken<T: Decodable & Sendable>(_ endPoint: E) async throws -> T
-    static func requestNonToken(_ endPoint: E) async throws
+    static func requestNonToken<T: Decodable & Sendable>(
+        _ endPoint: E,
+        adaptable: Bool
+    ) async throws -> T
+    static func requestNonToken(
+        _ endPoint: E,
+        adaptable: Bool
+    ) async throws
 }
 
 extension NetworkClientConfigurable {
     static func request<T: Decodable & Sendable>(_ endPoint: E) async throws -> T {
-#if DEBUG
-        try? NetworkLogger.request(endPoint)
-#endif
-        let response = await AF.request(
+        let session = AF.request(
             endPoint,
             interceptor: Interceptor(
-                adapter: KeyAdapter(),
-                retrier: TokenInterceptor.shared
+                adapters: [KeyAdapter()],
+                interceptors: [TokenInterceptor()]
             )
         )
-        .validate(statusCode: 200..<300)
-        .serializingDecodable(T.self, decoder: endPoint.decoder)
-        .response
+#if DEBUG
+        try? NetworkLogger.request(session.convertible)
+#endif
+        let response = await session
+            .validate(statusCode: 200..<300)
+            .serializingDecodable(T.self, decoder: endPoint.decoder)
+            .response
 #if DEBUG
         try? NetworkLogger.response(response)
 #endif
@@ -54,19 +61,20 @@ extension NetworkClientConfigurable {
     }
     
     static func request(_ endPoint: E) async throws {
-#if DEBUG
-        try? NetworkLogger.request(endPoint)
-#endif
-        let response = await AF.request(
+        let session = AF.request(
             endPoint,
             interceptor: Interceptor(
-                adapter: KeyAdapter(),
-                retrier: TokenInterceptor.shared
+                adapters: [KeyAdapter()],
+                interceptors: [TokenInterceptor()]
             )
         )
-        .validate(statusCode: 200..<300)
-        .serializingData()
-        .response
+#if DEBUG
+        try? NetworkLogger.request(session.convertible)
+#endif
+        let response = await session
+            .validate(statusCode: 200..<300)
+            .serializingData()
+            .response
 #if DEBUG
         try NetworkLogger.response(response)
 #endif
@@ -91,17 +99,21 @@ extension NetworkClientConfigurable {
         }
     }
     
-    static func requestNonToken<T: Decodable & Sendable>(_ endPoint: E) async throws -> T {
-#if DEBUG
-        try? NetworkLogger.request(endPoint)
-#endif
-        let response = await AF.request(
+    static func requestNonToken<T: Decodable & Sendable>(
+        _ endPoint: E,
+        adaptable: Bool = true
+    ) async throws -> T {
+        let session = AF.request(
             endPoint,
-            interceptor: Interceptor(adapters: [KeyAdapter()])
+            interceptor: Interceptor(adapters: adaptable ? [KeyAdapter()] : [])
         )
-        .validate(statusCode: 200..<300)
-        .serializingDecodable(T.self, decoder: endPoint.decoder)
-        .response
+#if DEBUG
+        try? NetworkLogger.request(session.convertible)
+#endif
+        let response = await session
+            .validate(statusCode: 200..<300)
+            .serializingDecodable(T.self, decoder: endPoint.decoder)
+            .response
 #if DEBUG
         try NetworkLogger.response(response)
 #endif
@@ -116,17 +128,21 @@ extension NetworkClientConfigurable {
         }
     }
     
-    static func requestNonToken(_ endPoint: E) async throws {
-#if DEBUG
-        try? NetworkLogger.request(endPoint)
-#endif
-        let response = await AF.request(
+    static func requestNonToken(
+        _ endPoint: E,
+        adaptable: Bool = true
+    ) async throws {
+        let session = AF.request(
             endPoint,
-            interceptor: Interceptor(adapters: [KeyAdapter()])
+            interceptor: Interceptor(adapters: adaptable ? [KeyAdapter()] : [])
         )
-        .validate(statusCode: 200..<300)
-        .serializingData()
-        .response
+#if DEBUG
+        try? NetworkLogger.request(session.convertible)
+#endif
+        let response = await session
+            .validate(statusCode: 200..<300)
+            .serializingData()
+            .response
 #if DEBUG
         try? NetworkLogger.response(response)
 #endif

@@ -26,12 +26,15 @@ struct UserClient {
     var deviceToken: @Sendable (
         _ deviceToken: String
     ) async throws -> Void
+    var logout: @Sendable () -> Void
 }
 
 extension UserClient: EnvironmentKey, NetworkClientConfigurable {
     typealias E = UserEndpoint
     
     static let defaultValue: UserClient = {
+        let keychainManager = KeychainManager.shared
+        
         return UserClient(
             validationEmail: { email in
                 try await requestNonToken(.validationEmail(email: email))
@@ -42,18 +45,46 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
             },
             emailLogin: { model in
                 let request = model.toData()
-                try await requestNonToken(.login(request))
+                let response: LoginResponse = try await requestNonToken(.login(request))
+                keychainManager.save(
+                    response.accessToken,
+                    key: .accessToken
+                )
+                keychainManager.save(
+                    response.refreshToken,
+                    key: .refreshToken
+                )
             },
             kakaoLogin: { model in
                 let request = model.toData()
-                try await requestNonToken(.kakoLogin(request))
+                let response: LoginResponse = try await requestNonToken(.kakoLogin(request))
+                keychainManager.save(
+                    response.accessToken,
+                    key: .accessToken
+                )
+                keychainManager.save(
+                    response.refreshToken,
+                    key: .refreshToken
+                )
             },
             appleLogin: { model in
                 let request = model.toData()
-                try await requestNonToken(.appleLogin(request))
+                let response: LoginResponse = try await requestNonToken(.appleLogin(request))
+                keychainManager.save(
+                    response.accessToken,
+                    key: .accessToken
+                )
+                keychainManager.save(
+                    response.refreshToken,
+                    key: .refreshToken
+                )
             },
             deviceToken: { deviceToken in
                 try await requestNonToken(.deviceToken(deviceToken: deviceToken))
+            },
+            logout: {
+                keychainManager.delete(.accessToken)
+                keychainManager.delete(.refreshToken)
             }
         )
     }()
@@ -65,7 +96,8 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
             emailLogin: { _ in },
             kakaoLogin: { _ in },
             appleLogin: { _ in },
-            deviceToken: { _ in }
+            deviceToken: { _ in },
+            logout: { }
         )
     }()
 }

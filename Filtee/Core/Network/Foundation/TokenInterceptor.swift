@@ -9,12 +9,8 @@ import Foundation
 
 import Alamofire
 
-actor TokenInterceptor: RequestInterceptor, NetworkClientConfigurable {
+struct TokenInterceptor: RequestInterceptor, NetworkClientConfigurable {
     typealias E = AuthEndpoint
-    
-    static let shared = TokenInterceptor()
-    
-    private init() { }
     
     private let keychainManager = KeychainManager.shared
     
@@ -23,18 +19,17 @@ actor TokenInterceptor: RequestInterceptor, NetworkClientConfigurable {
         for session: Session,
         completion: @escaping @Sendable (Result<URLRequest, Error>) -> Void
     ) {
-        Task {
-            var request = urlRequest
-            guard let accessToken = await keychainManager.read(.accessToken) else {
-                completion(.failure(FilteeError.tokenNotFound))
-                return
-            }
-            request.addValue(
-                "\(accessToken)",
-                forHTTPHeaderField: "Authorization"
-            )
-            completion(.success(request))
+        var request = urlRequest
+        guard let accessToken = keychainManager.read(.accessToken) else {
+            completion(.failure(FilteeError.tokenNotFound))
+            return
         }
+        request.addValue(
+            "\(accessToken)",
+            forHTTPHeaderField: "Authorization"
+        )
+//        try? NetworkLogger.request(request)
+        completion(.success(request))
     }
     
     nonisolated func retry(
@@ -63,25 +58,25 @@ actor TokenInterceptor: RequestInterceptor, NetworkClientConfigurable {
             return
         }
         
+        guard let refreshToken = keychainManager.read(.refreshToken) else {
+            completion(.doNotRetryWithError(FilteeError.tokenNotFound))
+            return
+        }
+        
         Task {
-            guard let refreshToken = await keychainManager.read(.refreshToken) else {
-                completion(.doNotRetryWithError(FilteeError.tokenNotFound))
-                return
-            }
             do {
                 guard let response: TokenResponse = try await Self.request(.refresh(refreshToken)) else {
                     completion(.doNotRetryWithError(FilteeError.reissueFail))
                     return
                 }
-                async let accessTokenSave: ()? = keychainManager.save(
+                keychainManager.save(
                     response.accessToken,
                     key: .accessToken
                 )
-                async let refreshTokenSave: ()? = keychainManager.save(
+                keychainManager.save(
                     response.refreshToken,
                     key: .refreshToken
                 )
-                let _ = await (accessTokenSave, refreshTokenSave)
                 completion(.retry)
             } catch {
                 completion(.doNotRetryWithError(FilteeError.reissueFail))

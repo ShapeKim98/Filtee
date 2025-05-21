@@ -17,8 +17,8 @@ struct KeyAdapter: RequestAdapter {
     ) {
         var request = urlRequest
         request.addValue(
-            "SeSACKey",
-            forHTTPHeaderField: Bundle.main.sesacKey
+            Bundle.main.sesacKey,
+            forHTTPHeaderField: "SeSACKey"
         )
         completion(.success(request))
     }

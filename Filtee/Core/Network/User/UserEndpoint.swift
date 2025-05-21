@@ -26,9 +26,9 @@ enum UserEndpoint: Endpoint {
         case .login:
             return "/v1/users/login"
         case .kakoLogin:
-            return "/v1/users/kakao"
+            return "/v1/users/login/kakao"
         case .appleLogin:
-            return "/v1/users/apple"
+            return "/v1/users/login/apple"
         case .deviceToken:
             return "/v1/users/deviceToken"
         }

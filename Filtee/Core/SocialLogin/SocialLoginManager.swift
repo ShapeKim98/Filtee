@@ -48,7 +48,7 @@ final class SocialLoginManager: NSObject {
         }
         
         // 성공 시 동작 구현
-        guard let idToken = oauthToken?.idToken else { return }
+        guard let idToken = oauthToken?.accessToken else { return }
         continuation?.resume(returning: SocialLoginResponse(
             token: idToken
         ))
@@ -70,7 +70,7 @@ final class SocialLoginManager: NSObject {
 extension SocialLoginManager: ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     func requestAppleLogin() {
         let request = ASAuthorizationAppleIDProvider().createRequest()
-        request.requestedScopes = []
+        request.requestedScopes = [.email, .fullName]
         
         let authorizationController = ASAuthorizationController(authorizationRequests: [request])
         authorizationController.delegate = self
@@ -98,7 +98,7 @@ extension SocialLoginManager: ASAuthorizationControllerDelegate, ASAuthorization
             let authorizationCode = appleIDCredential.authorizationCode,
             let idTokenString = String(data: idToken, encoding: .utf8),
             let authorizationCodeString = String(data: authorizationCode, encoding: .utf8),
-            let nickname = appleIDCredential.fullName?.nickname
+            let fullName = appleIDCredential.fullName
         else { return }
         
         print("🍎 [appleLogin] token: \(idTokenString)")
@@ -106,7 +106,7 @@ extension SocialLoginManager: ASAuthorizationControllerDelegate, ASAuthorization
         
         continuation?.resume(returning: SocialLoginResponse(
             token: idTokenString,
-            nick: nickname,
+            nick: (fullName.familyName ?? "") + (fullName.givenName ?? ""),
             authorizationCode: authorizationCodeString
         ))
         continuation = nil
@@ -146,10 +146,11 @@ extension SocialLoginManager: ASAuthorizationControllerDelegate, ASAuthorization
         var myJWT = JWT(header: header, claims: claims)
         let bundle = Bundle(for: type(of: self))
         guard let url = bundle.url(forResource: "AuthKey", withExtension: "p8") else {
+            print("AuthKey.p8 not found")
             return "못찾음"
         }
         let privateKey: Data = try! Data(contentsOf: url, options: .alwaysMapped)
-        
+        print(String(data: privateKey, encoding: .utf8))
         let jwtSigner = JWTSigner.es256(privateKey: privateKey)
         let signedJWT = try! myJWT.sign(using: jwtSigner)
         

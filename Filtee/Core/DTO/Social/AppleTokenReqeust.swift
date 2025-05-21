@@ -14,7 +14,7 @@ struct AppleTokenRequest: Encodable, Sendable {
     let grantType: String
     
     init(
-        clientId: String = "com.dohyeong.filtee",
+        clientId: String = "com.dohyeong.Filtee",
         clientSecret: String,
         code: String,
         grantType: String = "authorization_code"

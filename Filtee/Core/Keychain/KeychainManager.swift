@@ -7,23 +7,23 @@
 
 import Foundation
 
-actor KeychainManager {
+final class KeychainManager: Sendable {
     private let service: String = "Filtee"
     
     static let shared = KeychainManager()
     
     private init() { }
     
-    func save(_ data: String, key: Key) async {
-        guard await read(key) == nil else {
-            await update(data.data(using: .utf8), key: key)
+    func save(_ data: String, key: Key) {
+        guard read(key) == nil else {
+            update(data.data(using: .utf8), key: key)
             return
         }
-        await create(data.data(using: .utf8), key: key)
+        create(data.data(using: .utf8), key: key)
     }
 
     // MARK: Read Item
-    func read(_ key: Key) async -> String? {
+    func read(_ key: Key) -> String? {
         let query: NSDictionary = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
@@ -46,7 +46,7 @@ actor KeychainManager {
 
     // MARK: Delete Item
 
-    public func delete(_ key: Key) async {
+    public func delete(_ key: Key) {
         let query: NSDictionary = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
@@ -62,7 +62,7 @@ actor KeychainManager {
         print("🗝️ '\(key)' 성공!")
     }
     
-    private func create(_ data: Data?, key: Key) async {
+    private func create(_ data: Data?, key: Key) {
         guard let data = data else {
             print("🗝️ '\(key)' 값이 없어요.")
             return
@@ -84,7 +84,7 @@ actor KeychainManager {
     }
     
     // MARK: Update Item
-    private func update(_ data: Data?, key: Key) async {
+    private func update(_ data: Data?, key: Key) {
         guard let data = data else {
             print("🗝️ '\(key)' 값이 없어요.")
             return

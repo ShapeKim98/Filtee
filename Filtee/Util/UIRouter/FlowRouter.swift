@@ -7,20 +7,21 @@
 
 import Foundation
 
-actor FlowRouter<T> {
-    init(
-        switch: @escaping (T) -> Void,
-        publisher: @escaping () -> AsyncStream<T>,
-        cancelBag: @escaping () -> Void
-    ) {
-        self.switch = `switch`
-        self.publisher = publisher
-        self.cancelBag = cancelBag
+
+final class FlowRouter<T: Sendable>: Sendable {
+    @MainActor
+    private var continuation: AsyncStream<T>.Continuation?
+    
+    func `switch`(_ flow: T) async {
+        await continuation?.yield(flow)
     }
     
-    var `switch`: (T) -> Void
-    var publisher: () -> AsyncStream<T> = {
-        return AsyncStream { $0.finish() }
+    @MainActor
+    var stream: AsyncStream<T> {
+        return AsyncStream { [weak self] continuation in
+            Task { @Sendable in
+                self?.continuation = continuation
+            }
+        }
     }
-    var cancelBag: () -> Void
 }

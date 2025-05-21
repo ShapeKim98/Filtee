@@ -18,24 +18,24 @@ extension AuthClient: EnvironmentKey, NetworkClientConfigurable {
         return AuthClient(
             refresh: {
                 let keychainManager = KeychainManager.shared
-                let refreshToken = await keychainManager.read(.refreshToken)
+                let refreshToken = keychainManager.read(.refreshToken)
                 guard let refreshToken else { throw FilteeError.tokenNotFound }
                 
                 do {
-                    let response: TokenResponse = try await requestNonToken(
+                    let response: TokenResponse = try await request(
                         .refresh(refreshToken)
                     )
-                    await keychainManager.save(
+                    keychainManager.save(
                         response.accessToken,
                         key: .accessToken
                     )
-                    await keychainManager.save(
+                    keychainManager.save(
                         response.refreshToken,
                         key: .refreshToken
                     )
                 } catch {
-                    await keychainManager.delete(.accessToken)
-                    await keychainManager.delete(.refreshToken)
+                    keychainManager.delete(.accessToken)
+                    keychainManager.delete(.refreshToken)
                     throw FilteeError.reissueFail
                 }
             }

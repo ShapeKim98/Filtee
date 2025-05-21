@@ -25,33 +25,40 @@ extension SocialLoginClient: EnvironmentKey, NetworkClientConfigurable {
         return SocialLoginClient(
             kakaoLogin: { try await manager.kakaoLogin().toModel() },
             appleLogin: {
-                let response: SocialLoginResponse = try await manager.appleLogin()
+                let response = try await manager.appleLogin()
                 let authorizationCode = response.authorizationCode ?? ""
-                await keychainManager.save(
+                keychainManager.save(
                     authorizationCode,
                     key: .appleAuthorizationCode
                 )
                 return response.toModel()
             },
             appleToken: {
-                let code = await keychainManager.read(.appleAuthorizationCode) ?? ""
+                let code = keychainManager.read(.appleAuthorizationCode) ?? ""
                 let request = AppleTokenRequest(
                     clientSecret: manager.makeJWT(),
                     code: code
                 )
-                let response: AppleTokenResponse = try await requestNonToken(.appleToken(request))
-                await keychainManager.save(
+                dump(request)
+                let response: AppleTokenResponse = try await requestNonToken(
+                    .appleToken(request),
+                    adaptable: false
+                )
+                keychainManager.save(
                     response.refreshToken,
                     key: .appleRefreshToken
                 )
             },
             appleRevoke: {
-                let token = await keychainManager.read(.appleRefreshToken) ?? ""
+                let token = keychainManager.read(.appleRefreshToken) ?? ""
                 let request = AppleRevokeRequest(
                     clientSecret: manager.makeJWT(),
                     token: token
                 )
-                try await requestNonToken(.appleRevoke(request))
+                try await requestNonToken(
+                    .appleRevoke(request),
+                    adaptable: false
+                )
             },
             withdrawKakao: { manager.withdrawKakaoLogin() }
         )
@@ -66,4 +73,11 @@ extension SocialLoginClient: EnvironmentKey, NetworkClientConfigurable {
             withdrawKakao: { }
         )
     }()
+}
+
+extension EnvironmentValues {
+    var socialLoginClient: SocialLoginClient {
+        get { self[SocialLoginClient.self] }
+        set { self[SocialLoginClient.self] = newValue }
+    }
 }

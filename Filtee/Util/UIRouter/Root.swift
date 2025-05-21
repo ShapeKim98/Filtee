@@ -7,24 +7,14 @@
 
 import SwiftUICore
 
-enum Root {
-    case home
+enum Root: Sendable {
+    case tab
     case login
     case splash
 }
 
 extension FlowRouter: EnvironmentKey where T == Root {
-    static let defaultValue: FlowRouter<Root> = {
-        var continuation: AsyncStream<T>.Continuation?
-        
-        return FlowRouter(
-            switch: { continuation?.yield($0) },
-            publisher: {
-                AsyncStream { continuation = $0 }
-            },
-            cancelBag: { continuation?.finish() }
-        )
-    }()
+    static let defaultValue: FlowRouter<Root> = FlowRouter()
 }
 
 extension EnvironmentValues {
