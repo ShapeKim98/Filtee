@@ -16,7 +16,7 @@ protocol Endpoint: URLRequestConvertible {
     var headers: HTTPHeaders { get }
     var decoder: JSONDecoder { get }
     var encoder: ParameterEncoder? { get }
-    var parameters: (Encodable & Sendable)? { get }
+    var parameters: (RequestData)? { get }
     func errorBody(data: Data) throws -> Error
 }
 

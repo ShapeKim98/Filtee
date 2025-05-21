@@ -54,7 +54,7 @@ enum SocialLoginEndpoint: Endpoint {
         }
     }
     
-    var parameters: (any Encodable & Sendable)? {
+    var parameters: (any RequestData)? {
         switch self {
         case let .appleToken(model):
             return model

@@ -66,7 +66,7 @@ enum UserEndpoint: Endpoint {
         }
     }
     
-    var parameters: (any Encodable & Sendable)? {
+    var parameters: (any RequestData)? {
         switch self {
         case let .validationEmail(email):
             return ["email": email]

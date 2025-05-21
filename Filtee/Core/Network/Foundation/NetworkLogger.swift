@@ -35,7 +35,7 @@ enum NetworkLogger {
         }
     }
     
-    static func response<T: Decodable>(_ response: DataResponse<T, AFError>) throws {
+    static func response<T: ResponseData>(_ response: DataResponse<T, AFError>) throws {
         print("[ℹ️] NETWORK -> response:")
         if let urlResponse = response.response {
             print("url: \(urlResponse.url?.absoluteString ?? "N/A"),")

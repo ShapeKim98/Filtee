@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct FilterResponse: Decodable, Sendable {
+struct FilterResponse: ResponseData {
     let filterId: String
     let category: String
     let title: String

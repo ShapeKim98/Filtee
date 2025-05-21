@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AppleLoginRequest: Encodable, Sendable {
+struct AppleLoginRequest: RequestData {
     let idToken: String
     let deviceToken: String?
     let nick: String?

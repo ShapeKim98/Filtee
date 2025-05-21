@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TodayAuthorResponse: Decodable, Sendable {
+struct TodayAuthorResponse: ResponseData {
     let author: ProfileResponse
     let filters: [FilterResponse]
 }

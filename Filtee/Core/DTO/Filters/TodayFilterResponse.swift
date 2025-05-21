@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TodayFilterResponse: Decodable, Sendable {
+struct TodayFilterResponse: ResponseData {
     let filterId: String
     let title: String
     let introduction: String
@@ -26,3 +26,4 @@ struct TodayFilterResponse: Decodable, Sendable {
         case updatedAt = "updated_at"
     }
 }
+

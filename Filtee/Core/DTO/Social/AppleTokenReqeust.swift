@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AppleTokenRequest: Encodable, Sendable {
+struct AppleTokenRequest: RequestData {
     let clientId: String
     let clientSecret: String
     let code: String

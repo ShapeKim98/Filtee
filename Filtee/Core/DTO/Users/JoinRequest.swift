@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct JoinRequest: Encodable, Sendable {
+struct JoinRequest: RequestData {
     let email: String
     let password: String
     let nick: String
