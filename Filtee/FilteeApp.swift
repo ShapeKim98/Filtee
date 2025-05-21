@@ -7,11 +7,17 @@
 
 import SwiftUI
 
+import KakaoSDKCommon
+
 @main
 struct FilteeApp: App {
+    init() {
+        KakaoSDK.initSDK(appKey: Bundle.main.kakaoNativeAppKey)
+    }
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
     }
 }

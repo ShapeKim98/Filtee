@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C911F83A2DDAF28300C2DF89 /* SwiftJWT in Frameworks */ = {isa = PBXBuildFile; productRef = C911F8392DDAF28300C2DF89 /* SwiftJWT */; };
 		C9D67FB52DD072340097A10C /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = C9D67FB42DD072340097A10C /* Alamofire */; };
 		C9D67FB82DD072C30097A10C /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C9D67FB72DD072C30097A10C /* KakaoSDKAuth */; };
 		C9D67FBA2DD072C30097A10C /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = C9D67FB92DD072C30097A10C /* KakaoSDKCommon */; };
@@ -46,6 +47,7 @@
 				C9D67FBC2DD072C30097A10C /* KakaoSDKUser in Frameworks */,
 				C9D67FB52DD072340097A10C /* Alamofire in Frameworks */,
 				C9D67FBA2DD072C30097A10C /* KakaoSDKCommon in Frameworks */,
+				C911F83A2DDAF28300C2DF89 /* SwiftJWT in Frameworks */,
 				C9D67FB82DD072C30097A10C /* KakaoSDKAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -93,6 +95,7 @@
 				C9D67FB72DD072C30097A10C /* KakaoSDKAuth */,
 				C9D67FB92DD072C30097A10C /* KakaoSDKCommon */,
 				C9D67FBB2DD072C30097A10C /* KakaoSDKUser */,
+				C911F8392DDAF28300C2DF89 /* SwiftJWT */,
 			);
 			productName = Filtee;
 			productReference = C9D67F992DD060C00097A10C /* Filtee.app */;
@@ -126,6 +129,7 @@
 			packageReferences = (
 				C9D67FB32DD072340097A10C /* XCRemoteSwiftPackageReference "Alamofire" */,
 				C9D67FB62DD072C30097A10C /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */,
+				C911F8382DDAF28300C2DF89 /* XCRemoteSwiftPackageReference "Swift-JWT" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C9D67F9A2DD060C00097A10C /* Products */;
@@ -288,6 +292,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Filtee/Filtee.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Filtee/Preview Content\"";
@@ -311,7 +316,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.dohyeong.Filtee;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -323,6 +328,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Filtee/Filtee.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Filtee/Preview Content\"";
@@ -346,7 +352,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.dohyeong.Filtee;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -375,6 +381,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		C911F8382DDAF28300C2DF89 /* XCRemoteSwiftPackageReference "Swift-JWT" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Kitura/Swift-JWT";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.2;
+			};
+		};
 		C9D67FB32DD072340097A10C /* XCRemoteSwiftPackageReference "Alamofire" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Alamofire/Alamofire";
@@ -394,6 +408,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		C911F8392DDAF28300C2DF89 /* SwiftJWT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C911F8382DDAF28300C2DF89 /* XCRemoteSwiftPackageReference "Swift-JWT" */;
+			productName = SwiftJWT;
+		};
 		C9D67FB42DD072340097A10C /* Alamofire */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C9D67FB32DD072340097A10C /* XCRemoteSwiftPackageReference "Alamofire" */;

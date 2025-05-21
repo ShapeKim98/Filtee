@@ -1,0 +1,110 @@
+//
+//  UserClient.swift
+//  Filtee
+//
+//  Created by 김도형 on 5/19/25.
+//
+
+import SwiftUICore
+
+struct UserClient {
+    var validationEmail: @Sendable (
+        _ email: String
+    ) async throws -> Void
+    var join: @Sendable (
+        _ model: JoinModel
+    ) async throws -> Void
+    var emailLogin: @Sendable (
+        _ model: EmailLoginModel
+    ) async throws -> Void
+    var kakaoLogin: @Sendable (
+        _ model: KakaoLoginModel
+    ) async throws -> Void
+    var appleLogin: @Sendable (
+        _ model: AppleLoginModel
+    ) async throws -> Void
+    var deviceToken: @Sendable (
+        _ deviceToken: String
+    ) async throws -> Void
+    var logout: @Sendable () -> Void
+}
+
+extension UserClient: EnvironmentKey, NetworkClientConfigurable {
+    typealias E = UserEndpoint
+    
+    static let defaultValue: UserClient = {
+        let keychainManager = KeychainManager.shared
+        
+        return UserClient(
+            validationEmail: { email in
+                try await requestNonToken(.validationEmail(email: email))
+            },
+            join: { model in
+                let request = model.toData()
+                try await requestNonToken(.join(request))
+            },
+            emailLogin: { model in
+                let request = model.toData()
+                let response: LoginResponse = try await requestNonToken(.login(request))
+                keychainManager.save(
+                    response.accessToken,
+                    key: .accessToken
+                )
+                keychainManager.save(
+                    response.refreshToken,
+                    key: .refreshToken
+                )
+            },
+            kakaoLogin: { model in
+                let request = model.toData()
+                let response: LoginResponse = try await requestNonToken(.kakoLogin(request))
+                keychainManager.save(
+                    response.accessToken,
+                    key: .accessToken
+                )
+                keychainManager.save(
+                    response.refreshToken,
+                    key: .refreshToken
+                )
+            },
+            appleLogin: { model in
+                let request = model.toData()
+                let response: LoginResponse = try await requestNonToken(.appleLogin(request))
+                keychainManager.save(
+                    response.accessToken,
+                    key: .accessToken
+                )
+                keychainManager.save(
+                    response.refreshToken,
+                    key: .refreshToken
+                )
+            },
+            deviceToken: { deviceToken in
+                try await requestNonToken(.deviceToken(deviceToken: deviceToken))
+            },
+            logout: {
+                keychainManager.delete(.accessToken)
+                keychainManager.delete(.refreshToken)
+            }
+        )
+    }()
+    
+    static let testValue: UserClient = {
+        return UserClient(
+            validationEmail: { _ in },
+            join: { _ in },
+            emailLogin: { _ in },
+            kakaoLogin: { _ in },
+            appleLogin: { _ in },
+            deviceToken: { _ in },
+            logout: { }
+        )
+    }()
+}
+
+extension EnvironmentValues {
+    var userClient: UserClient {
+        get { self[UserClient.self] }
+        set { self[UserClient.self] = newValue }
+    }
+}
