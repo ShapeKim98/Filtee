@@ -40,6 +40,11 @@ private extension RootView {
     }
 }
 
+#if DEBUG
 #Preview {
     RootView()
+        .environment(\.authClient, .testValue)
+        .environment(\.userClient, .testValue)
+        .environment(\.filterClient, .testValue)
 }
+#endif
