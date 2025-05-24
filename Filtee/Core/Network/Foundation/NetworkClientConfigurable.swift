@@ -26,23 +26,17 @@ protocol NetworkClientConfigurable {
 
 extension NetworkClientConfigurable {
     static func request<T: ResponseData>(_ endPoint: E) async throws -> T {
-        let session = AF.request(
+        let response = await filteeSession.request(
             endPoint,
             interceptor: Interceptor(
                 adapters: [KeyAdapter()],
                 interceptors: [TokenInterceptor()]
             )
         )
-#if DEBUG
-        try? NetworkLogger.request(session.convertible)
-#endif
-        let response = await session
-            .validate(statusCode: 200..<300)
-            .serializingDecodable(T.self, decoder: endPoint.decoder)
-            .response
-#if DEBUG
-        try? NetworkLogger.response(response)
-#endif
+        .validate(statusCode: 200..<300)
+        .serializingDecodable(T.self, decoder: endPoint.decoder)
+        .response
+        
         switch response.result {
         case .success(let value):
             return value
@@ -61,23 +55,17 @@ extension NetworkClientConfigurable {
     }
     
     static func request(_ endPoint: E) async throws {
-        let session = AF.request(
+        let response = await filteeSession.request(
             endPoint,
             interceptor: Interceptor(
                 adapters: [KeyAdapter()],
                 interceptors: [TokenInterceptor()]
             )
         )
-#if DEBUG
-        try? NetworkLogger.request(session.convertible)
-#endif
-        let response = await session
-            .validate(statusCode: 200..<300)
-            .serializingData()
-            .response
-#if DEBUG
-        try NetworkLogger.response(response)
-#endif
+        .validate(statusCode: 200..<300)
+        .serializingData()
+        .response
+        
         switch response.result {
         case .success: return
         case .failure(let error):
@@ -103,20 +91,14 @@ extension NetworkClientConfigurable {
         _ endPoint: E,
         adaptable: Bool = true
     ) async throws -> T {
-        let session = AF.request(
+        let response = await filteeSession.request(
             endPoint,
             interceptor: Interceptor(adapters: adaptable ? [KeyAdapter()] : [])
         )
-#if DEBUG
-        try? NetworkLogger.request(session.convertible)
-#endif
-        let response = await session
-            .validate(statusCode: 200..<300)
-            .serializingDecodable(T.self, decoder: endPoint.decoder)
-            .response
-#if DEBUG
-        try NetworkLogger.response(response)
-#endif
+        .validate(statusCode: 200..<300)
+        .serializingDecodable(T.self, decoder: endPoint.decoder)
+        .response
+        
         switch response.result {
         case .success(let value):
             return value
@@ -132,20 +114,14 @@ extension NetworkClientConfigurable {
         _ endPoint: E,
         adaptable: Bool = true
     ) async throws {
-        let session = AF.request(
+        let response = await filteeSession.request(
             endPoint,
             interceptor: Interceptor(adapters: adaptable ? [KeyAdapter()] : [])
         )
-#if DEBUG
-        try? NetworkLogger.request(session.convertible)
-#endif
-        let response = await session
-            .validate(statusCode: 200..<300)
-            .serializingData()
-            .response
-#if DEBUG
-        try? NetworkLogger.response(response)
-#endif
+        .validate(statusCode: 200..<300)
+        .serializingData()
+        .response
+        
         switch response.result {
         case .success: return
         case .failure(let error):
