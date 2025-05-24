@@ -63,22 +63,29 @@ extension View {
         _ state: LazyImageState,
         @ViewBuilder transform: (Image) -> some View
     ) -> some View {
-        switch state.result {
-        case .success(let success):
-            transform(
-                Image(uiImage: success.image)
-                    .resizable()
-            )
-        case .failure(let failure):
-            Color.gray75
-                .onAppear { print(failure) }
-        case .none:
-            Color.gray75
-                .overlay {
-                    ProgressView()
-                        .controlSize(.regular)
-                        .tint(.brightTurquoise)
+        VStack {
+            if state.isLoading {
+                Color.gray75
+                    .overlay {
+                        ProgressView()
+                            .controlSize(.regular)
+                            .tint(.brightTurquoise)
+                    }
+            } else {
+                switch state.result {
+                case .success(let success):
+                    transform(
+                        Image(uiImage: success.image)
+                            .resizable()
+                    )
+                case .failure(let failure):
+                    Color.gray75
+                        .onAppear { print(failure) }
+                case .none:
+                    Color.gray75
                 }
+            }
         }
+        .animation(.smooth, value: state.isLoading)
     }
 }

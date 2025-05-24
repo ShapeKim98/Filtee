@@ -81,9 +81,6 @@ private extension MainView {
             }
             .padding(.horizontal, 20)
             .frame(maxWidth: .infinity)
-            .background {
-                
-            }
         }
     }
     
