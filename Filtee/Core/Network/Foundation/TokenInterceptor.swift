@@ -28,7 +28,6 @@ struct TokenInterceptor: RequestInterceptor, NetworkClientConfigurable {
             "\(accessToken)",
             forHTTPHeaderField: "Authorization"
         )
-//        try? NetworkLogger.request(request)
         completion(.success(request))
     }
     
