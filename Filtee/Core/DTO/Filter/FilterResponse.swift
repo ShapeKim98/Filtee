@@ -19,4 +19,18 @@ struct FilterResponse: ResponseData {
     let buyerCount: Int
     let createdAt: String
     let updatedAt: String
+    
+    enum CodingKeys: String, CodingKey {
+        case filterId = "filter_id"
+        case category
+        case title
+        case description
+        case files
+        case creator
+        case isLike
+        case likeCount
+        case buyerCount
+        case createdAt
+        case updatedAt
+    }
 }

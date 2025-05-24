@@ -16,4 +16,15 @@ struct ProfileResponse: ResponseData {
     let profileImage: String?
     let phoneNum: String?
     let hashTags: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case email
+        case nick
+        case name
+        case introduction
+        case profileImage
+        case phoneNum
+        case hashTags
+    }
 }

@@ -12,17 +12,22 @@ struct TodayFilterModel: Identifiable {
     let title: String
     let introduction: String
     let description: String
-    let files: [String]
+    let original: String?
+    let filtered: String?
 }
 
 extension TodayFilterResponse {
     func toModel() -> TodayFilterModel {
+        let original = self.files.first
+        let filtered = self.files.last
+        
         return TodayFilterModel(
             id: self.filterId,
             title: self.title,
             introduction: self.introduction,
             description: self.description,
-            files: self.files.map(\.imageURL)
+            original: original?.imageURL,
+            filtered: filtered?.imageURL
         )
     }
 }

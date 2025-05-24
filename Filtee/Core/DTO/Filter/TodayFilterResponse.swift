@@ -22,8 +22,8 @@ struct TodayFilterResponse: ResponseData {
         case introduction
         case description
         case files
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
+        case createdAt
+        case updatedAt
     }
 }
 
