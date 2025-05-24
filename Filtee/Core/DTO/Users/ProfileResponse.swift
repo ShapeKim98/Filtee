@@ -13,6 +13,7 @@ struct ProfileResponse: ResponseData {
     let nick: String
     let name: String?
     let introduction: String?
+    let description: String?
     let profileImage: String?
     let phoneNum: String?
     let hashTags: [String]
@@ -23,6 +24,7 @@ struct ProfileResponse: ResponseData {
         case nick
         case name
         case introduction
+        case description
         case profileImage
         case phoneNum
         case hashTags

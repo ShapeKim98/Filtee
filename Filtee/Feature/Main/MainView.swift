@@ -22,26 +22,14 @@ struct MainView: View {
     @State
     private var hotTrends: [FilterModel] = []
     @State
+    private var todayAuthor: TodayAuthorModel?
+    @State
     private var scrollOffset: CGFloat = 0
     
     var body: some View {
         ScrollView(content: content)
             .coordinateSpace(name: "ScrollView")
-            .background {
-                VisualEffect(style: .systemChromeMaterial)
-                    .mask(LinearGradient(
-                        colors: [
-                            .black.opacity(scrollOffset / CGFloat(160)),
-                            .black.opacity(scrollOffset / CGFloat(160) + CGFloat(0.1)),
-                            .black,
-                            .black,
-                            .black
-                        ],
-                        startPoint: UnitPoint(x: 0.5, y: 0),
-                        endPoint: UnitPoint(x: 0.5, y: 1)
-                    ))
-                    .ignoresSafeArea()
-            }
+            .background { scrollViewBackground }
             .ifLet(todayFilter?.filtered) { view, value in
                 view.background {
                     backgroundImage(url: value)
@@ -54,14 +42,35 @@ struct MainView: View {
 // MARK: - Configure Views
 private extension MainView {
     func content() -> some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 20) {
             todayFilterSection
             
             hotTrendSection
             
+            todayAuthorSection
+            
             Spacer()
         }
-        .scrollOffset($scrollOffset, coordinateSpace: "ScrollView")
+        .scrollOffset(
+            $scrollOffset,
+            coordinateSpace: "ScrollView"
+        )
+    }
+    
+    var scrollViewBackground: some View {
+        VisualEffect(style: .systemChromeMaterial)
+            .mask(LinearGradient(
+                colors: [
+                    .black.opacity(scrollOffset / CGFloat(160)),
+                    .black.opacity(scrollOffset / CGFloat(160) + CGFloat(0.1)),
+                    .black,
+                    .black,
+                    .black
+                ],
+                startPoint: UnitPoint(x: 0.5, y: 0),
+                endPoint: UnitPoint(x: 0.5, y: 1)
+            ))
+            .ignoresSafeArea()
     }
     
     @ViewBuilder
@@ -120,21 +129,19 @@ private extension MainView {
     }
     
     func backgroundImage(url: String) -> some View {
-        VStack {
+        VStack(spacing: 0) {
             LazyImage(url: URL(string: url)) { state in
                 lazyImageTransform(state) { image in
                     image.aspectRatio(contentMode: .fill)
-                        .frame(height: 500)
                 }
             }
             .filteeDim()
             
-            Spacer()
+            Color(red: 0.04, green: 0.04, blue: 0.04)
         }
         .ignoresSafeArea(edges: .top)
     }
     
-    @ViewBuilder
     var hotTrendSection: some View {
         VStack(spacing: 0) {
             FilteeTitle("핫 트렌드")
@@ -146,7 +153,6 @@ private extension MainView {
         }
     }
     
-    @ViewBuilder
     func hotTrendCell(_ filter: FilterModel) -> some View {
         LazyImage(url: URL(string: filter.filtered ?? "")) { state in
             lazyImageTransform(state) { image in
@@ -179,6 +185,20 @@ private extension MainView {
             .padding(.trailing, 10)
         }
     }
+    
+    @ViewBuilder
+    var todayAuthorSection: some View {
+        VStack(spacing: 8) {
+            FilteeTitle("오늘의 작가")
+            
+            if let todayAuthor {
+                FilteeProfile(
+                    profile: todayAuthor.author,
+                    filters: todayAuthor.filters
+                )
+            }
+        }
+    }
 }
 
 // MARK: - Fuctions
@@ -188,8 +208,10 @@ private extension MainView {
         do {
             async let todayFilter = filterClientTodayFilter()
             async let hotTrends = filterClientHotTrend()
+            async let todayAuthor = userClientTodayAuthor()
             self.todayFilter = try await todayFilter
             self.hotTrends = try await hotTrends
+            self.todayAuthor = try await todayAuthor
         } catch {
             print(error)
         }

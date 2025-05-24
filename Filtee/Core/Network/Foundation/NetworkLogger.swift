@@ -40,23 +40,6 @@ struct NetworkLogger: EventMonitor {
         }
     }
     
-    func request(_ request: DataRequest, didParseResponse response: DataResponse<Data?, AFError>) {
-        print("[ℹ️] NETWORK -> response:")
-        if let urlResponse = response.response {
-            print("url: \(urlResponse.url?.absoluteString ?? "N/A"),")
-            print("status code: \(urlResponse.statusCode),")
-        } else {
-            print(String(describing: response.response))
-        }
-        if let data = response.data {
-            do {
-                let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-                let jsonData = try JSONSerialization.data(withJSONObject: jsonObject, options: .prettyPrinted)
-                
-                print("body: \(String(data: jsonData, encoding: .utf8) ?? "nil")")
-            } catch { print(error) }
-        }
-    }
     // 추가: 요청 실패 이벤트
     func request(_ request: Request, didFailWithError error: AFError) {
         print("[ℹ️] NETWORK -> request failed with error: \(error)")

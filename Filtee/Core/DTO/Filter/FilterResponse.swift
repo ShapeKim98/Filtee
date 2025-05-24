@@ -9,7 +9,7 @@ import Foundation
 
 struct FilterResponse: ResponseData {
     let filterId: String
-    let category: String
+    let category: String?
     let title: String
     let description: String
     let files: [String]
