@@ -7,7 +7,15 @@
 
 import Foundation
 
-struct FilterModel: Identifiable {
+struct FilterModel: Identifiable, Hashable {
+    static func == (lhs: FilterModel, rhs: FilterModel) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
     let id: String
     let category: String
     let title: String

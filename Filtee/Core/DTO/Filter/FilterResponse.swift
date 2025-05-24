@@ -27,9 +27,9 @@ struct FilterResponse: ResponseData {
         case description
         case files
         case creator
-        case isLike
-        case likeCount
-        case buyerCount
+        case isLike = "is_liked"
+        case likeCount = "like_count"
+        case buyerCount = "buyer_count"
         case createdAt
         case updatedAt
     }
