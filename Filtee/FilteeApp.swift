@@ -7,12 +7,24 @@
 
 import SwiftUI
 
+import Alamofire
 import KakaoSDKCommon
+import Nuke
+import NukeAlamofirePlugin
+
+
 
 @main
 struct FilteeApp: App {
     init() {
         KakaoSDK.initSDK(appKey: Bundle.main.kakaoNativeAppKey)
+        
+        let pipeline = ImagePipeline {
+            $0.dataLoader = AlamofireDataLoader(session: imageSession)
+            $0.imageCache = ImageCache.shared
+        }
+
+        ImagePipeline.shared = pipeline
     }
     
     var body: some Scene {
