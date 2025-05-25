@@ -12,8 +12,14 @@ private struct FilteeDimModifier: ViewModifier {
         content.overlay {
             LinearGradient(
                 stops: [
-                    Gradient.Stop(color: Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0), location: 0.00),
-                    Gradient.Stop(color: Color(red: 0.04, green: 0.04, blue: 0.04), location: 1.00),
+                    Gradient.Stop(
+                        color: Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0),
+                        location: 0.00
+                    ),
+                    Gradient.Stop(
+                        color: Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.8),
+                        location: 1.00
+                    ),
                 ],
                 startPoint: UnitPoint(x: 0.5, y: 0.25),
                 endPoint: UnitPoint(x: 0.5, y: 0.95)

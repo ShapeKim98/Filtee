@@ -35,6 +35,9 @@ struct MainView: View {
                     backgroundImage(url: value)
                 }
             }
+            .overlay(alignment: .top) {
+                navigationBar
+            }
             .task(bodyTask)
     }
 }
@@ -129,15 +132,17 @@ private extension MainView {
     }
     
     func backgroundImage(url: String) -> some View {
-        VStack(spacing: 0) {
-            LazyImage(url: URL(string: url)) { state in
-                lazyImageTransform(state) { image in
+        LazyImage(url: URL(string: url)) { state in
+            lazyImageTransform(state) { image in
+                VStack(spacing: 0) {
                     image.aspectRatio(contentMode: .fill)
+                        .filteeDim()
+                    
+                    image.aspectRatio(contentMode: .fill)
+                        .overlay(Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.8))
+                    
                 }
             }
-            .filteeDim()
-            
-            Color(red: 0.04, green: 0.04, blue: 0.04)
         }
         .ignoresSafeArea(edges: .top)
     }
@@ -186,7 +191,6 @@ private extension MainView {
         }
     }
     
-    @ViewBuilder
     var todayAuthorSection: some View {
         VStack(spacing: 8) {
             FilteeTitle("오늘의 작가")
@@ -198,6 +202,23 @@ private extension MainView {
                 )
             }
         }
+    }
+    
+    var navigationBar: some View {
+        VisualEffect(style: .systemChromeMaterial)
+            .mask(LinearGradient(
+                colors: [
+                    .clear,
+                    .black,
+                    .black,
+                    .black
+                ],
+                startPoint: UnitPoint(x: 0.5, y: 1),
+                endPoint: UnitPoint(x: 0.5, y: 0)
+            ))
+            .frame(height: 80)
+            .opacity(scrollOffset / CGFloat(160))
+            .ignoresSafeArea()
     }
 }
 

@@ -22,6 +22,7 @@ struct FilteeApp: App {
         let pipeline = ImagePipeline {
             $0.dataLoader = AlamofireDataLoader(session: imageSession)
             $0.imageCache = ImageCache.shared
+            $0.dataCachePolicy = .automatic
         }
 
         ImagePipeline.shared = pipeline

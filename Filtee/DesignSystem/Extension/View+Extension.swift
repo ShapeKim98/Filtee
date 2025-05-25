@@ -65,7 +65,7 @@ extension View {
     ) -> some View {
         VStack {
             if state.isLoading {
-                Color.gray75
+                Color.secondary.opacity(0.5)
                     .overlay {
                         ProgressView()
                             .controlSize(.regular)
@@ -79,10 +79,10 @@ extension View {
                             .resizable()
                     )
                 case .failure(let failure):
-                    Color.gray75
+                    Color.secondary.opacity(0.5)
                         .onAppear { print(failure) }
                 case .none:
-                    Color.gray75
+                    Color.secondary.opacity(0.5)
                 }
             }
         }
