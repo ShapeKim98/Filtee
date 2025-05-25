@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct BlurEffectView: UIViewRepresentable {
+struct VisualEffect: UIViewRepresentable {
     private let style: UIBlurEffect.Style
     
     init(style: UIBlurEffect.Style) {

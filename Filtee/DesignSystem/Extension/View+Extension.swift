@@ -7,13 +7,28 @@
 
 import SwiftUI
 
+import NukeUI
+
 extension View {
-    @ViewBuilder func `if`<Content: View>(
+    @ViewBuilder
+    func `if`<Content: View>(
         _ condition: Bool,
         transform: (Self) -> Content
     ) -> some View {
         if condition {
             transform(self)
+        } else {
+            self
+        }
+    }
+    
+    @ViewBuilder
+    func ifLet<Content: View, T>(
+        _ value: T?,
+        transform: (Self, T) -> Content
+    ) -> some View {
+        if let value {
+            transform(self, value)
         } else {
             self
         }
@@ -39,7 +54,38 @@ extension View {
     
     func filteeBackground() -> some View {
         self.background {
-            BlurEffectView(style: .systemChromeMaterial)
+            VisualEffect(style: .systemChromeMaterial)
         }
+    }
+    
+    @ViewBuilder
+    func lazyImageTransform(
+        _ state: LazyImageState,
+        @ViewBuilder transform: (Image) -> some View
+    ) -> some View {
+        VStack {
+            if state.isLoading {
+                Color.secondary.opacity(0.5)
+                    .overlay {
+                        ProgressView()
+                            .controlSize(.regular)
+                            .tint(.brightTurquoise)
+                    }
+            } else {
+                switch state.result {
+                case .success(let success):
+                    transform(
+                        Image(uiImage: success.image)
+                            .resizable()
+                    )
+                case .failure(let failure):
+                    Color.secondary.opacity(0.5)
+                        .onAppear { print(failure) }
+                case .none:
+                    Color.secondary.opacity(0.5)
+                }
+            }
+        }
+        .animation(.smooth, value: state.isLoading)
     }
 }

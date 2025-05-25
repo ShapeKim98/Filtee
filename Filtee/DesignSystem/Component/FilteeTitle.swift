@@ -31,6 +31,8 @@ struct FilteeTitle<SubButton: View>: View {
                 .font(.pretendard(.body1(.medium)))
                 .foregroundStyle(.gray75)
         }
+        .padding(.horizontal, 20)
+        .frame(height: 48)
     }
 }
 

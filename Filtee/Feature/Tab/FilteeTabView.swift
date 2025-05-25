@@ -14,12 +14,14 @@ struct FilteeTabView: View {
     private var userClient
     
     var body: some View {
-        Button("로그아웃") {
-            userClient.logout()
-            Task {
-                await rootRouter.switch(.login)
-            }
-        }
+//        Button("로그아웃") {
+//            userClient.logout()
+//            Task {
+//                await rootRouter.switch(.login)
+//            }
+//        }
+        
+        MainView()
     }
 }
 

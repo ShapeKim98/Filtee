@@ -10,10 +10,14 @@ import SwiftUI
 struct LoginView: View {
     @Environment(\.rootRouter)
     private var rootRouter
-    @Environment(\.userClient)
-    private var userClient
-    @Environment(\.socialLoginClient)
-    private var socialLoginClient
+    @Environment(\.userClient.kakaoLogin)
+    private var userClientKakaoLogin
+    @Environment(\.userClient.appleLogin)
+    private var userClientAppleLogin
+    @Environment(\.socialLoginClient.kakaoLogin)
+    private var socialLoginClientKakaoLogin
+    @Environment(\.socialLoginClient.appleLogin)
+    private var socialLoginClientAppleLogin
     
     @State
     private var isLoading = false
@@ -87,9 +91,9 @@ private extension LoginView {
             isLoading = true
             defer { isLoading = false }
             do {
-                let model = try await socialLoginClient.kakaoLogin()
+                let model = try await socialLoginClientKakaoLogin()
                 let kakaoLoginModel = KakaoLoginModel(oauthToken: model.token)
-                try await userClient.kakaoLogin(kakaoLoginModel)
+                try await userClientKakaoLogin(kakaoLoginModel)
                 await rootRouter.switch(.tab)
             } catch {
                 print(error)
@@ -102,13 +106,13 @@ private extension LoginView {
             isLoading = true
             defer { isLoading = false }
             do {
-                let model = try await socialLoginClient.appleLogin()
+                let model = try await socialLoginClientAppleLogin()
 //                try await socialLoginClient.appleToken()
                 let appleLoginModel = AppleLoginModel(
                     idToken: model.token,
                     nick: model.nick
                 )
-                try await userClient.appleLogin(appleLoginModel)
+                try await userClientAppleLogin(appleLoginModel)
                 await rootRouter.switch(.tab)
             } catch {
                 print(error)

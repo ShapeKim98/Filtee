@@ -27,6 +27,7 @@ struct UserClient {
         _ deviceToken: String
     ) async throws -> Void
     var logout: @Sendable () -> Void
+    var todayAuthor: @Sendable () async throws -> TodayAuthorModel
 }
 
 extension UserClient: EnvironmentKey, NetworkClientConfigurable {
@@ -85,19 +86,11 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
             logout: {
                 keychainManager.delete(.accessToken)
                 keychainManager.delete(.refreshToken)
+            },
+            todayAuthor: {
+                let response: TodayAuthorResponse = try await request(.todayAuthor)
+                return response.toModel()
             }
-        )
-    }()
-    
-    static let testValue: UserClient = {
-        return UserClient(
-            validationEmail: { _ in },
-            join: { _ in },
-            emailLogin: { _ in },
-            kakaoLogin: { _ in },
-            appleLogin: { _ in },
-            deviceToken: { _ in },
-            logout: { }
         )
     }()
 }

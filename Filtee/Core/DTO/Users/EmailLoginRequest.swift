@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct EmailLoginRequest: Encodable, Sendable {
+struct EmailLoginRequest: RequestData {
     let email: String
     let password: String
     let deviceToken: String?

@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		C911F83A2DDAF28300C2DF89 /* SwiftJWT in Frameworks */ = {isa = PBXBuildFile; productRef = C911F8392DDAF28300C2DF89 /* SwiftJWT */; };
+		C96367EE2DDF10AB0050FA26 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = C96367ED2DDF10AB0050FA26 /* Nuke */; };
+		C96367F02DDF10AB0050FA26 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = C96367EF2DDF10AB0050FA26 /* NukeUI */; };
+		C96368DF2DDF6B090050FA26 /* NukeAlamofirePlugin in Frameworks */ = {isa = PBXBuildFile; productRef = C96368DE2DDF6B090050FA26 /* NukeAlamofirePlugin */; };
+		C96368E42DE076F20050FA26 /* IdentifiedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = C96368E32DE076F20050FA26 /* IdentifiedCollections */; };
 		C9D67FB52DD072340097A10C /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = C9D67FB42DD072340097A10C /* Alamofire */; };
 		C9D67FB82DD072C30097A10C /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C9D67FB72DD072C30097A10C /* KakaoSDKAuth */; };
 		C9D67FBA2DD072C30097A10C /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = C9D67FB92DD072C30097A10C /* KakaoSDKCommon */; };
@@ -44,9 +48,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C96368E42DE076F20050FA26 /* IdentifiedCollections in Frameworks */,
 				C9D67FBC2DD072C30097A10C /* KakaoSDKUser in Frameworks */,
+				C96367F02DDF10AB0050FA26 /* NukeUI in Frameworks */,
 				C9D67FB52DD072340097A10C /* Alamofire in Frameworks */,
 				C9D67FBA2DD072C30097A10C /* KakaoSDKCommon in Frameworks */,
+				C96367EE2DDF10AB0050FA26 /* Nuke in Frameworks */,
+				C96368DF2DDF6B090050FA26 /* NukeAlamofirePlugin in Frameworks */,
 				C911F83A2DDAF28300C2DF89 /* SwiftJWT in Frameworks */,
 				C9D67FB82DD072C30097A10C /* KakaoSDKAuth in Frameworks */,
 			);
@@ -96,6 +104,10 @@
 				C9D67FB92DD072C30097A10C /* KakaoSDKCommon */,
 				C9D67FBB2DD072C30097A10C /* KakaoSDKUser */,
 				C911F8392DDAF28300C2DF89 /* SwiftJWT */,
+				C96367ED2DDF10AB0050FA26 /* Nuke */,
+				C96367EF2DDF10AB0050FA26 /* NukeUI */,
+				C96368DE2DDF6B090050FA26 /* NukeAlamofirePlugin */,
+				C96368E32DE076F20050FA26 /* IdentifiedCollections */,
 			);
 			productName = Filtee;
 			productReference = C9D67F992DD060C00097A10C /* Filtee.app */;
@@ -130,6 +142,9 @@
 				C9D67FB32DD072340097A10C /* XCRemoteSwiftPackageReference "Alamofire" */,
 				C9D67FB62DD072C30097A10C /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */,
 				C911F8382DDAF28300C2DF89 /* XCRemoteSwiftPackageReference "Swift-JWT" */,
+				C96367EC2DDF10AB0050FA26 /* XCRemoteSwiftPackageReference "Nuke" */,
+				C96368DD2DDF6B090050FA26 /* XCRemoteSwiftPackageReference "Nuke-Alamofire-Plugin" */,
+				C96368E22DE076F10050FA26 /* XCRemoteSwiftPackageReference "swift-identified-collections" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C9D67F9A2DD060C00097A10C /* Products */;
@@ -389,6 +404,30 @@
 				minimumVersion = 4.0.2;
 			};
 		};
+		C96367EC2DDF10AB0050FA26 /* XCRemoteSwiftPackageReference "Nuke" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Nuke";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.8.0;
+			};
+		};
+		C96368DD2DDF6B090050FA26 /* XCRemoteSwiftPackageReference "Nuke-Alamofire-Plugin" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Nuke-Alamofire-Plugin";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+		C96368E22DE076F10050FA26 /* XCRemoteSwiftPackageReference "swift-identified-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-identified-collections";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.1;
+			};
+		};
 		C9D67FB32DD072340097A10C /* XCRemoteSwiftPackageReference "Alamofire" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Alamofire/Alamofire";
@@ -412,6 +451,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C911F8382DDAF28300C2DF89 /* XCRemoteSwiftPackageReference "Swift-JWT" */;
 			productName = SwiftJWT;
+		};
+		C96367ED2DDF10AB0050FA26 /* Nuke */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C96367EC2DDF10AB0050FA26 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = Nuke;
+		};
+		C96367EF2DDF10AB0050FA26 /* NukeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C96367EC2DDF10AB0050FA26 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeUI;
+		};
+		C96368DE2DDF6B090050FA26 /* NukeAlamofirePlugin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C96368DD2DDF6B090050FA26 /* XCRemoteSwiftPackageReference "Nuke-Alamofire-Plugin" */;
+			productName = NukeAlamofirePlugin;
+		};
+		C96368E32DE076F20050FA26 /* IdentifiedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C96368E22DE076F10050FA26 /* XCRemoteSwiftPackageReference "swift-identified-collections" */;
+			productName = IdentifiedCollections;
 		};
 		C9D67FB42DD072340097A10C /* Alamofire */ = {
 			isa = XCSwiftPackageProductDependency;

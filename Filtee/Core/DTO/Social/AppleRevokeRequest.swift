@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AppleRevokeRequest: Encodable, Sendable {
+struct AppleRevokeRequest: RequestData {
     let clientId: String
     let clientSecret: String
     let token: String

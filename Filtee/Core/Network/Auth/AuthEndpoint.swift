@@ -41,7 +41,7 @@ enum AuthEndpoint: Endpoint {
         }
     }
     
-    var parameters: (any Encodable & Sendable)? {
+    var parameters: (any RequestData)? {
         switch self {
         case .refresh: return nil
         }

@@ -16,6 +16,7 @@ enum UserEndpoint: Endpoint {
     case kakoLogin(KakaoLoginRequest)
     case appleLogin(AppleLoginRequest)
     case deviceToken(deviceToken: String)
+    case todayAuthor
     
     var path: String {
         switch self {
@@ -31,6 +32,8 @@ enum UserEndpoint: Endpoint {
             return "/v1/users/login/apple"
         case .deviceToken:
             return "/v1/users/deviceToken"
+        case .todayAuthor:
+            return "/v1/users/today-author"
         }
     }
     
@@ -43,6 +46,7 @@ enum UserEndpoint: Endpoint {
                 .appleLogin:
             return .post
         case .deviceToken: return .put
+        case .todayAuthor: return .get
         }
     }
     
@@ -57,16 +61,17 @@ enum UserEndpoint: Endpoint {
     var encoder: (any ParameterEncoder)? {
         switch self {
         case .validationEmail,
-                .join,
-                .login,
-                .kakoLogin,
-                .appleLogin,
-                .deviceToken:
+             .join,
+             .login,
+             .kakoLogin,
+             .appleLogin,
+             .deviceToken:
             return .json
+        case .todayAuthor: return nil
         }
     }
     
-    var parameters: (any Encodable & Sendable)? {
+    var parameters: (any RequestData)? {
         switch self {
         case let .validationEmail(email):
             return ["email": email]
@@ -80,6 +85,7 @@ enum UserEndpoint: Endpoint {
             return model
         case let .deviceToken(deviceToken):
             return ["deviceToken": deviceToken]
+        case .todayAuthor: return nil
         }
     }
 }
