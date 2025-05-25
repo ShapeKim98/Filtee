@@ -12,6 +12,7 @@ import Alamofire
 enum FilterEndpoint: Endpoint {
     case hotTrend
     case todayFilter
+    case filterDetail(id: String)
     
     var path: String {
         switch self {
@@ -19,13 +20,16 @@ enum FilterEndpoint: Endpoint {
             return "/v1/filters/hot-trend"
         case .todayFilter:
             return "/v1/filters/today-filter"
+        case let .filterDetail(id):
+            return "/v1/filters/\(id)"
         }
     }
     
     var method: HTTPMethod {
         switch self {
         case .hotTrend,
-             .todayFilter:
+             .todayFilter,
+             .filterDetail:
             return .get
         }
     }
@@ -41,7 +45,8 @@ enum FilterEndpoint: Endpoint {
     var encoder: (any ParameterEncoder)? {
         switch self {
         case .hotTrend,
-             .todayFilter:
+             .todayFilter,
+             .filterDetail:
             return nil
         }
     }
@@ -49,7 +54,8 @@ enum FilterEndpoint: Endpoint {
     var parameters: (any RequestData)? {
         switch self {
         case .hotTrend,
-             .todayFilter:
+             .todayFilter,
+             .filterDetail:
             return nil
         }
     }

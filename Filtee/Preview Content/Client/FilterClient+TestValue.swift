@@ -11,7 +11,8 @@ extension FilterClient {
     static let testValue = {
         return FilterClient(
             hotTrend: { FilterResponse.hotTrendMock.map { $0.toModel() } },
-            todayFilter: { TodayFilterResponse.mock.toModel() }
+            todayFilter: { TodayFilterResponse.mock.toModel() },
+            filterDetail: { _ in FilterDetailResponse.detailMock.toModel() }
         )
     }()
 }

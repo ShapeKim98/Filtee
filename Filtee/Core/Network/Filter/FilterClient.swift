@@ -10,6 +10,9 @@ import SwiftUICore
 struct FilterClient {
     var hotTrend: @Sendable () async throws -> [FilterModel]
     var todayFilter: @Sendable () async throws -> TodayFilterModel
+    var filterDetail: @Sendable (
+        _ id: String
+    ) async throws -> FilterDetailModel
 }
 
 extension FilterClient: EnvironmentKey, NetworkClientConfigurable {
@@ -23,6 +26,10 @@ extension FilterClient: EnvironmentKey, NetworkClientConfigurable {
             },
             todayFilter: {
                 let response: TodayFilterResponse = try await request(.todayFilter)
+                return response.toModel()
+            },
+            filterDetail: { id in
+                let response: FilterDetailResponse = try await request(.filterDetail(id: id))
                 return response.toModel()
             }
         )
