@@ -32,6 +32,8 @@ private struct FilteeSelectButtonStyle: ButtonStyle {
                 radius: 9999,
                 color: .blackTurquoise
             )
+            .scaleEffect(configuration.isPressed ? 0.9 : 1)
+            .animation(.filteeDefault, value: configuration.isPressed)
             .animation(.filteeDefault, value: isSelected)
     }
 }

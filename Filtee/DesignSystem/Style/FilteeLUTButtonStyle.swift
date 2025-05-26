@@ -29,6 +29,8 @@ private struct FilteeLUTButtonStyle: ButtonStyle {
                 .font(.pretendard(.caption2(.semiBold)))
         }
         .foregroundStyle(color)
+        .scaleEffect(configuration.isPressed ? 0.9 : 1)
+        .animation(.filteeDefault, value: configuration.isPressed)
         .animation(.filteeDefault, value: isSelected)
     }
 }
