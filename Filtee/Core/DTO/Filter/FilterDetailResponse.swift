@@ -22,6 +22,7 @@ struct FilterDetailResponse: ResponseData {
     let photoMetadata: PhotoMetadataResponse?
     let filterValues: FilterValuesResponse
     let isDownloaded: Bool
+    let price: Int
     
     enum CodingKeys: String, CodingKey {
         case filterId = "filter_id"
@@ -38,5 +39,6 @@ struct FilterDetailResponse: ResponseData {
         case photoMetadata
         case filterValues
         case isDownloaded = "is_downloaded"
+        case price
     }
 }

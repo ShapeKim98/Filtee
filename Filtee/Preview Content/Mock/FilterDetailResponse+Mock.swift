@@ -22,6 +22,7 @@ extension FilterDetailResponse {
         updatedAt: "9999-10-20T10:00:00.000Z",
         photoMetadata: .detailMock,
         filterValues: .detailMock,
-        isDownloaded: true
+        isDownloaded: true,
+        price: 100
     )
 }

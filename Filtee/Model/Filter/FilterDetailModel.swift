@@ -23,6 +23,7 @@ struct FilterDetailModel {
     let photoMetadata: PhotoMetadataModel?
     let filterValues: FilterValuesModel
     let isDownloaded: Bool
+    let price: Int
 }
 
 extension FilterDetailResponse {
@@ -35,8 +36,8 @@ extension FilterDetailResponse {
             category: self.category,
             title: self.title,
             description: self.description,
-            original: original,
-            filtered: filtered,
+            original: original?.imageURL,
+            filtered: filtered?.imageURL,
             creator: self.creator.toModel(),
             isLike: self.isLike,
             likeCount: self.likeCount,
@@ -45,7 +46,8 @@ extension FilterDetailResponse {
             updatedAt: self.updatedAt,
             photoMetadata: self.photoMetadata?.toModel(),
             filterValues: self.filterValues.toModel(),
-            isDownloaded: self.isDownloaded
+            isDownloaded: self.isDownloaded,
+            price: self.price
         )
     }
 }
