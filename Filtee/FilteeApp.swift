@@ -12,8 +12,6 @@ import KakaoSDKCommon
 import Nuke
 import NukeAlamofirePlugin
 
-
-
 @main
 struct FilteeApp: App {
     init() {
