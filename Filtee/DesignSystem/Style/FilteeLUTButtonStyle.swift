@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-private struct FilteeLUTButtonStyle: ButtonStyle {
+struct FilteeLUTButtonStyle: ButtonStyle {
     private let resource: ImageResource
     private let isSelected: Bool
     

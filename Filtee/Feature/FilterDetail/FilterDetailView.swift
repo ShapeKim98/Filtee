@@ -52,6 +52,10 @@ private extension FilterDetailView {
             price
             
             informationSection
+            
+            if let creator = filter?.creator {
+                FilteeProfile(profile: creator)
+            }
         }
     }
     
@@ -190,7 +194,7 @@ private extension FilterDetailView {
                 .foregroundStyle(.gray30)
         }
         .frame(width: 99, height: 56)
-        .background(.blackTurquoise)
+        .background(.deepTurquoise)
         .clipRectangle(8)
     }
     
@@ -198,21 +202,36 @@ private extension FilterDetailView {
         VStack(spacing: 20) {
             countSection
             
-            FilteeContentCell(
-                title: filter?.photoMetadata?.camera ?? "정보없음",
-                subtitle: "EXIF"
-            ) {
-                HStack(spacing: 16) {
-                    miniMap
-                    
-                    metadata
-                    
-                    Spacer()
-                }
-                .padding(8)
+            photoMetadata
+            
+            filterPresets
+            
+            let isDownloaded = filter?.isDownloaded ?? false
+            Button(isDownloaded ? "구매완료" : "결제하기") {
+                
             }
+            .buttonStyle(.filteeCTA)
+            .disabled(isDownloaded)
+            
+            divider
         }
         .padding(.horizontal, 20)
+    }
+    
+    var photoMetadata: some View {
+        FilteeContentCell(
+            title: filter?.photoMetadata?.camera ?? "정보없음",
+            subtitle: "EXIF"
+        ) {
+            HStack(spacing: 16) {
+                miniMap
+                
+                metadata
+                
+                Spacer()
+            }
+            .padding(8)
+        }
     }
     
     @ViewBuilder
@@ -263,6 +282,80 @@ private extension FilterDetailView {
         .font(.pretendard(.caption1(.semiBold)))
         .foregroundStyle(.gray75)
     }
+    
+    @ViewBuilder
+    var filterPresets: some View {
+        if let presets = filter?.filterValues {
+            FilteeContentCell(title: "Filter Presets", subtitle: "LUT") {
+                VStack(spacing: 4) {
+                    HStack {
+                        filterValue(.brightness, value: presets.brightness)
+                        
+                        filterValue(.exposure, value: presets.exposure)
+                        
+                        filterValue(.contrast, value: presets.contrast)
+                        
+                        filterValue(.saturation, value: presets.saturation)
+                        
+                        filterValue(.sharpness, value: presets.sharpness)
+                        
+                        filterValue(.blur, value: presets.blur)
+                    }
+                    
+                    HStack {
+                        filterValue(.vignette, value: presets.vignette)
+                        
+                        filterValue(.noise, value: presets.noiseReduction)
+                        
+                        filterValue(.highlights, value: presets.highlights)
+                        
+                        filterValue(.shadows, value: presets.shadows)
+                        
+                        filterValue(.temperature, value: presets.temperature)
+                        
+                        filterValue(.blackPoint, value: presets.blackPoint)
+                    }
+                }
+                .padding(20)
+                .if(!(filter?.isDownloaded ?? false)) { $0.overlay {
+                    ZStack {
+                        VisualEffect(style: .systemUltraThinMaterial)
+                        
+                        VStack(spacing: 12) {
+                            Image(.lock)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 32, height: 32)
+                            
+                            Text("결제가 필요한 유료 필터입니다")
+                                .font(.pretendard(.body1(.bold)))
+                            
+                        }
+                        .foregroundStyle(.gray45)
+                    }
+                }}
+            }
+        }
+    }
+    
+    func filterValue(
+        _ resource: ImageResource,
+        value: Double
+    ) -> some View {
+        VStack(spacing: 4) {
+            Image(resource)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 32, height: 32)
+                .foregroundStyle(.gray30)
+            
+            Text(String(format: "%.1f", value))
+                .font(.pretendard(.body1(.bold)))
+                .foregroundStyle(.gray75)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+    }
 }
 
 // MARK: - Functions
@@ -271,6 +364,8 @@ private extension FilterDetailView {
     func bodyTask() async {
         do {
             filter = try await filterClientFilterDetail(filterId)
+            filter?.creator.introduction = nil
+            filter?.creator.description = filter?.description
             async let originalImage = fetchImage(urlString: filter?.original)
             async let filteredImage = fetchImage(urlString: filter?.filtered)
             async let address = reverseGeocoder(

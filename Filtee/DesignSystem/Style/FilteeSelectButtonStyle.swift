@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-private struct FilteeSelectButtonStyle: ButtonStyle {
+struct FilteeSelectButtonStyle: ButtonStyle {
     private let isSelected: Bool
     
     init(isSelected: Bool) {

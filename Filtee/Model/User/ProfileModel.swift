@@ -12,8 +12,8 @@ struct ProfileModel: Identifiable {
     let email: String?
     let nick: String
     let name: String?
-    let introduction: String?
-    let description: String?
+    var introduction: String?
+    var description: String?
     let profileImage: String?
     let phoneNum: String?
     let hashTags: [String]
