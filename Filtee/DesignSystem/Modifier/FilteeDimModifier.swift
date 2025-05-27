@@ -17,7 +17,7 @@ private struct FilteeDimModifier: ViewModifier {
                         location: 0.00
                     ),
                     Gradient.Stop(
-                        color: Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.8),
+                        color: Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.9),
                         location: 1.00
                     ),
                 ],

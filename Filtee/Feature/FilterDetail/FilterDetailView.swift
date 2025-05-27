@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import Contacts
 
 import Nuke
 
@@ -17,13 +18,15 @@ struct FilterDetailView: View {
     @State
     private var filter: FilterDetailModel?
     @State
-    private var originalImage: Image?
+    private var originalImage: Image? = Image(.sampleOriginal)
     @State
     private var filteredImage: Image? = Image(.sampleFiltered)
     @State
     private var filterPivot: CGFloat = 0
     @State
     private var imageSectionHeight: CGFloat = 0
+    @State
+    private var photoAddress: String?
     
     private let filterId: String
     
@@ -57,7 +60,7 @@ private extension FilterDetailView {
             .resizable()
             .aspectRatio(contentMode: .fill)
             .frame(maxWidth: .infinity)
-            .overlay(.gray100.opacity(0.95))
+            .overlay(Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.9))
             .ignoresSafeArea()
     }
     
@@ -74,22 +77,22 @@ private extension FilterDetailView {
             let local = proxy.frame(in: .local)
             let width = local.width
             
-            //            if let originalImage, let filteredImage {
-            Image(.sampleOriginal)
-                .squareImage(width)
-            //                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 0, z: 1))
-                .frame(width: filterPivot, alignment: .leading)
-                .cornerRadius(radius: 24, corners: [.topLeft, .bottomLeft])
-                .clipped()
-                .offset(x: local.minX)
-            
-            Image(.sampleFiltered)
-                .squareImage(width)
-                .frame(width: width - filterPivot, alignment: .trailing)
-                .cornerRadius(radius: 24, corners: [.topRight, .bottomRight])
-                .clipped()
-                .offset(x: local.minX + filterPivot)
-            //            }
+            if let originalImage, let filteredImage {
+                originalImage
+                    .squareImage(width)
+//                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 0, z: 1))
+                    .frame(width: filterPivot, alignment: .leading)
+                    .cornerRadius(radius: 24, corners: [.topLeft, .bottomLeft])
+                    .clipped()
+                    .offset(x: local.minX)
+                
+                filteredImage
+                    .squareImage(width)
+                    .frame(width: width - filterPivot, alignment: .trailing)
+                    .cornerRadius(radius: 24, corners: [.topRight, .bottomRight])
+                    .clipped()
+                    .offset(x: local.minX + filterPivot)
+            }
             
             let sliderWidth: CGFloat = 48 * 2 + 8 + 24
             
@@ -253,6 +256,9 @@ private extension FilterDetailView {
             
             Text("\((pixelWidth * pixelHeight) / 1000 / 1000)MP • \(pixelWidth) × \(pixelHeight) • \(fileSize)MB")
             
+            if let photoAddress = photoAddress {
+                Text(photoAddress)
+            }
         }
         .font(.pretendard(.caption1(.semiBold)))
         .foregroundStyle(.gray75)
@@ -265,24 +271,45 @@ private extension FilterDetailView {
     func bodyTask() async {
         do {
             filter = try await filterClientFilterDetail(filterId)
-            guard
-                let original = filter?.original,
-                let filtered = filter?.filtered,
-                let originalURL = URL(string: original),
-                let filteredURL = URL(string: filtered)
-            else { return }
+            async let originalImage = fetchImage(urlString: filter?.original)
+            async let filteredImage = fetchImage(urlString: filter?.filtered)
+            async let address = reverseGeocoder(
+                latitude: filter?.photoMetadata?.latitude,
+                longitude: filter?.photoMetadata?.longitude
+            )
             
-//            async let originalUIImage = ImagePipeline.shared.imageTask(
-//                with: originalURL
-//            ).response.image
-//            async let filteredUIImage = ImagePipeline.shared.imageTask(
-//                with: filteredURL
-//            ).response.image
-//            
-//            originalImage = Image(uiImage: try await originalUIImage)
-//            filteredImage = Image(uiImage: try await filteredUIImage)
+            self.photoAddress = await address
+//            self.originalImage = try await originalImage
+//            self.filteredImage = try await filteredImage
         } catch {
             print(error)
+        }
+    }
+    
+    func fetchImage(urlString: String?) async throws -> Image? {
+        guard let urlString, let url = URL(string: urlString) else {
+            return nil
+        }
+        let image = try await ImagePipeline.shared.imageTask(with: url).response.image
+        return Image(uiImage: image)
+    }
+    
+    func reverseGeocoder(latitude: Double?, longitude: Double?) async -> String? {
+        do {
+            guard let latitude, let longitude else { return nil }
+            let location = CLLocation(
+                latitude: latitude,
+                longitude: longitude
+            )
+            let geocoder = CLGeocoder()
+            let placemarks = try await geocoder.reverseGeocodeLocation(location)
+            guard let address = placemarks.first?.postalAddress else {
+                return nil
+            }
+            return address.city + " " + address.street
+        } catch {
+            print(error)
+            return nil
         }
     }
     
