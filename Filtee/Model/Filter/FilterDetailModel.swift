@@ -16,8 +16,8 @@ struct FilterDetailModel {
     let filtered: String?
     var creator: ProfileModel
     var isLike: Bool
-    let likeCount: Int
-    let buyerCount: Int
+    var likeCount: Int
+    var buyerCount: Int
     let createdAt: String
     let updatedAt: String
     let photoMetadata: PhotoMetadataModel?

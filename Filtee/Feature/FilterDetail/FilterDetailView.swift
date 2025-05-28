@@ -221,6 +221,8 @@ private extension FilterDetailView {
             Text("\(count)")
                 .font(.pretendard(.title(.bold)))
                 .foregroundStyle(.gray30)
+                .contentTransition(.numericText())
+                .animation(.filteeDefault, value: count)
         }
         .frame(width: 99, height: 56)
         .background(.deepTurquoise)
@@ -460,7 +462,9 @@ private extension FilterDetailView {
         Task {
             guard let isLike = filter?.isLike else { return }
             do {
-                self.filter?.isLike = try await filterClientFilterLike(filterId, !isLike)
+                let response = try await filterClientFilterLike(filterId, !isLike)
+                self.filter?.isLike = response
+                self.filter?.likeCount += response ? 1 : -1
             } catch {
                 print(error)
             }
