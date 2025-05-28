@@ -23,9 +23,9 @@ struct FilterDetailView: View {
     @State
     private var filter: FilterDetailModel?
     @State
-    private var originalImage: Image? = Image(.sampleOriginal)
+    private var originalImage: Image?
     @State
-    private var filteredImage: Image? = Image(.sampleFiltered)
+    private var filteredImage: Image?
     @State
     private var filterPivot: CGFloat = 0
     @State
@@ -93,7 +93,7 @@ private extension FilterDetailView {
             .resizable()
             .aspectRatio(contentMode: .fill)
             .frame(maxWidth: .infinity)
-            .overlay(Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.9))
+            .overlay(Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.8))
             .ignoresSafeArea()
     }
     
@@ -113,7 +113,7 @@ private extension FilterDetailView {
             if let originalImage, let filteredImage {
                 originalImage
                     .squareImage(width)
-//                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 0, z: 1))
+                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 0, z: 1))
                     .frame(width: filterPivot, alignment: .leading)
                     .cornerRadius(radius: 24, corners: [.topLeft, .bottomLeft])
                     .clipped()
@@ -405,8 +405,8 @@ private extension FilterDetailView {
             )
             
             self.photoAddress = await address
-//            self.originalImage = try await originalImage
-//            self.filteredImage = try await filteredImage
+            self.originalImage = try await originalImage
+            self.filteredImage = try await filteredImage
         } catch {
             print(error)
         }
