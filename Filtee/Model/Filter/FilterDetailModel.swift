@@ -15,7 +15,7 @@ struct FilterDetailModel {
     let original: String?
     let filtered: String?
     var creator: ProfileModel
-    let isLike: Bool
+    var isLike: Bool
     let likeCount: Int
     let buyerCount: Int
     let createdAt: String

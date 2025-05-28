@@ -14,6 +14,8 @@ import Nuke
 struct FilterDetailView: View {
     @Environment(\.filterClient.filterDetail)
     private var filterClientFilterDetail
+    @Environment(\.filterClient.filterLike)
+    private var filterClientFilterLike
     
     @State
     private var filter: FilterDetailModel?
@@ -36,6 +38,11 @@ struct FilterDetailView: View {
     
     var body: some View {
         ScrollView(content: content)
+            .filteeNavigation(
+                title: filter?.title ?? "",
+                leadingItems: toolbarLeading,
+                trailingItems: toolbarTrailing
+            )
             .background {
                 scrollViewBackground
             }
@@ -45,6 +52,25 @@ struct FilterDetailView: View {
 
 // MARK: - Configure Views
 private extension FilterDetailView {
+    func toolbarLeading() -> some View {
+        Button(action: {}) {
+            Image(.chevron).resizable()
+        }
+        .buttonStyle(.filteeToolbar)
+    }
+    
+    @ViewBuilder
+    func toolbarTrailing() -> some View {
+        let isLike = filter?.isLike ?? false
+        let image: ImageResource = isLike ? .likeFill : .likeEmpty
+        
+        Button(action: likeButtonAction) {
+            Image(image).resizable()
+        }
+        .buttonStyle(.filteeToolbar)
+        .animation(.filteeDefault, value: isLike)
+    }
+    
     func content() -> some View {
         VStack(spacing: 28) {
             imageSection
@@ -287,7 +313,7 @@ private extension FilterDetailView {
     var filterPresets: some View {
         if let presets = filter?.filterValues {
             FilteeContentCell(title: "Filter Presets", subtitle: "LUT") {
-                VStack(spacing: 4) {
+                VStack(spacing: 16) {
                     HStack {
                         filterValue(.brightness, value: presets.brightness)
                         
@@ -425,6 +451,17 @@ private extension FilterDetailView {
         }
         
         imageSectionHeight = width + 12 + 24 + 20 + 1
+    }
+    
+    func likeButtonAction() {
+        Task {
+            guard let isLike = filter?.isLike else { return }
+            do {
+                self.filter?.isLike = try await filterClientFilterLike(filterId, !isLike)
+            } catch {
+                print(error)
+            }
+        }
     }
 }
 

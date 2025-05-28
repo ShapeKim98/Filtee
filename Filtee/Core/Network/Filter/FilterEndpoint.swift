@@ -13,6 +13,7 @@ enum FilterEndpoint: Endpoint {
     case hotTrend
     case todayFilter
     case filterDetail(id: String)
+    case filterLike(id: String, isLike: Bool)
     
     var path: String {
         switch self {
@@ -22,6 +23,8 @@ enum FilterEndpoint: Endpoint {
             return "/v1/filters/today-filter"
         case let .filterDetail(id):
             return "/v1/filters/\(id)"
+        case let .filterLike(id, _):
+            return "/v1/filters/\(id)/like"
         }
     }
     
@@ -31,6 +34,8 @@ enum FilterEndpoint: Endpoint {
              .todayFilter,
              .filterDetail:
             return .get
+        case .filterLike:
+            return .post
         }
     }
     
@@ -48,6 +53,8 @@ enum FilterEndpoint: Endpoint {
              .todayFilter,
              .filterDetail:
             return nil
+        case .filterLike:
+            return .json
         }
     }
     
@@ -57,6 +64,8 @@ enum FilterEndpoint: Endpoint {
              .todayFilter,
              .filterDetail:
             return nil
+        case let .filterLike(_, isLike):
+            return ["like_status": isLike]
         }
     }
 }

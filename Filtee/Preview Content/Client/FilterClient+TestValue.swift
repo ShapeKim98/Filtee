@@ -12,7 +12,8 @@ extension FilterClient {
         return FilterClient(
             hotTrend: { FilterResponse.hotTrendMock.map { $0.toModel() } },
             todayFilter: { TodayFilterResponse.mock.toModel() },
-            filterDetail: { _ in FilterDetailResponse.detailMock.toModel() }
+            filterDetail: { _ in FilterDetailResponse.detailMock.toModel() },
+            filterLike: { _, isLike in !isLike }
         )
     }()
 }
