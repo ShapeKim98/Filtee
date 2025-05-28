@@ -18,3 +18,8 @@ let imageSession = Session(
     ),
     eventMonitors: [NetworkLogger()]
 )
+
+let refreshSession = Session(
+    interceptor: Interceptor(adapters: [KeyAdapter(), TokenInterceptor()]),
+    eventMonitors: [NetworkLogger()]
+)
