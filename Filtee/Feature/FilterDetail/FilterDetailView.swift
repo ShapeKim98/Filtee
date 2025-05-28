@@ -12,6 +12,9 @@ import Contacts
 import Nuke
 
 struct FilterDetailView: View {
+    @Environment(\.mainNavigation)
+    private var navigation
+    
     @Environment(\.filterClient.filterDetail)
     private var filterClientFilterDetail
     @Environment(\.filterClient.filterLike)
@@ -53,7 +56,7 @@ struct FilterDetailView: View {
 // MARK: - Configure Views
 private extension FilterDetailView {
     func toolbarLeading() -> some View {
-        Button(action: {}) {
+        Button(action: backButtonAction) {
             Image(.chevron).resizable()
         }
         .buttonStyle(.filteeToolbar)
@@ -462,6 +465,10 @@ private extension FilterDetailView {
                 print(error)
             }
         }
+    }
+    
+    func backButtonAction() {
+        Task { await navigation.pop() }
     }
 }
 

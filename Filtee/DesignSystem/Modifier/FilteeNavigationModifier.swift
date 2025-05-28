@@ -46,7 +46,7 @@ private struct FilteeNavigationModifier<LeadingItems: View, TrailingItems: View>
             
             content
         }
-        .navigationBarBackButtonHidden()
+        .systemNavigationBarHidden()
     }
 }
 
