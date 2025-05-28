@@ -50,7 +50,7 @@ struct TokenInterceptor: RequestInterceptor {
             completion(.doNotRetryWithError(error))
             return
         }
-        guard response.statusCode == 401 else {
+        guard response.statusCode == 419 else {
             completion(.doNotRetryWithError(error))
             return
         }
