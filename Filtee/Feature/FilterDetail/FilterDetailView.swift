@@ -118,6 +118,7 @@ private extension FilterDetailView {
                     .cornerRadius(radius: 24, corners: [.topLeft, .bottomLeft])
                     .clipped()
                     .offset(x: local.minX)
+                    .filteeBlurReplace()
                 
                 filteredImage
                     .squareImage(width)
@@ -125,20 +126,24 @@ private extension FilterDetailView {
                     .cornerRadius(radius: 24, corners: [.topRight, .bottomRight])
                     .clipped()
                     .offset(x: local.minX + filterPivot)
+                    .filteeBlurReplace()
+                
+                let sliderWidth: CGFloat = 48 * 2 + 8 + 24
+                
+                filterSlider
+                    .offset(x: filterPivot - sliderWidth / 2, y: width + 12)
+                    .gesture(DragGesture().onChanged({ value in
+                        filterSliderDragGestureOnChanged(value, in: local)
+                    }))
+                    .onAppear { filterSliderOnAppear(width) }
+                    .filteeBlurReplace()
             }
-            
-            let sliderWidth: CGFloat = 48 * 2 + 8 + 24
-            
-            filterSlider
-                .offset(x: filterPivot - sliderWidth / 2, y: width + 12)
-                .gesture(DragGesture().onChanged({ value in
-                    filterSliderDragGestureOnChanged(value, in: local)
-                }))
-                .onAppear { filterSliderOnAppear(width) }
             
             divider
                 .offset(y: width + 12 + 24 + 20)
         }
+        .animation(.smooth, value: originalImage)
+        .animation(.smooth, value: filteredImage)
         .frame(height: imageSectionHeight)
         .padding(.horizontal, 20)
     }
@@ -275,8 +280,8 @@ private extension FilterDetailView {
             )
             let region = MKCoordinateRegion(
                 center: center,
-                latitudinalMeters: 76,
-                longitudinalMeters: 76
+                latitudinalMeters: 1000,
+                longitudinalMeters: 100
             )
             
             Group {
@@ -451,7 +456,7 @@ private extension FilterDetailView {
     }
     
     func filterSliderOnAppear(_ width: CGFloat) {
-        withAnimation(.spring) {
+        withAnimation(.smooth) {
             filterPivot = width / 2
         }
         

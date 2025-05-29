@@ -28,6 +28,8 @@ struct MainView: View {
     private var todayAuthor: TodayAuthorModel?
     @State
     private var scrollOffset: CGFloat = 0
+    @State
+    private var isLoading: Bool = true
     
     var body: some View {
         ScrollView(content: content)
@@ -211,7 +213,8 @@ private extension MainView {
             if let todayAuthor {
                 FilteeProfile(
                     profile: todayAuthor.author,
-                    filters: todayAuthor.filters
+                    filters: todayAuthor.filters,
+                    cellAction: profileCellAction
                 )
             }
         }
@@ -239,6 +242,8 @@ private extension MainView {
 private extension MainView {
     @Sendable
     func bodyTask() async {
+        guard isLoading else { return }
+        defer { isLoading = false }
         do {
             async let todayFilter = filterClientTodayFilter()
             async let hotTrends = filterClientHotTrend()
@@ -261,6 +266,12 @@ private extension MainView {
     func hotTrendButtonAction(id: String) {
         Task {
             await navigation.push(.detail(id: id))
+        }
+    }
+    
+    func profileCellAction(_ filter: FilterModel) {
+        Task {
+            await navigation.push(.detail(id: filter.id))
         }
     }
 }

@@ -21,7 +21,9 @@ struct FilteeTabView: View {
 //            }
 //        }
         
-        MainView()
+        MainNavigationView()
+        
+//        FilterDetailView(filterId: "68235153a9c731eadbeffdb0")
     }
 }
 
