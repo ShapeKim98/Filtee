@@ -12,13 +12,16 @@ import NukeUI
 struct FilteeProfile: View {
     private let profile: ProfileModel
     private let filters: [FilterModel]?
+    private let cellAction: ((FilterModel) -> Void)?
     
     init(
         profile: ProfileModel,
-        filters: [FilterModel]? = nil
+        filters: [FilterModel]? = nil,
+        cellAction: ((FilterModel) -> Void)? = nil
     ) {
         self.profile = profile
         self.filters = filters
+        self.cellAction = cellAction
     }
     
     var body: some View {
@@ -73,14 +76,17 @@ private extension FilteeProfile {
     var filterImagesSection: some View {
         if let filters {
             FilterList(filters: filters) { filter in
-                LazyImage(url: URL(string: filter.filtered ?? "")) { state in
-                    lazyImageTransform(state) { image in
-                        image.aspectRatio(contentMode: .fill)
+                Button(action: { cellAction?(filter) }) {
+                    LazyImage(url: URL(string: filter.filtered ?? "")) { state in
+                        lazyImageTransform(state) { image in
+                            image.aspectRatio(contentMode: .fill)
+                        }
                     }
+                    .frame(width: 120, height: 80)
+                    .clipRectangle(4)
+                    .clipped()
                 }
-                .frame(width: 120, height: 80)
-                .clipRectangle(4)
-                .clipped()
+                .disabled(cellAction == nil)
             }
             .frame(height: 80)
         }
