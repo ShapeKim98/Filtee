@@ -9,9 +9,7 @@ import Foundation
 
 import Alamofire
 
-struct TokenInterceptor: RequestInterceptor, NetworkClientConfigurable {
-    typealias E = AuthEndpoint
-    
+struct TokenInterceptor: RequestInterceptor {
     private let keychainManager = KeychainManager.shared
     
     nonisolated func adapt(
@@ -52,7 +50,7 @@ struct TokenInterceptor: RequestInterceptor, NetworkClientConfigurable {
             completion(.doNotRetryWithError(error))
             return
         }
-        guard response.statusCode == 401 else {
+        guard response.statusCode == 419 else {
             completion(.doNotRetryWithError(error))
             return
         }
@@ -64,7 +62,7 @@ struct TokenInterceptor: RequestInterceptor, NetworkClientConfigurable {
         
         Task {
             do {
-                guard let response: TokenResponse = try await Self.request(.refresh(refreshToken)) else {
+                guard let response: TokenResponse = try await self.request(.refresh(refreshToken)) else {
                     completion(.doNotRetryWithError(FilteeError.reissueFail))
                     return
                 }
@@ -80,6 +78,29 @@ struct TokenInterceptor: RequestInterceptor, NetworkClientConfigurable {
             } catch {
                 completion(.doNotRetryWithError(FilteeError.reissueFail))
             }
+        }
+    }
+    
+    func request<T: ResponseData>(_ endPoint: AuthEndpoint) async throws -> T {
+        let response = await refreshSession.request(endPoint)
+            .validate(statusCode: 200..<300)
+            .serializingDecodable(T.self, decoder: endPoint.decoder)
+            .response
+        
+        switch response.result {
+        case .success(let value):
+            return value
+        case .failure(let error):
+            if case let AFError.requestRetryFailed(
+                retryError: retryError,
+                originalError: _
+            ) = error {
+                throw retryError
+            }
+            guard let data = response.data else {
+                throw error
+            }
+            throw try endPoint.errorBody(data: data)
         }
     }
 }

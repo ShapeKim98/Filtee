@@ -10,6 +10,9 @@ import SwiftUI
 import NukeUI
 
 struct MainView: View {
+    @Environment(\.mainNavigation)
+    private var navigation
+    
     @Environment(\.userClient.todayAuthor)
     private var userClientTodayAuthor
     @Environment(\.filterClient.hotTrend)
@@ -25,6 +28,8 @@ struct MainView: View {
     private var todayAuthor: TodayAuthorModel?
     @State
     private var scrollOffset: CGFloat = 0
+    @State
+    private var isLoading: Bool = true
     
     var body: some View {
         ScrollView(content: content)
@@ -116,9 +121,7 @@ private extension MainView {
         HStack {
             Spacer()
             
-            Button {
-                
-            } label: {
+            Button(action: useButtonAction) {
                 Text("사용해보기")
                     .font(.pretendard(.caption1(.medium)))
                     .foregroundStyle(.secondary)
@@ -134,17 +137,25 @@ private extension MainView {
     func backgroundImage(url: String) -> some View {
         LazyImage(url: URL(string: url)) { state in
             lazyImageTransform(state) { image in
-                VStack(spacing: 0) {
+                GeometryReader { proxy in
+                    let global = proxy.frame(in: .global)
+                    let width = global.width
+                    let isMinus = scrollOffset < 0
+                    
+                    let topHeight = isMinus ? -scrollOffset + width : width
                     image.aspectRatio(contentMode: .fill)
                         .filteeDim()
+                        .frame(width: width, height: topHeight)
                     
+                    let bottomHeight = isMinus ? scrollOffset + width : width
                     image.aspectRatio(contentMode: .fill)
-                        .overlay(Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.8))
-                    
+                        .overlay(Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.9))
+                        .frame(width: width, height: bottomHeight)
+                        .offset(y: topHeight)
                 }
             }
         }
-        .ignoresSafeArea(edges: .top)
+        .ignoresSafeArea()
     }
     
     var hotTrendSection: some View {
@@ -152,7 +163,11 @@ private extension MainView {
             FilteeTitle("핫 트렌드")
             
             HotTrendList(filters: hotTrends) { filter in
-                hotTrendCell(filter)
+                Button {
+                    hotTrendButtonAction(id: filter.id)
+                } label: {
+                    hotTrendCell(filter)
+                }
             }
             .frame(height: 240)
         }
@@ -198,7 +213,8 @@ private extension MainView {
             if let todayAuthor {
                 FilteeProfile(
                     profile: todayAuthor.author,
-                    filters: todayAuthor.filters
+                    filters: todayAuthor.filters,
+                    cellAction: profileCellAction
                 )
             }
         }
@@ -226,6 +242,8 @@ private extension MainView {
 private extension MainView {
     @Sendable
     func bodyTask() async {
+        guard isLoading else { return }
+        defer { isLoading = false }
         do {
             async let todayFilter = filterClientTodayFilter()
             async let hotTrends = filterClientHotTrend()
@@ -235,6 +253,25 @@ private extension MainView {
             self.todayAuthor = try await todayAuthor
         } catch {
             print(error)
+        }
+    }
+    
+    func useButtonAction() {
+        Task {
+            guard let id = todayFilter?.id else { return }
+            await navigation.push(.detail(id: id))
+        }
+    }
+    
+    func hotTrendButtonAction(id: String) {
+        Task {
+            await navigation.push(.detail(id: id))
+        }
+    }
+    
+    func profileCellAction(_ filter: FilterModel) {
+        Task {
+            await navigation.push(.detail(id: filter.id))
         }
     }
 }

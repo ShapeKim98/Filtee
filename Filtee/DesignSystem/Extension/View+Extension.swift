@@ -88,4 +88,13 @@ extension View {
         }
         .animation(.smooth, value: state.isLoading)
     }
+    
+    @ViewBuilder
+    func systemNavigationBarHidden(_ hidden: Bool = true) -> some View {
+        if #available(iOS 18.0, *) {
+            self.toolbarVisibility(hidden ? .hidden : .visible, for: .navigationBar)
+        } else {
+            self.navigationBarBackButtonHidden()
+        }
+    }
 }

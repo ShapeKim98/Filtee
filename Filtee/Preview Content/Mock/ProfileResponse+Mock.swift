@@ -31,4 +31,16 @@ extension ProfileResponse {
         phoneNum: nil,
         hashTags: ["#맑음"]
     )
+    
+    static let detailMock = ProfileResponse(
+        userId: "6816ee1c6d1bff703149336f",
+        email: nil,
+        nick: "sesac",
+        name: "김새싹",
+        introduction: "프로필 소개입니다.",
+        description: nil,
+        profileImage: "/data/profiles/1712739634962.png",
+        phoneNum: nil,
+        hashTags: ["#맑음"]
+    )
 }

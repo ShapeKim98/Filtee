@@ -8,7 +8,7 @@
 import SwiftUI
 
 @MainActor
-private struct FilteeTextFieldStyle: @preconcurrency TextFieldStyle {
+struct FilteeTextFieldStyle: @preconcurrency TextFieldStyle {
     typealias Configuration = TextField<Self._Label>
     
     private let state: TextFieldState
