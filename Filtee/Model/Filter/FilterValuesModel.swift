@@ -8,21 +8,40 @@
 import Foundation
 
 struct FilterValuesModel {
-    let brightness: Double
-    let exposure: Double
-    let contrast: Double
-    let saturation: Double
-    let sharpness: Double
-    let blur: Double
-    let vignette: Double
-    let noiseReduction: Double
-    let highlights: Double
-    let shadows: Double
-    let temperature: Double
-    let blackPoint: Double
+    var brightness: Double = 0
+    var exposure: Double = 0
+    var contrast: Double = 0
+    var saturation: Double = 0
+    var sharpness: Double = 0
+    var blur: Double = 0
+    var vignette: Double = 0
+    var noiseReduction: Double = 0
+    var highlights: Double = 0
+    var shadows: Double = 0
+    var temperature: Double = 0
+    var blackPoint: Double = 0
 }
 
-extension FilterValuesResponse {
+extension FilterValuesModel {
+    func toData() -> FilterValuesDTO {
+        return FilterValuesDTO(
+            brightness: self.brightness,
+            exposure: self.exposure,
+            contrast: self.contrast,
+            saturation: self.saturation,
+            sharpness: self.sharpness,
+            blur: self.blur,
+            vignette: self.vignette,
+            noiseReduction: self.noiseReduction,
+            highlights: self.highlights,
+            shadows: self.shadows,
+            temperature: self.temperature,
+            blackPoint: self.blackPoint
+        )
+    }
+}
+
+extension FilterValuesDTO {
     func toModel() -> FilterValuesModel {
         return FilterValuesModel(
             brightness: self.brightness ?? 0,

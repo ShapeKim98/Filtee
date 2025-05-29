@@ -12,9 +12,9 @@ import Alamofire
 protocol NetworkClientConfigurable {
     associatedtype E: Endpoint
     
-    static func request<T: ResponseData>(_ endPoint: E) async throws -> T
+    static func request<T: ResponseDTO>(_ endPoint: E) async throws -> T
     static func request(_ endPoint: E) async throws
-    static func requestNonToken<T: ResponseData>(
+    static func requestNonToken<T: ResponseDTO>(
         _ endPoint: E,
         adaptable: Bool
     ) async throws -> T
@@ -25,7 +25,7 @@ protocol NetworkClientConfigurable {
 }
 
 extension NetworkClientConfigurable {
-    static func request<T: ResponseData>(_ endPoint: E) async throws -> T {
+    static func request<T: ResponseDTO>(_ endPoint: E) async throws -> T {
         let response = await filteeSession.request(
             endPoint,
             interceptor: Interceptor(
@@ -87,7 +87,7 @@ extension NetworkClientConfigurable {
         }
     }
     
-    static func requestNonToken<T: ResponseData>(
+    static func requestNonToken<T: ResponseDTO>(
         _ endPoint: E,
         adaptable: Bool = true
     ) async throws -> T {

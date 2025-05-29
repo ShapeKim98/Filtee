@@ -7,8 +7,8 @@
 
 import Foundation
 
-extension TodayFilterResponse {
-    static let mock = TodayFilterResponse(
+extension TodayFilterResponseDTO {
+    static let mock = TodayFilterResponseDTO(
         filterId: "670bcd66539a670e42b2a3d8",
         title: "청록 새록",
         introduction: "새싹을 담은 필터",

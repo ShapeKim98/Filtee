@@ -19,7 +19,7 @@ struct ProfileModel: Identifiable {
     let hashTags: [String]
 }
 
-extension ProfileResponse {
+extension UserInfoResponseDTO {
     func toModel() -> ProfileModel {
         return ProfileModel(
             id: self.userId,

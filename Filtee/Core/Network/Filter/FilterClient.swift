@@ -25,15 +25,15 @@ extension FilterClient: EnvironmentKey, NetworkClientConfigurable {
     static let defaultValue = {
         return FilterClient(
             hotTrend: {
-                let response: DataTo<[FilterResponse]> = try await request(.hotTrend)
+                let response: ListDTO<[FilterSummaryResponseDTO]> = try await request(.hotTrend)
                 return response.data.map { $0.toModel() }
             },
             todayFilter: {
-                let response: TodayFilterResponse = try await request(.todayFilter)
+                let response: TodayFilterResponseDTO = try await request(.todayFilter)
                 return response.toModel()
             },
             filterDetail: { id in
-                let response: FilterDetailResponse = try await request(.filterDetail(id: id))
+                let response: FilterResponseDTO = try await request(.filterDetail(id: id))
                 return response.toModel()
             },
             filterLike: { id, isLike in

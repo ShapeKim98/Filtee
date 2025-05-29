@@ -58,7 +58,7 @@ enum FilterEndpoint: Endpoint {
         }
     }
     
-    var parameters: (any RequestData)? {
+    var parameters: (any RequestDTO)? {
         switch self {
         case .hotTrend,
              .todayFilter,

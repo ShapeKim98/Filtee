@@ -7,6 +7,6 @@
 
 import Foundation
 
-struct DataTo<T: ResponseData>: ResponseData {
+struct ListDTO<T: ResponseDTO>: ResponseDTO {
     let data: T
 }

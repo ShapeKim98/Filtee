@@ -234,8 +234,8 @@ private extension FilteeProfile.FilterList {
 #if DEBUG
 #Preview {
     FilteeProfile(
-        profile: ProfileResponse.todayAuthorMock.toModel(),
-        filters: FilterResponse.hotTrendMock.map { $0.toModel() }
+        profile: UserInfoResponseDTO.todayAuthorMock.toModel(),
+        filters: FilterSummaryResponseDTO.hotTrendMock.map { $0.toModel() }
     )
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .filteeBackground()

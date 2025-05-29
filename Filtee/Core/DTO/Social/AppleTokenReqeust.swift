@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AppleTokenRequest: RequestData {
+struct AppleTokenRequest: RequestDTO {
     let clientId: String
     let clientSecret: String
     let code: String

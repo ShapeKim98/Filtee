@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct EmailLoginRequest: RequestData {
+struct EmailLoginRequest: RequestDTO {
     let email: String
     let password: String
     let deviceToken: String?

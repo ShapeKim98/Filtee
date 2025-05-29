@@ -16,7 +16,7 @@ struct TodayFilterModel: Identifiable {
     let filtered: String?
 }
 
-extension TodayFilterResponse {
+extension TodayFilterResponseDTO {
     func toModel() -> TodayFilterModel {
         let original = self.files.first
         let filtered = self.files.last

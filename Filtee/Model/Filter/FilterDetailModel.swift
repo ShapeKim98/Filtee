@@ -26,7 +26,7 @@ struct FilterDetailModel {
     let price: Int
 }
 
-extension FilterDetailResponse {
+extension FilterResponseDTO {
     func toModel() -> FilterDetailModel {
         let original = self.files.first
         let filtered = self.files.last

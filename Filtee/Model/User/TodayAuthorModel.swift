@@ -12,7 +12,7 @@ struct TodayAuthorModel {
     let filters: [FilterModel]
 }
 
-extension TodayAuthorResponse {
+extension TodayAuthorResponseDTO {
     func toModel() -> TodayAuthorModel {
         return TodayAuthorModel(
             author: self.author.toModel(),

@@ -23,7 +23,27 @@ struct PhotoMetadataModel {
     let longitude: Double?
 }
 
-extension PhotoMetadataResponse {
+extension PhotoMetadataModel {
+    func toData() -> PhotoMetadataDTO {
+        return PhotoMetadataDTO(
+            camera: self.camera,
+            lensInfo: self.lensInfo,
+            focalLength: self.focalLength,
+            aperture: self.aperture,
+            iso: self.iso,
+            shutterSpeed: self.shutterSpeed,
+            pixelHeight: self.pixelHeight,
+            pixelWidth: self.pixelWidth,
+            fileSize: self.fileSize,
+            format: self.format,
+            dateTimeOriginal: self.dateTimeOriginal,
+            latitude: self.latitude,
+            longitude: self.longitude
+        )
+    }
+}
+
+extension PhotoMetadataDTO {
     func toModel() -> PhotoMetadataModel {
         return PhotoMetadataModel(
             camera: self.camera,

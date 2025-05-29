@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TodayFilterResponse: ResponseData {
+struct TodayFilterResponseDTO: ResponseDTO {
     let filterId: String
     let title: String
     let introduction: String

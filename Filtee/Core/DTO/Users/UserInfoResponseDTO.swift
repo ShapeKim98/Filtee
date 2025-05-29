@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ProfileResponse: ResponseData {
+struct UserInfoResponseDTO: ResponseDTO {
     let userId: String
     let email: String?
     let nick: String

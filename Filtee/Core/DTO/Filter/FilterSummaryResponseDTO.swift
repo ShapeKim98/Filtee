@@ -7,13 +7,13 @@
 
 import Foundation
 
-struct FilterResponse: ResponseData {
+struct FilterSummaryResponseDTO: ResponseDTO {
     let filterId: String
     let category: String?
     let title: String
     let description: String
     let files: [String]
-    let creator: ProfileResponse
+    let creator: UserInfoResponseDTO
     let isLike: Bool
     let likeCount: Int
     let buyerCount: Int

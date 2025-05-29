@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct PhotoMetadataResponse: ResponseData {
+struct PhotoMetadataDTO: DTO {
     let camera: String?
     let lensInfo: String?
     let focalLength: Int?

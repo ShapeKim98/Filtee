@@ -30,7 +30,7 @@ struct FilterModel: Identifiable, Hashable {
     let filtered: String?
 }
 
-extension FilterResponse {
+extension FilterSummaryResponseDTO {
     func toModel() -> FilterModel {
         let original = self.files.first
         let filtered = self.files.last

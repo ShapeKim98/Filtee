@@ -7,20 +7,20 @@
 
 import Foundation
 
-struct FilterDetailResponse: ResponseData {
+struct FilterResponseDTO: ResponseDTO {
     let filterId: String
     let category: String?
     let title: String
     let description: String
     let files: [String]
-    let creator: ProfileResponse
+    let creator: UserInfoResponseDTO
     let isLike: Bool
     let likeCount: Int
     let buyerCount: Int
     let createdAt: String
     let updatedAt: String
-    let photoMetadata: PhotoMetadataResponse?
-    let filterValues: FilterValuesResponse
+    let photoMetadata: PhotoMetadataDTO?
+    let filterValues: FilterValuesDTO
     let isDownloaded: Bool
     let price: Int
     

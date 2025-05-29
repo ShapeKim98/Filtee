@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct FilterValuesResponse: ResponseData {
+struct FilterValuesDTO: DTO {
     let brightness: Double?
     let exposure: Double?
     let contrast: Double?

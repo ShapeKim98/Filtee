@@ -7,8 +7,8 @@
 
 import Foundation
 
-extension PhotoMetadataResponse {
-    static let detailMock = PhotoMetadataResponse(
+extension PhotoMetadataDTO {
+    static let detailMock = PhotoMetadataDTO(
         camera: "Apple iPhone 16 Pro",
         lensInfo: "와이드 카메라",
         focalLength: 50,

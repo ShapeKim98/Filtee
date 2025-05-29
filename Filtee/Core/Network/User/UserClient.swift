@@ -46,7 +46,7 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
             },
             emailLogin: { model in
                 let request = model.toData()
-                let response: LoginResponse = try await requestNonToken(.login(request))
+                let response: LoginDTO = try await requestNonToken(.login(request))
                 keychainManager.save(
                     response.accessToken,
                     key: .accessToken
@@ -58,7 +58,7 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
             },
             kakaoLogin: { model in
                 let request = model.toData()
-                let response: LoginResponse = try await requestNonToken(.kakoLogin(request))
+                let response: LoginDTO = try await requestNonToken(.kakoLogin(request))
                 keychainManager.save(
                     response.accessToken,
                     key: .accessToken
@@ -70,7 +70,7 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
             },
             appleLogin: { model in
                 let request = model.toData()
-                let response: LoginResponse = try await requestNonToken(.appleLogin(request))
+                let response: LoginDTO = try await requestNonToken(.appleLogin(request))
                 keychainManager.save(
                     response.accessToken,
                     key: .accessToken
@@ -88,7 +88,7 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
                 keychainManager.delete(.refreshToken)
             },
             todayAuthor: {
-                let response: TodayAuthorResponse = try await request(.todayAuthor)
+                let response: TodayAuthorResponseDTO = try await request(.todayAuthor)
                 return response.toModel()
             }
         )
