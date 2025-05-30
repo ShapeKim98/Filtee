@@ -6,10 +6,15 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct MakeView: View {
     @State
     private var filter = FilterMakeModel()
+    @State
+    private var pickerItem: PhotosPickerItem?
+    @State
+    private var selectedImage: Image?
     
     var body: some View {
         ScrollView(content: content)
@@ -19,6 +24,7 @@ struct MakeView: View {
                 trailingItems: trailingItems
             )
             .background(content: scrollViewBackground)
+            .onChange(of: pickerItem, perform: pickerItemOnChange)
     }
 }
 
@@ -106,8 +112,36 @@ private extension MakeView {
     }
     
     var photoSection: some View {
-        section("대표 사진 등록") {
-            Button(action: {}) {
+        VStack(spacing: 0) {
+            FilteeTitle("대표 사진 선택") {
+                if selectedImage != nil {
+                    Button("수정하기") {
+                        
+                    }
+                    .font(.pretendard(.body1(.medium)))
+                    .foregroundStyle(.gray75)
+                }
+            }
+            
+            photoPicker
+        }
+    }
+    
+    @ViewBuilder
+    var photoPicker: some View {
+        if let selectedImage {
+            PhotosPicker(selection: $pickerItem) {
+                selectedImage
+                    .resizable()
+            }
+            .aspectRatio(1, contentMode: .fill)
+            .frame(maxWidth: .infinity)
+            .clipRectangle(12)
+            .clipped()
+            .padding(.horizontal, 20)
+            .filteeBlurReplace()
+        } else {
+            PhotosPicker(selection: $pickerItem) {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(.blackTurquoise)
                     .overlay {
@@ -119,6 +153,23 @@ private extension MakeView {
                     .frame(height: 100)
             }
             .padding(.horizontal, 20)
+        }
+    }
+}
+
+// MARK: - Functions
+private extension MakeView {
+    func pickerItemOnChange(_ newValue: PhotosPickerItem?) {
+        guard let newValue else { return }
+        
+        Task {
+            guard
+                let data = try? await newValue.loadTransferable(type: Data.self),
+                let uiImage = UIImage(data: data)
+            else { return }
+            withAnimation(.spring) {
+                selectedImage = Image(uiImage: uiImage)
+            }
         }
     }
 }
