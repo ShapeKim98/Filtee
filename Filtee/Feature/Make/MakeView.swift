@@ -79,8 +79,20 @@ private extension MakeView {
         .buttonStyle(.filteeToolbar)
     }
     
+    func backgroundImage(_ image: Image) -> some View {
+        image
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(maxWidth: .infinity)
+            .overlay(Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.9))
+            .ignoresSafeArea()
+    }
+    
     func scrollViewBackground() -> some View {
         VisualEffect(style: .systemChromeMaterialDark)
+            .ifLet(selectedImage) { view, image in
+                view.background { backgroundImage(image) }
+            }
             .ignoresSafeArea()
     }
     
@@ -103,7 +115,13 @@ private extension MakeView {
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(categories, id: \.self) { category in
-                        FilteeTag(category.rawValue)
+                        let isSelectd = filter.category == category.rawValue
+                        Button(category.rawValue) {
+                            categoryButtonAction(category.rawValue)
+                        }
+                        .buttonStyle(.filteeSelected(isSelectd))
+                        .animation(.filteeDefault, value: isSelectd)
+                        .padding(.vertical, 1)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -167,10 +185,14 @@ private extension MakeView {
                 let data = try? await newValue.loadTransferable(type: Data.self),
                 let uiImage = UIImage(data: data)
             else { return }
-            withAnimation(.spring) {
+            withAnimation(.filteeSpring) {
                 selectedImage = Image(uiImage: uiImage)
             }
         }
+    }
+    
+    func categoryButtonAction(_ category: String) {
+        filter.category = category
     }
 }
 

@@ -8,7 +8,7 @@
 import Foundation
 
 struct FilterMakeModel {
-    var category: String = ""
+    var category: String?
     var title: String = ""
     var description: String = ""
     var original: String = ""
