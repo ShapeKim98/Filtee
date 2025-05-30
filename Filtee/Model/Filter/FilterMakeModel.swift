@@ -17,3 +17,13 @@ struct FilterMakeModel {
     var filterValues: FilterValuesModel = FilterValuesModel()
     var price: Int = 0
 }
+
+extension FilterMakeModel {
+    enum Category: String, CaseIterable {
+        case 푸드
+        case 인물
+        case 풍경
+        case 야경
+        case 별
+    }
+}
