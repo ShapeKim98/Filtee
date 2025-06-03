@@ -376,7 +376,7 @@ private extension FilterDetailView {
     
     func filterValue(
         _ resource: ImageResource,
-        value: Double
+        value: Float
     ) -> some View {
         VStack(spacing: 4) {
             Image(resource)
