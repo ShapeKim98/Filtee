@@ -11,7 +11,7 @@
 actor ImageFilterProcessor: NSObject {
     private let device: MTLDevice
     private let textureLoader: MTKTextureLoader
-    private var inputTexture: MTLTexture?
+    var inputTexture: MTLTexture?
     private var filterParams: FilterValuesModel
     
     let vertexBuffer: MTLBuffer
@@ -22,7 +22,7 @@ actor ImageFilterProcessor: NSObject {
     var filteredTextureStack: [MTLTexture] = []
     var nextTextureStack: [MTLTexture] = []
     
-    init(device: MTLDevice?, image: UIImage) throws {
+    init(device: MTLDevice?, image: CGImage) throws {
         guard let device,
               let commandQueue = device.makeCommandQueue(),
               let library = device.makeDefaultLibrary()
@@ -39,11 +39,8 @@ actor ImageFilterProcessor: NSObject {
         
         self.textureLoader = MTKTextureLoader(device: device)
         
-        guard let cgImage = image.cgImage else {
-            throw NSError(domain: "ImageProcessing", code: -1, userInfo: nil)
-        }
         let texture = try textureLoader.newTexture(
-            cgImage: cgImage,
+            cgImage: image,
             options: nil
         )
         self.inputTexture = texture
@@ -66,54 +63,22 @@ actor ImageFilterProcessor: NSObject {
         super.init()
     }
     
-    @Sendable
-    func updateImage(filterValues: FilterValuesModel) async throws {
-        guard let inputTexture = inputTexture else {
-            throw NSError(domain: "NoInputTexture", code: -1, userInfo: nil)
-        }
-        
-        let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat: .bgra8Unorm,
-            width: inputTexture.width,
-            height: inputTexture.height,
-            mipmapped: false
-        )
-        textureDescriptor.usage = [.renderTarget, .shaderRead, .shaderWrite]
-        guard let newOutputTexture = device.makeTexture(
-            descriptor: textureDescriptor
-        ) else { throw NSError(domain: "TextureCreation", code: -1, userInfo: nil) }
-        
-        // 필터 적용
-        try await applyFilters(
-            inputTexture: inputTexture,
-            outputTexture: newOutputTexture,
-            filterValues: filterValues
-        )
-        
-        self.outputTexture = newOutputTexture
-        self.filterParams = filterValues
-    }
-    
-    private func applyFilters(
-        inputTexture: MTLTexture,
-        outputTexture: MTLTexture,
-        filterValues: FilterValuesModel
+    func renderToView(
+            drawableSize: CGSize,
+            renderPassDescriptor: MTLRenderPassDescriptor,
+            commandBuffer: MTLCommandBuffer,
+            filterValues: FilterValuesModel
     ) async throws {
-        let renderPassDescriptor = MTLRenderPassDescriptor()
-        guard let commandBuffer = commandQueue.makeCommandBuffer() else {
-            throw NSError(domain: "CommandBuffer", code: -1, userInfo: nil)
-        }
+        guard let inputTexture,
+              let renderEncoder = commandBuffer.makeRenderCommandEncoder(
+                descriptor: renderPassDescriptor
+              )
+        else { throw NSError(domain: "RenderSetup", code: -1, userInfo: nil) }
         
-        renderPassDescriptor.colorAttachments[0].texture = outputTexture
-        renderPassDescriptor.colorAttachments[0].loadAction = .clear
-        renderPassDescriptor.colorAttachments[0].storeAction = .store
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1)
-        
-        guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(
-            descriptor: renderPassDescriptor
-        ) else { throw NSError(domain: "RenderEncoder", code: -1, userInfo: nil) }
-        
+        // 렌더 파이프라인 상태 설정
         renderEncoder.setRenderPipelineState(pipelineState)
+        
+        // 원본 텍스처 설정 (프래그먼트 셰이더에 전달)
         renderEncoder.setFragmentTexture(inputTexture, index: 0)
         
         // 샘플러 설정
@@ -122,46 +87,41 @@ actor ImageFilterProcessor: NSObject {
         samplerDescriptor.magFilter = .linear
         guard let samplerState = device.makeSamplerState(
             descriptor: samplerDescriptor
-        ) else { throw NSError(domain: "SamplerCreation", code: -1, userInfo: nil) }
+        ) else {
+            renderEncoder.endEncoding()
+            throw NSError(domain: "SamplerCreation", code: -1, userInfo: nil)
+        }
         renderEncoder.setFragmentSamplerState(samplerState, index: 0)
         
-        // 필터 값 버퍼
-        var params = filterValues
+        // 필터 값 버퍼 설정 (인덱스 1)
+        var filterValues = filterValues
         renderEncoder.setFragmentBuffer(
-            device.makeBuffer(
-                bytes: &params,
-                length: MemoryLayout<FilterValuesModel>.size,
-                options: []
-            ),
+            device.makeBuffer(bytes: &filterValues, length: MemoryLayout<FilterValuesModel>.size, options: []),
             offset: 0,
             index: 1
         )
         
-        // 해상도 버퍼
-        var resolution = SIMD2<Float>(
-            Float(inputTexture.width),
-            Float(inputTexture.height)
-        )
-        renderEncoder.setFragmentBytes(
-            &resolution,
-            length: MemoryLayout<SIMD2<Float>>.size,
-            index: 2
-        )
+        // 해상도 버퍼 설정 (인덱스 2)
+        var resolution = SIMD2<Float>(Float(inputTexture.width), Float(inputTexture.height))
+        renderEncoder.setFragmentBytes(&resolution, length: MemoryLayout<SIMD2<Float>>.size, index: 2)
         
+        // 뷰 크기 버퍼 설정 (인덱스 3)
+        var drawableSize = SIMD2<Float>(
+            Float(drawableSize.width),
+            Float(drawableSize.height)
+        )
+        renderEncoder.setFragmentBytes(&drawableSize, length: MemoryLayout<SIMD2<Float>>.size, index: 3)
+        
+        // 버텍스 버퍼 설정
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-        renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
-        renderEncoder.endEncoding()
         
-        return try await withCheckedThrowingContinuation { continuation in
-            commandBuffer.addCompletedHandler { buffer in
-                if let error = buffer.error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume()
-                }
-            }
-            commandBuffer.commit()
-        }
+        // 렌더링 명령
+        renderEncoder.drawPrimitives(
+            type: .triangleStrip,
+            vertexStart: 0,
+            vertexCount: 4
+        )
+        renderEncoder.endEncoding()
     }
     
     func pushFilteredTexture() {

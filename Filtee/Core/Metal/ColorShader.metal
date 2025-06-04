@@ -5,13 +5,6 @@
 //  Created by 김도형 on 5/30/25.
 //
 
-//
-//  ColorShader.metal
-//  Filtee
-//
-//  Created by 김도형 on 5/30/25.
-//
-
 #include <metal_stdlib>
 using namespace metal;
 
@@ -47,8 +40,37 @@ fragment float4 filterFragment(VertexOut in [[stage_in]],
                                texture2d<float> inputTexture [[texture(0)]],
                                sampler textureSampler [[sampler(0)]],
                                constant FilterValues& filterValues [[buffer(1)]],
-                               constant float2& resolution [[buffer(2)]]) {
+                               constant float2& resolution [[buffer(2)]],
+                               constant float2& drawableSize [[buffer(3)]]) {
     float2 texCoord = in.texCoord;
+        
+        // 텍스처 크기와 뷰 크기를 포인트 단위로 조정
+    float renderWidth = drawableSize.x; // 뷰 가로 (402.0 포인트)
+    float textureAspect = resolution.x / resolution.y; // 463 / 694 ≈ 0.667
+    float renderHeight = renderWidth / textureAspect; // 402.0 / 0.667 ≈ 602.4 포인트
+    
+    float offsetX = 0.0;
+    float offsetY;
+    
+    if (renderHeight > drawableSize.y) {
+        // 텍스처가 뷰보다 높을 경우: 세로 기준 조정
+        renderHeight = drawableSize.y; // 뷰 세로 (770.0 포인트)
+        renderWidth = renderHeight * textureAspect; // 770.0 * 0.667 ≈ 513.9 포인트
+        offsetX = (drawableSize.x - renderWidth) / drawableSize.x / 2.0; // (402.0 - 513.9) / 402.0 / 2
+        offsetY = 0.0;
+    } else {
+        // 가로 기준 조정: 세로 중앙 배치
+        offsetY = (drawableSize.y - renderHeight) / drawableSize.y / 2.0; // (770.0 - 602.4) / 770.0 / 2 ≈ 0.1085
+    }
+    
+    // 텍스처 좌표 정규화
+    float2 renderSize = float2(renderWidth / drawableSize.x, renderHeight / drawableSize.y);
+    float2 adjustedTexCoord = (texCoord - float2(offsetX, offsetY)) / renderSize;
+    
+    if (adjustedTexCoord.x < 0.0 || adjustedTexCoord.x > 1.0 ||
+        adjustedTexCoord.y < 0.0 || adjustedTexCoord.y > 1.0) {
+        return float4(0.0, 0.0, 0.0, 0.0);
+    }
     
     // 3x3 커널 샘플링
     float2 offsets[9] = {
@@ -65,7 +87,12 @@ fragment float4 filterFragment(VertexOut in [[stage_in]],
     
     float4 samples[9];
     for (int i = 0; i < 9; i++) {
-        samples[i] = inputTexture.sample(textureSampler, texCoord + offsets[i]);
+        float2 sampleCoord = adjustedTexCoord + offsets[i];
+        if (sampleCoord.x >= 0.0 && sampleCoord.x <= 1.0 && sampleCoord.y >= 0.0 && sampleCoord.y <= 1.0) {
+            samples[i] = inputTexture.sample(textureSampler, sampleCoord);
+        } else {
+            samples[i] = float4(0.0);
+        }
     }
     
     // 블러 색상 계산
@@ -121,7 +148,7 @@ fragment float4 filterFragment(VertexOut in [[stage_in]],
     
     // 비네트
     float2 center = float2(0.5);
-    float distance = length(texCoord - center);
+    float distance = length(texCoord - center); // 비네트는 원본 좌표 사용
     float vignetteAmount = filterValues.vignette * 2.0;
     float vignetteFactor = 1.0 - smoothstep(0.2, 0.8, distance * vignetteAmount);
     color.rgb *= clamp(vignetteFactor, 0.0, 1.0);
