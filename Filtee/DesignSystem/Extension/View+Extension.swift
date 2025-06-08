@@ -107,4 +107,15 @@ extension View {
             }
         }
     }
+    
+    @ViewBuilder
+    func valueFeedback<T: Equatable>(trigger: T) -> some View {
+        if #available(iOS 17.0, *) {
+            self.sensoryFeedback(.levelChange, trigger: trigger)
+        } else {
+            self.onChange(of: trigger) { _ in
+                UISelectionFeedbackGenerator().selectionChanged()
+            }
+        }
+    }
 }

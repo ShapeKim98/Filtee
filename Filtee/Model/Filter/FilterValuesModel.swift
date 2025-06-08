@@ -127,6 +127,20 @@ extension FilterValuesModel {
             default: return 0.01
             }
         }
+        
+        var decimalUnit: CGFloat {
+            switch self {
+            case .temperature: return -2
+            default: return 2
+            }
+        }
+        
+        var format: String {
+            switch self {
+            case .temperature: return "%.0f"
+            default: return "%.2f"
+            }
+        }
     }
 }
 

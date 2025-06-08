@@ -21,9 +21,11 @@ struct FilteeTabView: View {
 //            }
 //        }
         
-        MainNavigationView()
+//        MainNavigationView()
         
 //        FilterDetailView(filterId: "68235153a9c731eadbeffdb0")
+        
+        EditView(image: UIImage(resource: .sampleFiltered).cgImage!)
     }
 }
 

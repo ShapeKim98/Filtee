@@ -19,7 +19,7 @@ struct EditView: View {
     @State
     private var valueSliderFrame: CGRect = .zero
     @State
-    private var valueIndicatorSize: CGSize = .zero
+    private var dragGestureTask: Task<Void, Never>?
     
     init(image: CGImage) {
         self.image = image
@@ -89,25 +89,34 @@ private extension EditView {
             }
             .offset(x: valueOffsetX - 12, y: frame.maxY - 12)
             
-            Text(String(format: "%.1f", filterValues.currentValue))
-                .contentTransition(.numericText())
-                .animation(.filteeDefault, value: filterValues.currentValue)
-                .font(.pretendard(.body2(.bold)))
-                .foregroundStyle(.gray75)
-                .frame(width: 56, height: 22)
-                .padding(.horizontal, 11)
-                .background(.blackTurquoise)
-                .clipRectangle(8)
-                .frame(height: 40, alignment: .top)
-                .background(.black.opacity(0.01))
-                .offset(x: valueOffsetX - (88 / 2))
-                .gesture(DragGesture().onChanged({ value in
-                    valueIndicatorDragGestureOnChanged(value, frame: frame)
-                }))
+            Text(String(
+                format: filterValues.currentFilterValue.format,
+                filterValues.currentValue
+            ))
+            .contentTransition(.numericText())
+            .animation(.easeInOut, value: valueOffsetX)
+            .font(.pretendard(.body2(.bold)))
+            .foregroundStyle(.gray75)
+            .frame(width: 64, height: 22)
+            .background(.blackTurquoise)
+            .clipRectangle(8)
+            .frame(height: 40, alignment: .top)
+            .background(.black.opacity(0.01))
+            .offset(x: valueOffsetX - (64 / 2 + 6))
+            .gesture(
+                DragGesture()
+                    .onChanged({ value in
+                        valueIndicatorDragGestureOnChanged(value, frame: frame)
+                    })
+                    .onEnded({ value in
+//                        valueIndicatorDragGestureOnEnded(value)
+                    })
+            )
         }
         .frame(height: 40)
         .padding(.top, 16)
         .padding(.horizontal, 20)
+        .valueFeedback(trigger: filterValues.currentValue)
     }
     
     var valueButtonList: some View {
@@ -160,8 +169,16 @@ private extension EditView {
         guard value.location.x > valueSliderFrame.minX,
               value.location.x < valueSliderFrame.maxX
         else { return }
-        valueOffsetX = value.location.x
-        normalizationOffset()
+        dragGestureTask?.cancel()
+        
+        dragGestureTask = Task {
+            try? await Task.sleep(for: .milliseconds(2))
+            normalizationOffset(value)
+        }
+    }
+    
+    func valueIndicatorDragGestureOnEnded(_ value: DragGesture.Value) {
+        
     }
     
     func valueSliderOnAppear(frame: CGRect) {
@@ -182,7 +199,7 @@ private extension EditView {
         valueOffsetX = newOffsetX
     }
     
-    func normalizationOffset() {
+    func normalizationOffset(_ value: DragGesture.Value) {
         let currentFilterValue = filterValues.currentFilterValue
         let minimum = currentFilterValue.minimum - currentFilterValue.median
         let maximum = currentFilterValue.maximum - currentFilterValue.median
@@ -191,8 +208,15 @@ private extension EditView {
         let maxOffsetX = valueSliderFrame.maxX - valueSliderFrame.midX
         
         let normalizeValue = (maximum - minimum) / (maxOffsetX - minOffsetX)
-        let newValue = (valueOffsetX - valueSliderFrame.midX) * normalizeValue + currentFilterValue.median
+        var newValue = (value.location.x - valueSliderFrame.midX) * normalizeValue + currentFilterValue.median
+        let unit = pow(10, currentFilterValue.decimalUnit)
+        newValue = round(newValue * unit) / unit
         
+        valueOffsetX = value.location.x
+        
+        var remainder = newValue.truncatingRemainder(dividingBy: currentFilterValue.unit)
+        remainder = remainder < 0 ? ceil(remainder) : floor(remainder)
+        guard remainder == 0 else { return }
         updateValue(newValue)
     }
     
@@ -241,11 +265,9 @@ private extension EditView {
         type: FilterValuesModel.FilterValue,
         proxy: ScrollViewProxy
     ) {
-        withAnimation(.filteeSpring) {
-            filterValues.currentFilterValue = type
-            normalizationValue()
-            proxy.scrollTo(type.rawValue, anchor: .center)
-        }
+        filterValues.currentFilterValue = type
+        normalizationValue()
+        proxy.scrollTo(type.rawValue, anchor: .center)
     }
 }
 
