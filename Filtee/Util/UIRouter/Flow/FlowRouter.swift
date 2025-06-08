@@ -19,9 +19,7 @@ final class FlowRouter<T: Sendable>: Sendable {
     @MainActor
     var stream: AsyncStream<T> {
         return AsyncStream { [weak self] continuation in
-            Task { @Sendable in
-                self?.continuation = continuation
-            }
+            self?.continuation = continuation
         }
     }
 }

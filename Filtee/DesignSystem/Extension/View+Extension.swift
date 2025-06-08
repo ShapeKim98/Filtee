@@ -97,4 +97,14 @@ extension View {
             self.navigationBarBackButtonHidden()
         }
     }
+    
+    func size(completion: @escaping (CGSize) -> Void) -> some View {
+        self.background {
+            GeometryReader { proxy in
+                Color.clear.onAppear {
+                    completion(proxy.size)
+                }
+            }
+        }
+    }
 }

@@ -28,8 +28,8 @@ struct FilterDetailModel {
 
 extension FilterResponseDTO {
     func toModel() -> FilterDetailModel {
-        let original = self.files.first
-        let filtered = self.files.last
+        let filtered = self.files.first
+        let original = self.files.last
         
         return FilterDetailModel(
             id: self.filterId,

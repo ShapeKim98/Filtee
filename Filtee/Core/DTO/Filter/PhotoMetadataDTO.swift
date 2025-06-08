@@ -10,7 +10,7 @@ import Foundation
 struct PhotoMetadataDTO: DTO {
     let camera: String?
     let lensInfo: String?
-    let focalLength: Int?
+    let focalLength: Double?
     let aperture: Double?
     let iso: Int?
     let shutterSpeed: String?

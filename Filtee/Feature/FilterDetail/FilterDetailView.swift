@@ -111,16 +111,15 @@ private extension FilterDetailView {
             let width = local.width
             
             if let originalImage, let filteredImage {
-                originalImage
+                filteredImage
                     .squareImage(width)
-                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 0, z: 1))
                     .frame(width: filterPivot, alignment: .leading)
                     .cornerRadius(radius: 24, corners: [.topLeft, .bottomLeft])
                     .clipped()
                     .offset(x: local.minX)
                     .filteeBlurReplace()
                 
-                filteredImage
+                originalImage
                     .squareImage(width)
                     .frame(width: width - filterPivot, alignment: .trailing)
                     .cornerRadius(radius: 24, corners: [.topRight, .bottomRight])
@@ -299,7 +298,10 @@ private extension FilterDetailView {
     @ViewBuilder
     var metadata: some View {
         let lensInfo = filter?.photoMetadata?.lensInfo ?? ""
-        let focalLength = filter?.photoMetadata?.focalLength?.description ?? ""
+        let focalLength = String(
+            format: "%.2f",
+            filter?.photoMetadata?.focalLength ?? 0
+        )
         let aperture = filter?.photoMetadata?.aperture?.description ?? ""
         let iso = filter?.photoMetadata?.iso?.description ?? ""
         let fileSize = ((filter?.photoMetadata?.fileSize ?? 0) / (1024 * 1024))
@@ -422,7 +424,11 @@ private extension FilterDetailView {
             return nil
         }
         let image = try await ImagePipeline.shared.imageTask(with: url).response.image
-        return Image(uiImage: image)
+        guard image.imageOrientation == .up,
+              let cgImage = image.cgImage
+        else { return Image(uiImage: image) }
+        let upImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+        return Image(uiImage: upImage)
     }
     
     func reverseGeocoder(latitude: Double?, longitude: Double?) async -> String? {
