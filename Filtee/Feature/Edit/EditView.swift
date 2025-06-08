@@ -15,43 +15,11 @@ struct EditView: View {
     @State
     private var imageHeight: CGFloat = .zero
     @State
-    private var currentValue: FilterValue = .brightness
-    @State
     private var valueOffsetX: CGFloat = 0
     @State
     private var valueSliderFrame: CGRect = .zero
     @State
     private var valueIndicatorSize: CGSize = .zero
-    
-    
-    private var value: Float {
-        switch currentValue {
-        case .brightness:
-            return filterValues.brightness
-        case .exposure:
-            return filterValues.exposure
-        case .contrast:
-            return filterValues.contrast
-        case .saturation:
-            return filterValues.saturation
-        case .sharpness:
-            return filterValues.sharpness
-        case .blur:
-            return filterValues.blur
-        case .vignette:
-            return filterValues.vignette
-        case .noise:
-            return filterValues.noiseReduction
-        case .highlights:
-            return filterValues.highlights
-        case .shadows:
-            return filterValues.shadows
-        case .temperature:
-            return filterValues.temperature
-        case .blackPoint:
-            return filterValues.blackPoint
-        }
-    }
     
     init(image: CGImage) {
         self.image = image
@@ -121,9 +89,9 @@ private extension EditView {
             }
             .offset(x: valueOffsetX - 12, y: frame.maxY - 12)
             
-            Text(String(format: "%.1f", value))
+            Text(String(format: "%.1f", filterValues.currentValue))
                 .contentTransition(.numericText())
-                .animation(.filteeDefault, value: value)
+                .animation(.filteeDefault, value: filterValues.currentValue)
                 .font(.pretendard(.body2(.bold)))
                 .foregroundStyle(.gray75)
                 .frame(width: 56, height: 22)
@@ -146,7 +114,10 @@ private extension EditView {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(FilterValue.allCases, id: \.self) { type in
+                    ForEach(
+                        FilterValuesModel.FilterValue.allCases,
+                        id: \.self
+                    ) { type in
                         valueButton(type, proxy: proxy)
                             .id(type.rawValue)
                     }
@@ -159,8 +130,11 @@ private extension EditView {
     }
     
     @ViewBuilder
-    func valueButton(_ type: FilterValue, proxy: ScrollViewProxy) -> some View {
-        let isSelected = type == currentValue
+    func valueButton(
+        _ type: FilterValuesModel.FilterValue,
+        proxy: ScrollViewProxy
+    ) -> some View {
+        let isSelected = type == filterValues.currentFilterValue
         
         Button(action: { valueButtonAction(type: type, proxy: proxy) }) {
             VStack(spacing: 8) {
@@ -196,32 +170,34 @@ private extension EditView {
     }
     
     func normalizationValue() {
-        let minimum = currentValue.minimum - currentValue.median
-        let maximum = currentValue.maximum - currentValue.median
+        let currentFilterValue = filterValues.currentFilterValue
+        let minimum = currentFilterValue.minimum - currentFilterValue.median
+        let maximum = currentFilterValue.maximum - currentFilterValue.median
         
         let minOffsetX = valueSliderFrame.minX - valueSliderFrame.midX
         let maxOffsetX = valueSliderFrame.maxX - valueSliderFrame.midX
         
         let normalizeValue = (maxOffsetX - minOffsetX) / (maximum - minimum)
-        let newOffsetX = (CGFloat(value) - currentValue.median) * normalizeValue + valueSliderFrame.midX
+        let newOffsetX = (CGFloat(filterValues.currentValue) - currentFilterValue.median) * normalizeValue + valueSliderFrame.midX
         valueOffsetX = newOffsetX
     }
     
     func normalizationOffset() {
-        let minimum = currentValue.minimum - currentValue.median
-        let maximum = currentValue.maximum - currentValue.median
+        let currentFilterValue = filterValues.currentFilterValue
+        let minimum = currentFilterValue.minimum - currentFilterValue.median
+        let maximum = currentFilterValue.maximum - currentFilterValue.median
         
         let minOffsetX = valueSliderFrame.minX - valueSliderFrame.midX
         let maxOffsetX = valueSliderFrame.maxX - valueSliderFrame.midX
         
         let normalizeValue = (maximum - minimum) / (maxOffsetX - minOffsetX)
-        let newValue = (valueOffsetX - valueSliderFrame.midX) * normalizeValue + currentValue.median
+        let newValue = (valueOffsetX - valueSliderFrame.midX) * normalizeValue + currentFilterValue.median
         
         updateValue(newValue)
     }
     
     func updateValue(_ newValue: CGFloat) {
-        switch currentValue {
+        switch filterValues.currentFilterValue {
         case .brightness:
             filterValues.brightness = Float(newValue)
             return
@@ -261,101 +237,14 @@ private extension EditView {
         }
     }
     
-    func valueButtonAction(type: FilterValue, proxy: ScrollViewProxy) {
+    func valueButtonAction(
+        type: FilterValuesModel.FilterValue,
+        proxy: ScrollViewProxy
+    ) {
         withAnimation(.filteeSpring) {
-            currentValue = type
+            filterValues.currentFilterValue = type
             normalizationValue()
             proxy.scrollTo(type.rawValue, anchor: .center)
-        }
-    }
-}
-
-private extension EditView {
-    enum FilterValue: String, CaseIterable {
-        case brightness
-        case exposure
-        case contrast
-        case saturation
-        case sharpness
-        case blur
-        case vignette
-        case noise
-        case highlights
-        case shadows
-        case temperature
-        case blackPoint
-        
-        var image: ImageResource {
-            switch self {
-            case .brightness:
-                return .brightness
-            case .exposure:
-                return .exposure
-            case .contrast:
-                return .contrast
-            case .saturation:
-                return .saturation
-            case .sharpness:
-                return .sharpness
-            case .blur:
-                return .blur
-            case .vignette:
-                return .vignette
-            case .noise:
-                return .noise
-            case .highlights:
-                return .highlights
-            case .shadows:
-                return .shadows
-            case .temperature:
-                return .temperature
-            case .blackPoint:
-                return .blackPoint
-            }
-        }
-        
-        var title: String {
-            self.rawValue.uppercased()
-        }
-        
-        var minimum: CGFloat {
-            switch self {
-            case .contrast,
-                 .saturation:
-                return 0
-            case .temperature:
-                return 2000
-            default: return -1
-            }
-        }
-        
-        var median: CGFloat {
-            switch self {
-            case .contrast,
-                 .saturation:
-                return 1
-            case .temperature:
-                return 6500
-            default: return 0
-            }
-        }
-        
-        var maximum: CGFloat {
-            switch self {
-            case .contrast,
-                 .saturation:
-                return 2
-            case .temperature:
-                return 11000
-            default: return 1
-            }
-        }
-        
-        var unit: CGFloat {
-            switch self {
-            case .temperature: return 100
-            default: return 0.01
-            }
         }
     }
 }

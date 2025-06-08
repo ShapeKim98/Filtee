@@ -20,6 +20,114 @@ struct FilterValuesModel: Sendable {
     var shadows: Float = 0
     var temperature: Float = 6500
     var blackPoint: Float = 0
+    var currentFilterValue: FilterValue = .brightness
+    
+    var currentValue: Float {
+        switch currentFilterValue {
+        case .brightness: return brightness
+        case .exposure: return exposure
+        case .contrast: return contrast
+        case .saturation: return saturation
+        case .sharpness: return sharpness
+        case .blur: return blur
+        case .vignette: return vignette
+        case .noise: return noiseReduction
+        case .highlights: return highlights
+        case .shadows: return shadows
+        case .temperature: return temperature
+        case .blackPoint: return blackPoint
+        }
+    }
+}
+
+extension FilterValuesModel {
+    enum FilterValue: String, CaseIterable {
+        case brightness
+        case exposure
+        case contrast
+        case saturation
+        case sharpness
+        case blur
+        case vignette
+        case noise
+        case highlights
+        case shadows
+        case temperature
+        case blackPoint
+        
+        var image: ImageResource {
+            switch self {
+            case .brightness:
+                return .brightness
+            case .exposure:
+                return .exposure
+            case .contrast:
+                return .contrast
+            case .saturation:
+                return .saturation
+            case .sharpness:
+                return .sharpness
+            case .blur:
+                return .blur
+            case .vignette:
+                return .vignette
+            case .noise:
+                return .noise
+            case .highlights:
+                return .highlights
+            case .shadows:
+                return .shadows
+            case .temperature:
+                return .temperature
+            case .blackPoint:
+                return .blackPoint
+            }
+        }
+        
+        var title: String {
+            self.rawValue.uppercased()
+        }
+        
+        var minimum: CGFloat {
+            switch self {
+            case .contrast,
+                 .saturation:
+                return 0
+            case .temperature:
+                return 2000
+            default: return -1
+            }
+        }
+        
+        var median: CGFloat {
+            switch self {
+            case .contrast,
+                 .saturation:
+                return 1
+            case .temperature:
+                return 6500
+            default: return 0
+            }
+        }
+        
+        var maximum: CGFloat {
+            switch self {
+            case .contrast,
+                 .saturation:
+                return 2
+            case .temperature:
+                return 11000
+            default: return 1
+            }
+        }
+        
+        var unit: CGFloat {
+            switch self {
+            case .temperature: return 100
+            default: return 0.01
+            }
+        }
+    }
 }
 
 extension FilterValuesModel {
