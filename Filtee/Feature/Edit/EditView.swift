@@ -12,7 +12,7 @@ struct EditView: View {
     private var coordinator: MetalImageView.Coordinator
     
     @Binding
-    private var filteredImage: CGImage
+    private var filteredImage: CGImage?
     
     @State
     private var imageHeight: CGFloat = .zero
@@ -31,7 +31,7 @@ struct EditView: View {
     @State
     private var tempFilterValues: FilterValuesModel?
     
-    init(image: Binding<CGImage>) {
+    init(image: Binding<CGImage?>) {
         self._coordinator = StateObject(
             wrappedValue: MetalImageView.Coordinator(
                 image: image.wrappedValue,
@@ -79,8 +79,8 @@ private extension EditView {
     
     var bodyBackground: some View {
         VisualEffect(style: .systemChromeMaterialDark)
-            .ifLet(UIImage(cgImage: filteredImage)) { view, image in
-                view.background { backgroundImage(Image(uiImage: image)) }
+            .ifLet(filteredImage) { view, image in
+                view.background { backgroundImage(Image(uiImage: UIImage(cgImage: image))) }
             }
             .ignoresSafeArea()
     }

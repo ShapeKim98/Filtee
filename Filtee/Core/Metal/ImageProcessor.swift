@@ -19,10 +19,11 @@ final class ImageFilterProcessor: NSObject {
     let commandQueue: MTLCommandQueue
     var outputTexture: MTLTexture?
     
-    init(device: MTLDevice?, image: CGImage) throws {
+    init(device: MTLDevice?, image: CGImage?) throws {
         guard let device,
               let commandQueue = device.makeCommandQueue(),
-              let library = device.makeDefaultLibrary()
+              let library = device.makeDefaultLibrary(),
+              let image
         else { throw NSError(domain: "MetalSetup", code: -1, userInfo: nil) }
         self.device = device
         self.commandQueue = commandQueue

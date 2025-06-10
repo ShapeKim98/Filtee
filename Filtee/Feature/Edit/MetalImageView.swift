@@ -46,7 +46,7 @@ struct MetalImageView: UIViewRepresentable {
 extension MetalImageView {
     final class Coordinator: NSObject, ObservableObject {
         @Published
-        var image: CGImage
+        var image: CGImage?
         @Published
         var filterValues: FilterValuesModel
         @Published
@@ -55,7 +55,7 @@ extension MetalImageView {
         var processor: ImageFilterProcessor?
         
         init(
-            image: CGImage,
+            image: CGImage?,
             filterValues: FilterValuesModel,
             rotationAngle: Float
         ) {

@@ -15,7 +15,9 @@ struct MakeView: View {
     @State
     private var pickerItem: PhotosPickerItem?
     @State
-    private var selectedImage: Image?
+    private var filteredImage: CGImage?
+    @State
+    private var originalImage: UIImage?
     
     var body: some View {
         ScrollView(content: content)
@@ -80,8 +82,8 @@ private extension MakeView {
         .buttonStyle(.filteeToolbar)
     }
     
-    func backgroundImage(_ image: Image) -> some View {
-        image
+    func backgroundImage(_ image: UIImage) -> some View {
+        Image(uiImage: image)
             .resizable()
             .aspectRatio(contentMode: .fill)
             .frame(maxWidth: .infinity)
@@ -91,7 +93,7 @@ private extension MakeView {
     
     func scrollViewBackground() -> some View {
         VisualEffect(style: .systemChromeMaterialDark)
-            .ifLet(selectedImage) { view, image in
+            .ifLet(originalImage) { view, image in
                 view.background { backgroundImage(image) }
             }
             .ignoresSafeArea()
@@ -133,7 +135,7 @@ private extension MakeView {
     var photoSection: some View {
         VStack(spacing: 0) {
             FilteeTitle("대표 사진 선택") {
-                if selectedImage != nil {
+                if filteredImage != nil {
                     Button("수정하기") {
                         
                     }
@@ -155,9 +157,9 @@ private extension MakeView {
     
     @ViewBuilder
     var photoPicker: some View {
-        if let selectedImage {
+        if let filteredImage {
             PhotosPicker(selection: $pickerItem) {
-                selectedImage
+                Image(uiImage: UIImage(cgImage: filteredImage))
                     .resizable()
             }
             .aspectRatio(1, contentMode: .fill)
@@ -196,7 +198,7 @@ private extension MakeView {
                 let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any]
             else { return }
             withAnimation(.filteeSpring) {
-                selectedImage = Image(uiImage: uiImage)
+                originalImage = uiImage
             }
             
             let exifData = metadata[kCGImagePropertyExifDictionary as String] as? [String: Any]
@@ -232,7 +234,11 @@ private extension MakeView {
             let latitude = gpsData?[kCGImagePropertyGPSLatitude as String] as? Double
             let longitude = gpsData?[kCGImagePropertyGPSLongitude as String] as? Double
             
+            let orientationValue = metadata[kCGImagePropertyOrientation as String] as? UInt32
+            let orientation = CGImagePropertyOrientation(rawValue: orientationValue ?? 1)
+            
             withAnimation(.filteeSpring) {
+                filteredImage = uiImage.cgImage?.oriented(orientation ?? .up)
                 filter.photoMetadata = PhotoMetadataModel(
                     camera: camera,
                     lensInfo: lensInfo,
