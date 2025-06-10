@@ -11,6 +11,9 @@ struct EditView: View {
     @StateObject
     private var coordinator: MetalImageView.Coordinator
     
+    @Binding
+    private var filteredImage: CGImage
+    
     @State
     private var imageHeight: CGFloat = .zero
     @State
@@ -27,19 +30,16 @@ struct EditView: View {
     private var isOriginal: Bool = false
     @State
     private var tempFilterValues: FilterValuesModel?
-    @State
-    private var filteredImage: CGImage
     
-    init(image: CGImage) {
+    init(image: Binding<CGImage>) {
         self._coordinator = StateObject(
             wrappedValue: MetalImageView.Coordinator(
-                image: image,
-                filteredImage: image,
+                image: image.wrappedValue,
                 filterValues: FilterValuesModel(),
                 rotationAngle: 0
             )
         )
-        self.filteredImage = image
+        self._filteredImage = image
     }
     
     var body: some View {
@@ -396,5 +396,5 @@ private extension EditView {
 }
 
 #Preview {
-    EditView(image: UIImage(resource: .rice).cgImage!)
+    EditView(image: .constant(UIImage(resource: .rice).cgImage!))
 }

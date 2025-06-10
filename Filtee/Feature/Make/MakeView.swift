@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PhotosUI
+import ImageIO
 
 struct MakeView: View {
     @State
@@ -142,6 +143,13 @@ private extension MakeView {
             }
             
             photoPicker
+            
+            if let photoMetadata =  filter.photoMetadata {
+                FilteeMetadataCell(photoMetadata: photoMetadata)
+                    .padding(.top, 12)
+                    .padding(.horizontal, 20)
+                    .filteeBlurReplace()
+            }
         }
     }
     
@@ -179,14 +187,67 @@ private extension MakeView {
 private extension MakeView {
     func pickerItemOnChange(_ newValue: PhotosPickerItem?) {
         guard let newValue else { return }
-        
+        filter.photoMetadata = nil
         Task {
             guard
                 let data = try? await newValue.loadTransferable(type: Data.self),
-                let uiImage = UIImage(data: data)
+                let uiImage = UIImage(data: data),
+                let source = CGImageSourceCreateWithData(data as CFData, nil),
+                let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any]
             else { return }
             withAnimation(.filteeSpring) {
                 selectedImage = Image(uiImage: uiImage)
+            }
+            
+            let exifData = metadata[kCGImagePropertyExifDictionary as String] as? [String: Any]
+            let tiffData = metadata[kCGImagePropertyTIFFDictionary as String] as? [String: Any]
+            let gpsData = metadata[kCGImagePropertyGPSDictionary as String] as? [String: Any]
+            
+            let camera = exifData?[kCGImagePropertyTIFFModel as String] as? String ?? tiffData?[kCGImagePropertyTIFFModel as String] as? String
+            let focalLength = exifData?[kCGImagePropertyExifFocalLength as String] as? Double
+            let lensInfo: String?
+            switch focalLength ?? -1 {
+            case ..<20:
+                lensInfo = "초광각 카메라"
+            case 20..<35:
+                lensInfo = "광각 카메라"
+            case 35..<85:
+                lensInfo = "표준 카메라"
+            case 85...:
+                lensInfo = "망원 카메라"
+            default:
+                lensInfo = nil
+            }
+            let aperture = exifData?[kCGImagePropertyExifApertureValue as String] as? Double
+            let iso = (exifData?[kCGImagePropertyExifISOSpeedRatings as String] as? [Int])?.first
+            let shutterSpeed = (exifData?[kCGImagePropertyExifExposureTime as String] as? Double).map {
+                let denominator = Int(1 / $0)
+                return "1/\(denominator)"
+            }
+            let pixelHeight = metadata[kCGImagePropertyPixelHeight as String] as? Int
+            let pixelWidth = metadata[kCGImagePropertyPixelWidth as String] as? Int
+            let fileSize = data.count
+            let format = metadata[kCGImagePropertyFileContentsDictionary as String] as? String
+            let dateTimeOriginal = exifData?[kCGImagePropertyExifDateTimeOriginal as String] as? String
+            let latitude = gpsData?[kCGImagePropertyGPSLatitude as String] as? Double
+            let longitude = gpsData?[kCGImagePropertyGPSLongitude as String] as? Double
+            
+            withAnimation(.filteeSpring) {
+                filter.photoMetadata = PhotoMetadataModel(
+                    camera: camera,
+                    lensInfo: lensInfo,
+                    focalLength: focalLength,
+                    aperture: aperture,
+                    iso: iso,
+                    shutterSpeed: shutterSpeed,
+                    pixelHeight: pixelHeight,
+                    pixelWidth: pixelWidth,
+                    fileSize: fileSize,
+                    format: format,
+                    dateTimeOriginal: dateTimeOriginal,
+                    latitude: latitude,
+                    longitude: longitude
+                )
             }
         }
     }

@@ -237,7 +237,9 @@ private extension FilterDetailView {
         VStack(spacing: 20) {
             countSection
             
-            photoMetadata
+            if let photoMetadata =  filter?.photoMetadata {
+                FilteeMetadataCell(photoMetadata: photoMetadata)
+            }
             
             filterPresets
             
@@ -251,74 +253,6 @@ private extension FilterDetailView {
             divider
         }
         .padding(.horizontal, 20)
-    }
-    
-    var photoMetadata: some View {
-        FilteeContentCell(
-            title: filter?.photoMetadata?.camera ?? "정보없음",
-            subtitle: "EXIF"
-        ) {
-            HStack(spacing: 16) {
-                miniMap
-                
-                metadata
-                
-                Spacer()
-            }
-            .padding(8)
-        }
-    }
-    
-    @ViewBuilder
-    var miniMap: some View {
-        if let latitude = filter?.photoMetadata?.latitude,
-           let longitude = filter?.photoMetadata?.longitude {
-            let center = CLLocationCoordinate2D(
-                latitude: latitude,
-                longitude: longitude
-            )
-            let region = MKCoordinateRegion(
-                center: center,
-                latitudinalMeters: 1000,
-                longitudinalMeters: 100
-            )
-            
-            Group {
-                if #available(iOS 17.0, *) {
-                    Map(initialPosition: .region(region))
-                } else {
-                    Map(coordinateRegion: .constant(region))
-                }
-            }
-            .frame(width: 76, height: 76)
-            .clipRectangle(8)
-        }
-    }
-    
-    @ViewBuilder
-    var metadata: some View {
-        let lensInfo = filter?.photoMetadata?.lensInfo ?? ""
-        let focalLength = String(
-            format: "%.2f",
-            filter?.photoMetadata?.focalLength ?? 0
-        )
-        let aperture = filter?.photoMetadata?.aperture?.description ?? ""
-        let iso = filter?.photoMetadata?.iso?.description ?? ""
-        let fileSize = ((filter?.photoMetadata?.fileSize ?? 0) / (1024 * 1024))
-        let pixelWidth = filter?.photoMetadata?.pixelWidth ?? 0
-        let pixelHeight = filter?.photoMetadata?.pixelHeight ?? 0
-        
-        VStack(alignment: .leading, spacing: 8) {
-            Text("\(lensInfo) - \(focalLength) mm 𝒇 \(aperture) ISO \(iso)")
-            
-            Text("\((pixelWidth * pixelHeight) / 1000 / 1000)MP • \(pixelWidth) × \(pixelHeight) • \(fileSize)MB")
-            
-            if let photoAddress = photoAddress {
-                Text(photoAddress)
-            }
-        }
-        .font(.pretendard(.caption1(.semiBold)))
-        .foregroundStyle(.gray75)
     }
     
     @ViewBuilder
@@ -406,12 +340,7 @@ private extension FilterDetailView {
             filter?.creator.description = filter?.description
             async let originalImage = fetchImage(urlString: filter?.original)
             async let filteredImage = fetchImage(urlString: filter?.filtered)
-            async let address = reverseGeocoder(
-                latitude: filter?.photoMetadata?.latitude,
-                longitude: filter?.photoMetadata?.longitude
-            )
             
-            self.photoAddress = await address
             self.originalImage = try await originalImage
             self.filteredImage = try await filteredImage
         } catch {
@@ -429,25 +358,6 @@ private extension FilterDetailView {
         else { return Image(uiImage: image) }
         let upImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
         return Image(uiImage: upImage)
-    }
-    
-    func reverseGeocoder(latitude: Double?, longitude: Double?) async -> String? {
-        do {
-            guard let latitude, let longitude else { return nil }
-            let location = CLLocation(
-                latitude: latitude,
-                longitude: longitude
-            )
-            let geocoder = CLGeocoder()
-            let placemarks = try await geocoder.reverseGeocodeLocation(location)
-            guard let address = placemarks.first?.postalAddress else {
-                return nil
-            }
-            return address.city + " " + address.street
-        } catch {
-            print(error)
-            return nil
-        }
     }
     
     func filterSliderDragGestureOnChanged(

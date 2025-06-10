@@ -25,7 +25,7 @@ struct FilteeTabView: View {
         
 //        FilterDetailView(filterId: "68235153a9c731eadbeffdb0")
         
-        EditView(image: UIImage(resource: .sampleFiltered).cgImage!)
+        EditView(image: .constant(UIImage(resource: .sampleFiltered).cgImage!))
     }
 }
 

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct PhotoMetadataModel {
+struct PhotoMetadataModel: Equatable {
     let camera: String?
     let lensInfo: String?
     let focalLength: Double?

@@ -56,7 +56,6 @@ extension MetalImageView {
         
         init(
             image: CGImage,
-            filteredImage: CGImage,
             filterValues: FilterValuesModel,
             rotationAngle: Float
         ) {
