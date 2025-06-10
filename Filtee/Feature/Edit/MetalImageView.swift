@@ -9,11 +9,11 @@
 import MetalKit
 
 struct MetalImageView: UIViewRepresentable {
-    @Binding var image: CGImage
-    @Binding var filterValues: FilterValuesModel
+    @EnvironmentObject
+    private var coordinator: Coordinator
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(self, filterValues: $filterValues)
+        self.coordinator
     }
     
     func makeUIView(context: Context) -> MTKView {
@@ -26,8 +26,12 @@ struct MetalImageView: UIViewRepresentable {
         view.device = device
         view.delegate = context.coordinator
         view.backgroundColor = .clear
+        view.colorPixelFormat = .rgba16Float
         do {
-            let processor = try ImageFilterProcessor(device: device, image: image)
+            let processor = try ImageFilterProcessor(
+                device: device,
+                image: coordinator.image
+            )
             context.coordinator.processor = processor
             view.setNeedsDisplay()
         } catch { print("Failed to initialize ImageFilterProcessor: \(error)") }
@@ -40,16 +44,73 @@ struct MetalImageView: UIViewRepresentable {
 }
 
 extension MetalImageView {
-    final class Coordinator: NSObject {
-        @Binding
-        private var filterValues: FilterValuesModel
+    final class Coordinator: NSObject, ObservableObject {
+        @Published
+        var image: CGImage
+        @Published
+        var filterValues: FilterValuesModel
+        @Published
+        var rotationAngle: Float
         
-        var parent: MetalImageView
         var processor: ImageFilterProcessor?
         
-        init(_ parent: MetalImageView, filterValues: Binding<FilterValuesModel>) {
-            self.parent = parent
-            self._filterValues = filterValues
+        init(
+            image: CGImage,
+            filteredImage: CGImage,
+            filterValues: FilterValuesModel,
+            rotationAngle: Float
+        ) {
+            self.image = image
+            self.filterValues = filterValues
+            self.rotationAngle = rotationAngle
+        }
+        
+        func updateValue(_ newValue: CGFloat) {
+            switch filterValues.currentFilterValue {
+            case .brightness:
+                filterValues.brightness = Float(newValue)
+                return
+            case .exposure:
+                filterValues.exposure = Float(newValue)
+                return
+            case .contrast:
+                filterValues.contrast = Float(newValue)
+                return
+            case .saturation:
+                filterValues.saturation = Float(newValue)
+                return
+            case .sharpness:
+                filterValues.sharpness = Float(newValue)
+                return
+            case .blur:
+                filterValues.blur = Float(newValue)
+                return
+            case .vignette:
+                filterValues.vignette = Float(newValue)
+                return
+            case .noise:
+                filterValues.noiseReduction = Float(newValue)
+                return
+            case .highlights:
+                filterValues.highlights = Float(newValue)
+                return
+            case .shadows:
+                filterValues.shadows = Float(newValue)
+                return
+            case .temperature:
+                filterValues.temperature = Float(newValue)
+                return
+            case .blackPoint:
+                filterValues.blackPoint = Float(newValue)
+                return
+            }
+        }
+        
+        func filteredImage() async throws -> CGImage? {
+            return try await processor?.filteredImage(
+                filterValues: filterValues,
+                rotationAngle: rotationAngle
+            )
         }
     }
 }
@@ -60,54 +121,27 @@ extension MetalImageView.Coordinator: MTKViewDelegate {
     }
     
     func draw(in view: MTKView) {
-        Task {
+        Task { [weak self] in
+            guard let `self` else { return }
             guard let drawable = view.currentDrawable,
                   let renderPassDescriptor = view.currentRenderPassDescriptor,
-                  let commandBuffer = await processor?.commandQueue.makeCommandBuffer()
+                  let processor,
+                  let commandBuffer = processor.commandQueue.makeCommandBuffer()
             else { return }
             
             do {
-                try await processor?.renderToView(
+                try await processor.renderToView(
                     drawableSize: view.drawableSize,
                     renderPassDescriptor: renderPassDescriptor,
                     commandBuffer: commandBuffer,
-                    filterValues: filterValues
+                    filterValues: filterValues,
+                    rotationAngle: rotationAngle
                 )
                 commandBuffer.present(drawable)
                 commandBuffer.commit()
             } catch {
                 print("Failed to render: \(error)")
             }
-        }
-    }
-}
-
-struct MetalImageExampleView: View {
-    @State private var filterValues = FilterValuesModel()
-    @State private var inputImage = UIImage(named: "SampleOriginal")!.cgImage!
-    
-    var body: some View {
-        ScrollView {
-            VStack {
-                MetalImageView(image: $inputImage, filterValues: $filterValues)
-                    .frame(width: 400, height: 400)
-                    .border(Color.gray, width: 1)
-                
-                Slider(value: $filterValues.brightness, in: -1.0...1.0) { Text("Brightness") }
-                Slider(value: $filterValues.exposure, in: -1.0...1.0) { Text("Exposure") }
-                Slider(value: $filterValues.contrast, in: 0.0...2.0) { Text("Contrast") }
-                Slider(value: $filterValues.saturation, in: 0.0...2.0) { Text("Saturation") }
-                Slider(value: $filterValues.sharpness, in: -1.0...1.0) { Text("Sharpness") }
-                Slider(value: $filterValues.blur, in: -1.0...1.0) { Text("Blur") }
-                Slider(value: $filterValues.vignette, in: -1.0...1.0) { Text("Vignette") }
-                Slider(value: $filterValues.noiseReduction, in: -1.0...1.0) { Text("Noise Reduction") }
-                Slider(value: $filterValues.highlights, in: -1.0...1.0) { Text("Highlights") }
-                Slider(value: $filterValues.shadows, in: -1.0...1.0) { Text("Shadows") }
-                Slider(value: $filterValues.temperature, in: 3000.0...10000.0) { Text("Temperature") }
-                Slider(value: $filterValues.blackPoint, in: -1.0...1.0) { Text("Black Point") }
-            }
-            .foregroundStyle(.primary)
-            .padding()
         }
     }
 }

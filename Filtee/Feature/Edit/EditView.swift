@@ -8,10 +8,9 @@
 import SwiftUI
 
 struct EditView: View {
-    @State
-    private var image: CGImage
-    @State
-    private var filterValues = FilterValuesModel()
+    @StateObject
+    private var coordinator: MetalImageView.Coordinator
+    
     @State
     private var imageHeight: CGFloat = .zero
     @State
@@ -20,18 +19,47 @@ struct EditView: View {
     private var valueSliderFrame: CGRect = .zero
     @State
     private var dragGestureTask: Task<Void, Never>?
+    @State
+    private var previousFilterStack: [FilterValuesModel] = []
+    @State
+    private var nextFilterStack: [FilterValuesModel] = []
+    @State
+    private var isOriginal: Bool = false
+    @State
+    private var tempFilterValues: FilterValuesModel?
+    @State
+    private var filteredImage: CGImage
     
     init(image: CGImage) {
-        self.image = image
+        self._coordinator = StateObject(
+            wrappedValue: MetalImageView.Coordinator(
+                image: image,
+                filteredImage: image,
+                filterValues: FilterValuesModel(),
+                rotationAngle: 0
+            )
+        )
+        self.filteredImage = image
     }
     
     var body: some View {
         VStack(spacing: 0) {
-            MetalImageView(image: $image, filterValues: $filterValues)
+            MetalImageView()
+                .environmentObject(coordinator)
+                .overlay(alignment: .bottom) {
+                    filterStatusBar
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
+                }
+                .animation(.default, value: coordinator.rotationAngle)
             
-            valueSlider
-            
-            valueButtonList
+            Group {
+                valueSlider
+                    .opacity(isOriginal ? 0.5 : 1)
+                
+                valueButtonList
+            }
+            .disabled(isOriginal)
         }
         .filteeNavigation(title: "EDIT")
         .background { bodyBackground }
@@ -44,14 +72,14 @@ private extension EditView {
         image
             .resizable()
             .aspectRatio(contentMode: .fill)
-            .frame(maxWidth: .infinity)
             .overlay(Color(red: 0.04, green: 0.04, blue: 0.04).opacity(0.8))
+            .clipped()
             .ignoresSafeArea()
     }
     
     var bodyBackground: some View {
         VisualEffect(style: .systemChromeMaterialDark)
-            .ifLet(UIImage(cgImage: image)) { view, image in
+            .ifLet(UIImage(cgImage: filteredImage)) { view, image in
                 view.background { backgroundImage(Image(uiImage: image)) }
             }
             .ignoresSafeArea()
@@ -90,8 +118,8 @@ private extension EditView {
             .offset(x: valueOffsetX - 12, y: frame.maxY - 12)
             
             Text(String(
-                format: filterValues.currentFilterValue.format,
-                filterValues.currentValue
+                format: coordinator.filterValues.currentFilterValue.format,
+                coordinator.filterValues.currentValue
             ))
             .contentTransition(.numericText())
             .animation(.easeInOut, value: valueOffsetX)
@@ -108,15 +136,13 @@ private extension EditView {
                     .onChanged({ value in
                         valueIndicatorDragGestureOnChanged(value, frame: frame)
                     })
-                    .onEnded({ value in
-//                        valueIndicatorDragGestureOnEnded(value)
-                    })
+                    .onEnded({ _ in valueIndicatorDragGestureOnEnded()})
             )
         }
         .frame(height: 40)
         .padding(.top, 16)
         .padding(.horizontal, 20)
-        .valueFeedback(trigger: filterValues.currentValue)
+        .valueFeedback(trigger: coordinator.filterValues.currentValue)
     }
     
     var valueButtonList: some View {
@@ -143,7 +169,7 @@ private extension EditView {
         _ type: FilterValuesModel.FilterValue,
         proxy: ScrollViewProxy
     ) -> some View {
-        let isSelected = type == filterValues.currentFilterValue
+        let isSelected = type == coordinator.filterValues.currentFilterValue
         
         Button(action: { valueButtonAction(type: type, proxy: proxy) }) {
             VStack(spacing: 8) {
@@ -161,6 +187,69 @@ private extension EditView {
         }
         .buttonStyle(.plain)
     }
+    
+    var filterStatusBar: some View {
+        HStack(spacing: 8) {
+            Group {
+                Button(action: redoButtonAction) {
+                    filterStatusButtonLabel
+                }
+                .buttonStyle(.plain)
+                .disabled(previousFilterStack.isEmpty)
+                .rotation3DEffect(.degrees(180), axis: (0, 1, 0))
+                
+                Button(action: undoButtonAction) {
+                    filterStatusButtonLabel
+                }
+                .buttonStyle(.plain)
+                .disabled(nextFilterStack.isEmpty)
+            }
+            .disabled(isOriginal)
+
+            
+            Spacer()
+            
+            Button(action: originalButtonAction) {
+                Image(.compare)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.ultraThinMaterial)
+                    .clipRectangle(8)
+                    .rotationEffect(.degrees(isOriginal ? 180 : 0))
+                    .animation(nil, value: isOriginal)
+            }
+            .buttonStyle(.plain)
+            
+            Button(action: degreeButtonAction) {
+                Image(systemName: "rotate.left")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.ultraThinMaterial)
+                    .clipRectangle(8)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+    
+    var filterStatusButtonLabel: some View {
+        Image(.redo)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 24, height: 24)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.ultraThinMaterial)
+            .clipRectangle(8)
+    }
 }
 
 // MARK: - Functions
@@ -177,8 +266,11 @@ private extension EditView {
         }
     }
     
-    func valueIndicatorDragGestureOnEnded(_ value: DragGesture.Value) {
-        
+    func valueIndicatorDragGestureOnEnded() {
+        if !nextFilterStack.isEmpty {
+            nextFilterStack.removeAll()
+        }
+        pushPreviousFilterStack()
     }
     
     func valueSliderOnAppear(frame: CGRect) {
@@ -186,8 +278,44 @@ private extension EditView {
         normalizationValue()
     }
     
+    func valueButtonAction(
+        type: FilterValuesModel.FilterValue,
+        proxy: ScrollViewProxy
+    ) {
+        coordinator.filterValues.currentFilterValue = type
+        normalizationValue()
+        withAnimation(.default) {
+            proxy.scrollTo(type.rawValue, anchor: .center)
+        }
+    }
+    
+    func redoButtonAction() {
+        popPreviousFilterStack()
+    }
+    
+    func undoButtonAction() {
+        popNextFilterStack()
+    }
+    
+    func originalButtonAction() {
+        isOriginal.toggle()
+        if isOriginal {
+            tempFilterValues = coordinator.filterValues
+            coordinator.filterValues = FilterValuesModel()
+        } else {
+            guard let tempFilterValues else { return }
+            self.tempFilterValues = nil
+            coordinator.filterValues = tempFilterValues
+        }
+    }
+    
+    func degreeButtonAction() {
+        let newRotationAngle = coordinator.rotationAngle + 90
+        coordinator.rotationAngle = newRotationAngle.truncatingRemainder(dividingBy: 360)
+    }
+    
     func normalizationValue() {
-        let currentFilterValue = filterValues.currentFilterValue
+        let currentFilterValue = coordinator.filterValues.currentFilterValue
         let minimum = currentFilterValue.minimum - currentFilterValue.median
         let maximum = currentFilterValue.maximum - currentFilterValue.median
         
@@ -195,12 +323,14 @@ private extension EditView {
         let maxOffsetX = valueSliderFrame.maxX - valueSliderFrame.midX
         
         let normalizeValue = (maxOffsetX - minOffsetX) / (maximum - minimum)
-        let newOffsetX = (CGFloat(filterValues.currentValue) - currentFilterValue.median) * normalizeValue + valueSliderFrame.midX
-        valueOffsetX = newOffsetX
+        let newOffsetX = (CGFloat(coordinator.filterValues.currentValue) - currentFilterValue.median) * normalizeValue + valueSliderFrame.midX
+        withAnimation(.filteeSpring) {
+            valueOffsetX = newOffsetX
+        }
     }
     
     func normalizationOffset(_ value: DragGesture.Value) {
-        let currentFilterValue = filterValues.currentFilterValue
+        let currentFilterValue = coordinator.filterValues.currentFilterValue
         let minimum = currentFilterValue.minimum - currentFilterValue.median
         let maximum = currentFilterValue.maximum - currentFilterValue.median
         
@@ -217,60 +347,54 @@ private extension EditView {
         var remainder = newValue.truncatingRemainder(dividingBy: currentFilterValue.unit)
         remainder = remainder < 0 ? ceil(remainder) : floor(remainder)
         guard remainder == 0 else { return }
-        updateValue(newValue)
+        coordinator.updateValue(newValue)
     }
     
-    func updateValue(_ newValue: CGFloat) {
-        switch filterValues.currentFilterValue {
-        case .brightness:
-            filterValues.brightness = Float(newValue)
-            return
-        case .exposure:
-            filterValues.exposure = Float(newValue)
-            return
-        case .contrast:
-            filterValues.contrast = Float(newValue)
-            return
-        case .saturation:
-            filterValues.saturation = Float(newValue)
-            return
-        case .sharpness:
-            filterValues.sharpness = Float(newValue)
-            return
-        case .blur:
-            filterValues.blur = Float(newValue)
-            return
-        case .vignette:
-            filterValues.vignette = Float(newValue)
-            return
-        case .noise:
-            filterValues.noiseReduction = Float(newValue)
-            return
-        case .highlights:
-            filterValues.highlights = Float(newValue)
-            return
-        case .shadows:
-            filterValues.shadows = Float(newValue)
-            return
-        case .temperature:
-            filterValues.temperature = Float(newValue)
-            return
-        case .blackPoint:
-            filterValues.blackPoint = Float(newValue)
+    func pushPreviousFilterStack() {
+        if previousFilterStack.isEmpty {
+            previousFilterStack.append(FilterValuesModel())
+        }
+        previousFilterStack.append(coordinator.filterValues)
+    }
+    
+    func popPreviousFilterStack() {
+        if coordinator.filterValues == previousFilterStack.last {
+            let _ = previousFilterStack.popLast()
+        }
+        guard let filter = previousFilterStack.popLast() else {
             return
         }
+        nextFilterStack.append(coordinator.filterValues)
+        coordinator.filterValues = filter
+        normalizationValue()
     }
     
-    func valueButtonAction(
-        type: FilterValuesModel.FilterValue,
-        proxy: ScrollViewProxy
-    ) {
-        filterValues.currentFilterValue = type
+    func popNextFilterStack() {
+        if coordinator.filterValues == nextFilterStack.last {
+            let _ = nextFilterStack.popLast()
+        }
+        guard let filter = nextFilterStack.popLast() else {
+            return
+        }
+        previousFilterStack.append(coordinator.filterValues)
+        coordinator.filterValues = filter
         normalizationValue()
-        proxy.scrollTo(type.rawValue, anchor: .center)
+    }
+    
+    func updateFilteredImage() {
+        let coordinator = coordinator
+        Task {
+            do {
+                let image = try await coordinator.filteredImage()
+                guard let image else { return }
+                filteredImage = image
+            } catch {
+                print(error)
+            }
+        }
     }
 }
 
 #Preview {
-    EditView(image: UIImage(resource: .sampleOriginal).cgImage!)
+    EditView(image: UIImage(resource: .rice).cgImage!)
 }

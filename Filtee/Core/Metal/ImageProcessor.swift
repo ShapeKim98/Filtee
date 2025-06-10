@@ -8,7 +8,7 @@
 @preconcurrency import Metal
 @preconcurrency import MetalKit
 
-actor ImageFilterProcessor: NSObject {
+final class ImageFilterProcessor: NSObject {
     private let device: MTLDevice
     private let textureLoader: MTKTextureLoader
     var inputTexture: MTLTexture?
@@ -18,9 +18,6 @@ actor ImageFilterProcessor: NSObject {
     let pipelineState: MTLRenderPipelineState
     let commandQueue: MTLCommandQueue
     var outputTexture: MTLTexture?
-    
-    var filteredTextureStack: [MTLTexture] = []
-    var nextTextureStack: [MTLTexture] = []
     
     init(device: MTLDevice?, image: CGImage) throws {
         guard let device,
@@ -34,7 +31,7 @@ actor ImageFilterProcessor: NSObject {
         let pipelineDescriptor = MTLRenderPipelineDescriptor()
         pipelineDescriptor.vertexFunction = library.makeFunction(name: "vertexShader")
         pipelineDescriptor.fragmentFunction = library.makeFunction(name: "filterFragment")
-        pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        pipelineDescriptor.colorAttachments[0].pixelFormat = .rgba16Float
         self.pipelineState = try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
         
         self.textureLoader = MTKTextureLoader(device: device)
@@ -45,12 +42,11 @@ actor ImageFilterProcessor: NSObject {
         )
         self.inputTexture = texture
         self.outputTexture = texture
-        filteredTextureStack.append(texture)
         
         let vertices: [Float] = [
             -1, -1, 0, 1,  // 왼쪽 아래: 위치 (-1, -1), 텍스처 (0, 1)
              1, -1, 1, 1,  // 오른쪽 아래: 위치 (1, -1), 텍스처 (1, 1)
-            -1,  1, 0, 0,  // 왼쪽 위: 위치 (-1, 1), 텍스처 (0, 0)
+             -1,  1, 0, 0,  // 왼쪽 위: 위치 (-1, 1), 텍스처 (0, 0)
              1,  1, 1, 0   // 오른쪽 위: 위치 (1, 1), 텍스처 (1, 0)
         ]
         guard let buffer = device.makeBuffer(
@@ -63,37 +59,27 @@ actor ImageFilterProcessor: NSObject {
         super.init()
     }
     
-    func renderToView(
-            drawableSize: CGSize,
-            renderPassDescriptor: MTLRenderPassDescriptor,
-            commandBuffer: MTLCommandBuffer,
-            filterValues: FilterValuesModel
-    ) async throws {
-        guard let inputTexture,
-              let renderEncoder = commandBuffer.makeRenderCommandEncoder(
-                descriptor: renderPassDescriptor
-              )
-        else { throw NSError(domain: "RenderSetup", code: -1, userInfo: nil) }
-        
-        // 렌더 파이프라인 상태 설정
+    private func setupRenderEncoder(
+        _ renderEncoder: MTLRenderCommandEncoder,
+        inputTexture: MTLTexture,
+        filterValues: FilterValuesModel,
+        resolution: SIMD2<Float>,
+        drawableSize: SIMD2<Float>,
+        rotationAngle: Float,
+        isPreview: Bool
+    ) {
         renderEncoder.setRenderPipelineState(pipelineState)
-        
-        // 원본 텍스처 설정 (프래그먼트 셰이더에 전달)
         renderEncoder.setFragmentTexture(inputTexture, index: 0)
         
-        // 샘플러 설정
         let samplerDescriptor = MTLSamplerDescriptor()
         samplerDescriptor.minFilter = .linear
         samplerDescriptor.magFilter = .linear
-        guard let samplerState = device.makeSamplerState(
-            descriptor: samplerDescriptor
-        ) else {
+        guard let samplerState = device.makeSamplerState(descriptor: samplerDescriptor) else {
             renderEncoder.endEncoding()
-            throw NSError(domain: "SamplerCreation", code: -1, userInfo: nil)
+            fatalError("Failed to create sampler state")
         }
         renderEncoder.setFragmentSamplerState(samplerState, index: 0)
         
-        // 필터 값 버퍼 설정 (인덱스 1)
         var filterValues = filterValues
         renderEncoder.setFragmentBuffer(
             device.makeBuffer(bytes: &filterValues, length: MemoryLayout<FilterValuesModel>.size, options: []),
@@ -101,47 +87,142 @@ actor ImageFilterProcessor: NSObject {
             index: 1
         )
         
-        // 해상도 버퍼 설정 (인덱스 2)
-        var resolution = SIMD2<Float>(Float(inputTexture.width), Float(inputTexture.height))
-        renderEncoder.setFragmentBytes(&resolution, length: MemoryLayout<SIMD2<Float>>.size, index: 2)
-        
-        // 뷰 크기 버퍼 설정 (인덱스 3)
-        var drawableSize = SIMD2<Float>(
-            Float(drawableSize.width),
-            Float(drawableSize.height)
+        var resolution = resolution
+        renderEncoder.setFragmentBytes(
+            &resolution,
+            length: MemoryLayout<SIMD2<Float>>.size,
+            index: 2
         )
-        renderEncoder.setFragmentBytes(&drawableSize, length: MemoryLayout<SIMD2<Float>>.size, index: 3)
         
-        // 버텍스 버퍼 설정
+        var drawableSize = drawableSize
+        renderEncoder.setFragmentBytes(
+            &drawableSize,
+            length: MemoryLayout<SIMD2<Float>>.size,
+            index: 3
+        )
+        
+        var rotationAngle = rotationAngle
+        renderEncoder.setVertexBytes(&rotationAngle, length: MemoryLayout<Float>.size, index: 1)
+        renderEncoder.setFragmentBytes(&rotationAngle, length: MemoryLayout<Float>.size, index: 4)
+        
+        var isPreview = isPreview
+        renderEncoder.setFragmentBytes(&isPreview, length: MemoryLayout<Bool>.size, index: 5)
+        
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+    }
+    
+    func renderToView(
+        drawableSize: CGSize,
+        renderPassDescriptor: MTLRenderPassDescriptor,
+        commandBuffer: MTLCommandBuffer,
+        filterValues: FilterValuesModel,
+        rotationAngle: Float
+    ) async throws {
+        guard let inputTexture,
+              let renderEncoder = commandBuffer.makeRenderCommandEncoder(
+                descriptor: renderPassDescriptor
+              )
+        else { throw NSError(domain: "RenderSetup", code: -1, userInfo: nil) }
         
-        // 렌더링 명령
-        renderEncoder.drawPrimitives(
-            type: .triangleStrip,
-            vertexStart: 0,
-            vertexCount: 4
+        let resolution = SIMD2<Float>(Float(inputTexture.width), Float(inputTexture.height))
+        let drawableSizeFloat = SIMD2<Float>(Float(drawableSize.width), Float(drawableSize.height))
+        
+        setupRenderEncoder(
+            renderEncoder,
+            inputTexture: inputTexture,
+            filterValues: filterValues,
+            resolution: resolution,
+            drawableSize: drawableSizeFloat,
+            rotationAngle: rotationAngle,
+            isPreview: true
         )
+        
+        renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         renderEncoder.endEncoding()
     }
     
-    func pushFilteredTexture() {
-        guard let outputTexture = outputTexture else { return }
-        filteredTextureStack.append(outputTexture)
+    func filteredImage(
+        filterValues: FilterValuesModel,
+        rotationAngle: Float
+    ) async throws -> CGImage {
+        guard let inputTexture else {
+            throw NSError(domain: "InputTextureMissing", code: -1, userInfo: nil)
+        }
+        
+        let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: .rgba16Float,
+            width: inputTexture.width,
+            height: inputTexture.height,
+            mipmapped: false
+        )
+        textureDescriptor.usage = [.renderTarget, .shaderRead]
+        guard let outputTexture = device.makeTexture(descriptor: textureDescriptor) else {
+            throw NSError(domain: "OutputTextureCreation", code: -1, userInfo: nil)
+        }
+        
+        let renderPassDescriptor = MTLRenderPassDescriptor()
+        renderPassDescriptor.colorAttachments[0].texture = outputTexture
+        renderPassDescriptor.colorAttachments[0].loadAction = .clear
+        renderPassDescriptor.colorAttachments[0].storeAction = .store
+        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 0)
+        
+        guard let commandBuffer = commandQueue.makeCommandBuffer(),
+              let renderEncoder = commandBuffer.makeRenderCommandEncoder(
+                descriptor: renderPassDescriptor
+              )
+        else {
+            throw NSError(domain: "CommandBufferCreation", code: -1, userInfo: nil)
+        }
+        
+        let resolution: SIMD2<Float>
+        let drawableSizeFloat: SIMD2<Float>
+        
+        if Int(rotationAngle) % 180 == 0 {
+            resolution = SIMD2<Float>(Float(inputTexture.width), Float(inputTexture.height))
+            drawableSizeFloat = SIMD2<Float>(Float(inputTexture.width), Float(inputTexture.height))
+        } else {
+            resolution = SIMD2<Float>(Float(inputTexture.height), Float(inputTexture.width))
+            drawableSizeFloat = SIMD2<Float>(Float(inputTexture.height), Float(inputTexture.width))
+        }
+        
+        setupRenderEncoder(
+            renderEncoder,
+            inputTexture: inputTexture,
+            filterValues: filterValues,
+            resolution: resolution,
+            drawableSize: drawableSizeFloat,
+            rotationAngle: rotationAngle,
+            isPreview: false
+        )
+        
+        renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
+        renderEncoder.endEncoding()
+        
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
+        
+        guard let ciImage = CIImage(mtlTexture: outputTexture, options: nil) else {
+            throw NSError(domain: "CIImageCreation", code: -1, userInfo: nil)
+        }
+        
+        let context = CIContext()
+        let extent = ciImage.extent
+            
+        // 수직 반전을 위한 변환 행렬 생성
+        // y축 방향으로 -1 스케일링하고, y축 방향으로 이미지 높이만큼 이동
+        let transform = CGAffineTransform(scaleX: 1.0, y: -1.0)
+            .translatedBy(x: 0, y: -extent.height)
+        
+        // 변환 적용
+        let flippedImage = ciImage.transformed(by: transform)
+        
+        guard let cgImage = context.createCGImage(
+            flippedImage,
+            from: flippedImage.extent
+        ) else { throw NSError(domain: "CGImageCreation", code: -1, userInfo: nil) }
+        print(cgImage)
+        
+        return cgImage
     }
     
-    func popFilteredTexture() {
-        guard let outputTexture = filteredTextureStack.popLast() else {
-            return
-        }
-        nextTextureStack.append(outputTexture)
-        self.outputTexture = filteredTextureStack.last
-    }
-    
-    func popNextTexture() {
-        guard let outputTexture = nextTextureStack.popLast() else {
-            return
-        }
-        filteredTextureStack.append(outputTexture)
-        self.outputTexture = outputTexture
-    }
 }
