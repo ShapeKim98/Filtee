@@ -118,4 +118,13 @@ extension View {
             }
         }
     }
+    
+    @ViewBuilder
+    func tabBarHidden() -> some View {
+        if #available(iOS 18.0, *) {
+            self.toolbarVisibility(.hidden, for: .tabBar)
+        } else {
+            self.toolbar(.hidden, for: .tabBar)
+        }
+    }
 }

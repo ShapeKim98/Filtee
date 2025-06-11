@@ -10,6 +10,9 @@ import PhotosUI
 import ImageIO
 
 struct MakeView: View {
+    @EnvironmentObject
+    private var navigation: NavigationRouter<MakePath>
+    
     @State
     private var filter = FilterMakeModel()
     @State
@@ -64,6 +67,7 @@ private extension MakeView {
             
             Spacer()
         }
+        .padding(.bottom, 68)
     }
     
     func leadingItems() -> some View {
@@ -137,7 +141,7 @@ private extension MakeView {
             FilteeTitle("대표 사진 선택") {
                 if filteredImage != nil {
                     Button("수정하기") {
-                        
+                        editButtonAction()
                     }
                     .font(.pretendard(.body1(.medium)))
                     .foregroundStyle(.gray75)
@@ -197,8 +201,8 @@ private extension MakeView {
                 let source = CGImageSourceCreateWithData(data as CFData, nil),
                 let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any]
             else { return }
+            
             withAnimation(.filteeSpring) {
-                originalImage = uiImage
             }
             
             let exifData = metadata[kCGImagePropertyExifDictionary as String] as? [String: Any]
@@ -239,6 +243,8 @@ private extension MakeView {
             
             withAnimation(.filteeSpring) {
                 filteredImage = uiImage.cgImage?.oriented(orientation ?? .up)
+                guard let cgImage = filteredImage else { return }
+                originalImage = UIImage(cgImage: cgImage)
                 filter.photoMetadata = PhotoMetadataModel(
                     camera: camera,
                     lensInfo: lensInfo,
@@ -260,6 +266,14 @@ private extension MakeView {
     
     func categoryButtonAction(_ category: String) {
         filter.category = category
+    }
+    
+    func editButtonAction() {
+        navigation.push(.edit(
+            filteredImage: $filteredImage,
+            originalImage: $originalImage,
+            filterValues: $filter.filterValues
+        ))
     }
 }
 

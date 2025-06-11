@@ -8,10 +8,11 @@
 import SwiftUI
 
 struct SplashView: View {
-    @Environment(\.rootRouter)
-    private var rootRouter
     @Environment(\.authClient.refresh)
     private var authClientRefresh
+    
+    @EnvironmentObject
+    private var rootRouter: FlowRouter<Root>
     
     var body: some View {
         VStack {
@@ -36,9 +37,9 @@ private extension SplashView {
     func bodyTask() async {
         do {
             try await authClientRefresh()
-            await rootRouter.switch(.tab)
+            rootRouter.switch(.tab)
         } catch {
-            await rootRouter.switch(.login)
+            rootRouter.switch(.login)
         }
     }
 }

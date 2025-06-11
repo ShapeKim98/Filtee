@@ -11,8 +11,15 @@ struct EditView: View {
     @StateObject
     private var coordinator: MetalImageView.Coordinator
     
+    @EnvironmentObject
+    private var navigation: NavigationRouter<MakePath>
+    
     @Binding
     private var filteredImage: CGImage?
+    @Binding
+    private var originalImage: UIImage?
+    @Binding
+    private var filterValues: FilterValuesModel
     
     @State
     private var imageHeight: CGFloat = .zero
@@ -31,15 +38,21 @@ struct EditView: View {
     @State
     private var tempFilterValues: FilterValuesModel?
     
-    init(image: Binding<CGImage?>) {
+    init(
+        filteredImage: Binding<CGImage?>,
+        originalImage: Binding<UIImage?>,
+        filterValues: Binding<FilterValuesModel>
+    ) {
         self._coordinator = StateObject(
             wrappedValue: MetalImageView.Coordinator(
-                image: image.wrappedValue,
-                filterValues: FilterValuesModel(),
+                image: originalImage.wrappedValue?.cgImage,
+                filterValues: filterValues.wrappedValue,
                 rotationAngle: 0
             )
         )
-        self._filteredImage = image
+        self._filteredImage = filteredImage
+        self._originalImage = originalImage
+        self._filterValues = filterValues
     }
     
     var body: some View {
@@ -61,13 +74,33 @@ struct EditView: View {
             }
             .disabled(isOriginal)
         }
-        .filteeNavigation(title: "EDIT")
+        .filteeNavigation(
+            title: "EDIT",
+            leadingItems: leadingItems,
+            trailingItems: trailingItems
+        )
         .background { bodyBackground }
     }
 }
 
 // MARK: - Configure Views
 private extension EditView {
+    func leadingItems() -> some View {
+        Button(action: backButtonAction) {
+            Image(.chevron)
+                .resizable()
+        }
+        .buttonStyle(.filteeToolbar)
+    }
+    
+    func trailingItems() -> some View {
+        Button(action: saveButtonAction) {
+            Image(.save)
+                .resizable()
+        }
+        .buttonStyle(.filteeToolbar)
+    }
+    
     func backgroundImage(_ image: Image) -> some View {
         image
             .resizable()
@@ -254,6 +287,24 @@ private extension EditView {
 
 // MARK: - Functions
 private extension EditView {
+    func backButtonAction() {
+        filterValues = FilterValuesModel()
+        navigation.pop()
+    }
+    
+    func saveButtonAction() {
+        let coordinator = self.coordinator
+        Task {
+            filteredImage = try await coordinator.filteredImage()
+            filterValues = coordinator.filterValues
+            let degrees = CGFloat(coordinator.rotationAngle)
+            let cgImage = originalImage?.cgImage?.rotateCGImage(byAngleDegrees: degrees)
+            guard let cgImage else { return }
+            originalImage = UIImage(cgImage: cgImage)
+            navigation.pop()
+        }
+    }
+    
     func valueIndicatorDragGestureOnChanged(_ value: DragGesture.Value, frame: CGRect) {
         guard value.location.x > valueSliderFrame.minX,
               value.location.x < valueSliderFrame.maxX
@@ -396,5 +447,9 @@ private extension EditView {
 }
 
 #Preview {
-    EditView(image: .constant(UIImage(resource: .rice).cgImage!))
+    EditView(
+        filteredImage: .constant(UIImage(resource: .rice).cgImage!),
+        originalImage: .constant(UIImage(resource: .rice)),
+        filterValues: .constant(FilterValuesModel())
+    )
 }

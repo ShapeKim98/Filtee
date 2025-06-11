@@ -12,8 +12,8 @@ import Contacts
 import Nuke
 
 struct FilterDetailView: View {
-    @Environment(\.mainNavigation)
-    private var navigation
+    @EnvironmentObject
+    private var navigation: NavigationRouter<MainPath>
     
     @Environment(\.filterClient.filterDetail)
     private var filterClientFilterDetail
@@ -393,7 +393,7 @@ private extension FilterDetailView {
     }
     
     func backButtonAction() {
-        Task { await navigation.pop() }
+        navigation.pop()
     }
 }
 

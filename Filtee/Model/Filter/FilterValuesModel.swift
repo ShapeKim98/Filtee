@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct FilterValuesModel: Sendable, Equatable {
+struct FilterValuesModel: Sendable, Hashable {
     var brightness: Float = 0
     var exposure: Float = 0
     var contrast: Float = 1

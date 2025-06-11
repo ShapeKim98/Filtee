@@ -66,4 +66,35 @@ extension CGImage {
         // 변환된 CGImage 반환
         return context.makeImage() ?? self
     }
+    
+    func rotateCGImage(byAngleDegrees: CGFloat) -> CGImage? {
+        let radians = byAngleDegrees * .pi / 180
+        let transform = CGAffineTransform(rotationAngle: radians)
+        
+        let width = self.width
+        let height = self.height
+        let rotatedSize = CGRect(x: 0, y: 0, width: width, height: height)
+            .applying(transform)
+            .size
+        
+        let context = CGContext(
+            data: nil,
+            width: Int(rotatedSize.width),
+            height: Int(rotatedSize.height),
+            bitsPerComponent: self.bitsPerComponent,
+            bytesPerRow: 0,
+            space: self.colorSpace ?? CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: self.bitmapInfo.rawValue
+        )
+        
+        guard let context = context else { return nil }
+        
+        context.translateBy(x: rotatedSize.width / 2, y: rotatedSize.height / 2)
+        context.rotate(by: radians)
+        context.translateBy(x: -CGFloat(width) / 2, y: -CGFloat(height) / 2)
+        
+        context.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
+        
+        return context.makeImage()
+    }
 }
