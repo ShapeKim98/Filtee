@@ -50,7 +50,7 @@ extension MetalImageView {
         @Published
         var filterValues: FilterValuesModel
         
-        var view: MTKView?
+        weak var view: MTKView?
         var processor: ImageFilterProcessor?
         
         init(
@@ -60,6 +60,8 @@ extension MetalImageView {
             self.image = image
             self.filterValues = filterValues
         }
+        
+        deinit { print(#function) }
         
         func updateValue(_ newValue: CGFloat) {
             switch filterValues.currentFilterValue {
@@ -131,11 +133,11 @@ extension MetalImageView.Coordinator: MTKViewDelegate {
     
     func draw(in view: MTKView) {
         Task { [weak self] in
-            guard let `self` else { return }
             guard let drawable = view.currentDrawable,
                   let renderPassDescriptor = view.currentRenderPassDescriptor,
-                  let processor,
-                  let commandBuffer = processor.commandQueue.makeCommandBuffer()
+                  let processor = self?.processor,
+                  let commandBuffer = processor.commandQueue.makeCommandBuffer(),
+                  let filterValues = self?.filterValues
             else { return }
             
             do {
