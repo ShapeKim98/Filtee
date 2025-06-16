@@ -66,7 +66,6 @@ final class ImageFilterProcessor: NSObject {
         filterValues: FilterValuesModel,
         resolution: SIMD2<Float>,
         drawableSize: SIMD2<Float>,
-        rotationAngle: Float,
         isPreview: Bool
     ) {
         renderEncoder.setRenderPipelineState(pipelineState)
@@ -102,22 +101,24 @@ final class ImageFilterProcessor: NSObject {
             index: 3
         )
         
-        var rotationAngle = rotationAngle
-        renderEncoder.setVertexBytes(&rotationAngle, length: MemoryLayout<Float>.size, index: 1)
-        renderEncoder.setFragmentBytes(&rotationAngle, length: MemoryLayout<Float>.size, index: 4)
-        
         var isPreview = isPreview
-        renderEncoder.setFragmentBytes(&isPreview, length: MemoryLayout<Bool>.size, index: 5)
+        renderEncoder.setFragmentBytes(&isPreview, length: MemoryLayout<Bool>.size, index: 4)
         
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+    }
+    
+    func updateInputTexture(_ image: CGImage) async throws {
+        inputTexture = try await textureLoader.newTexture(
+            cgImage: image,
+            options: nil
+        )
     }
     
     func renderToView(
         drawableSize: CGSize,
         renderPassDescriptor: MTLRenderPassDescriptor,
         commandBuffer: MTLCommandBuffer,
-        filterValues: FilterValuesModel,
-        rotationAngle: Float
+        filterValues: FilterValuesModel
     ) async throws {
         guard let inputTexture,
               let renderEncoder = commandBuffer.makeRenderCommandEncoder(
@@ -134,7 +135,6 @@ final class ImageFilterProcessor: NSObject {
             filterValues: filterValues,
             resolution: resolution,
             drawableSize: drawableSizeFloat,
-            rotationAngle: rotationAngle,
             isPreview: true
         )
         
@@ -143,8 +143,7 @@ final class ImageFilterProcessor: NSObject {
     }
     
     func filteredImage(
-        filterValues: FilterValuesModel,
-        rotationAngle: Float
+        filterValues: FilterValuesModel
     ) async throws -> CGImage {
         guard let inputTexture else {
             throw NSError(domain: "InputTextureMissing", code: -1, userInfo: nil)
@@ -175,16 +174,8 @@ final class ImageFilterProcessor: NSObject {
             throw NSError(domain: "CommandBufferCreation", code: -1, userInfo: nil)
         }
         
-        let resolution: SIMD2<Float>
-        let drawableSizeFloat: SIMD2<Float>
-        
-        if Int(rotationAngle) % 180 == 0 {
-            resolution = SIMD2<Float>(Float(inputTexture.width), Float(inputTexture.height))
-            drawableSizeFloat = SIMD2<Float>(Float(inputTexture.width), Float(inputTexture.height))
-        } else {
-            resolution = SIMD2<Float>(Float(inputTexture.height), Float(inputTexture.width))
-            drawableSizeFloat = SIMD2<Float>(Float(inputTexture.height), Float(inputTexture.width))
-        }
+        let resolution = SIMD2<Float>(Float(inputTexture.width), Float(inputTexture.height))
+        let drawableSizeFloat = SIMD2<Float>(Float(inputTexture.width), Float(inputTexture.height))
         
         setupRenderEncoder(
             renderEncoder,
@@ -192,7 +183,6 @@ final class ImageFilterProcessor: NSObject {
             filterValues: filterValues,
             resolution: resolution,
             drawableSize: drawableSizeFloat,
-            rotationAngle: rotationAngle,
             isPreview: false
         )
         
@@ -208,14 +198,9 @@ final class ImageFilterProcessor: NSObject {
         
         let context = CIContext()
         let extent = ciImage.extent
-            
-        // 수직 반전을 위한 변환 행렬 생성
-        // y축 방향으로 -1 스케일링하고, y축 방향으로 이미지 높이만큼 이동
-        let transform = CGAffineTransform(scaleX: 1.0, y: -1.0)
-            .translatedBy(x: 0, y: -extent.height)
         
         // 변환 적용
-        let flippedImage = ciImage.transformed(by: transform)
+        let flippedImage = ciImage.oriented(.downMirrored)
         
         guard let cgImage = context.createCGImage(
             flippedImage,

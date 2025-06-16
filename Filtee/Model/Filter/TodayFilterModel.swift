@@ -18,8 +18,8 @@ struct TodayFilterModel: Identifiable {
 
 extension TodayFilterResponseDTO {
     func toModel() -> TodayFilterModel {
-        let original = self.files.first
-        let filtered = self.files.last
+        let filtered = self.files.first(where: { $0.contains("filtered") }) ?? self.files.last
+        let original = self.files.last(where: { $0.contains("original") }) ?? self.files.first
         
         return TodayFilterModel(
             id: self.filterId,

@@ -54,7 +54,7 @@ extension FilterClient: EnvironmentKey, NetworkClientConfigurable {
                     guard let fileExtension = data.fileExtensionForData(),
                           let mimeType = data.detectMimeType()
                     else { continue }
-                    let imageType = index == 0 ? "filtered" : "original"
+                    let imageType = index == 0 ? "original" : "filtered"
                     forms.append(MultipartForm(
                         data: data,
                         withName: "files",

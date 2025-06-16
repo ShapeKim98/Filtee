@@ -37,6 +37,8 @@ struct EditView: View {
     private var isOriginal: Bool = false
     @State
     private var tempFilterValues: FilterValuesModel?
+    @State
+    private var imageDegree: CGFloat = 0
     
     init(
         filteredImage: Binding<CGImage?>,
@@ -46,8 +48,7 @@ struct EditView: View {
         self._coordinator = StateObject(
             wrappedValue: MetalImageView.Coordinator(
                 image: originalImage.wrappedValue?.cgImage,
-                filterValues: filterValues.wrappedValue,
-                rotationAngle: 0
+                filterValues: filterValues.wrappedValue
             )
         )
         self._filteredImage = filteredImage
@@ -64,7 +65,6 @@ struct EditView: View {
                         .padding(.horizontal, 20)
                         .padding(.bottom, 16)
                 }
-                .animation(.default, value: coordinator.rotationAngle)
             
             Group {
                 valueSlider
@@ -80,6 +80,9 @@ struct EditView: View {
             trailingItems: trailingItems
         )
         .background { bodyBackground }
+        .onChange(of: coordinator.filterValues.currentValue) { newValue in
+            UISelectionFeedbackGenerator().selectionChanged()
+        }
     }
 }
 
@@ -175,7 +178,7 @@ private extension EditView {
         .frame(height: 40)
         .padding(.top, 16)
         .padding(.horizontal, 20)
-        .valueFeedback(trigger: coordinator.filterValues.currentValue)
+//        .valueFeedback(trigger: coordinator.filterValues.currentValue)
     }
     
     var valueButtonList: some View {
@@ -296,8 +299,7 @@ private extension EditView {
         Task {
             filteredImage = try await coordinator.filteredImage()
             filterValues = coordinator.filterValues
-            let degrees = CGFloat(coordinator.rotationAngle)
-            let cgImage = originalImage?.cgImage?.rotateCGImage(byAngleDegrees: degrees)
+            let cgImage = originalImage?.cgImage?.rotateCGImage(byAngleDegrees: imageDegree)
             guard let cgImage else { return }
             originalImage = UIImage(cgImage: cgImage)
             navigation.pop()
@@ -360,8 +362,10 @@ private extension EditView {
     }
     
     func degreeButtonAction() {
-        let newRotationAngle = coordinator.rotationAngle + 90
-        coordinator.rotationAngle = newRotationAngle.truncatingRemainder(dividingBy: 360)
+        let newRotationAngle = imageDegree + 90
+        imageDegree = newRotationAngle.truncatingRemainder(dividingBy: 360)
+        print(imageDegree)
+        coordinator.rotatedImage()
     }
     
     func normalizationValue() {

@@ -33,25 +33,10 @@ float3 linearToSRGB(float3 linear) {
 }
 
 vertex VertexOut vertexShader(device const float4* vertices [[buffer(0)]],
-                              constant float& rotationAngleDegrees [[buffer(1)]],
                               uint vid [[vertex_id]]) {
     VertexOut out;
     out.position = float4(vertices[vid].xy, 0, 1);
-    
-    float2 texCoord = vertices[vid].zw;
-    float2 center = float2(0.5, 0.5);
-    texCoord -= center;
-    
-    float rotationAngle = rotationAngleDegrees * 3.141592653589793 / 180.0;
-    float cosAngle = cos(rotationAngle);
-    float sinAngle = sin(rotationAngle);
-    float2 rotatedTexCoord = float2(
-        texCoord.x * cosAngle - texCoord.y * sinAngle,
-        texCoord.x * sinAngle + texCoord.y * cosAngle
-    );
-    
-    rotatedTexCoord += center;
-    out.texCoord = rotatedTexCoord;
+    out.texCoord = vertices[vid].zw;
     return out;
 }
 
@@ -61,13 +46,12 @@ fragment float4 filterFragment(VertexOut in [[stage_in]],
                                constant FilterValues& filterValues [[buffer(1)]],
                                constant float2& resolution [[buffer(2)]],
                                constant float2& drawableSize [[buffer(3)]],
-                               constant float& rotationAngleDegrees [[buffer(4)]],
-                               constant bool& isPreview [[buffer(5)]]) {
+                               constant bool& isPreview [[buffer(4)]]) {
     float2 texCoord = in.texCoord;
     float2 sampleCoord;
     
     float renderWidth = drawableSize.x;
-    float textureAspect = int(rotationAngleDegrees) % 180 == 0 ? resolution.x / resolution.y : resolution.y / resolution.x;
+    float textureAspect = resolution.x / resolution.y;
     float renderHeight = renderWidth / textureAspect;
     
     float offsetX = 0.0;

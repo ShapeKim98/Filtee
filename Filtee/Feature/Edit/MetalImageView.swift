@@ -49,19 +49,16 @@ extension MetalImageView {
         var image: CGImage?
         @Published
         var filterValues: FilterValuesModel
-        @Published
-        var rotationAngle: Float
         
+        var view: MTKView?
         var processor: ImageFilterProcessor?
         
         init(
             image: CGImage?,
-            filterValues: FilterValuesModel,
-            rotationAngle: Float
+            filterValues: FilterValuesModel
         ) {
             self.image = image
             self.filterValues = filterValues
-            self.rotationAngle = rotationAngle
         }
         
         func updateValue(_ newValue: CGFloat) {
@@ -107,15 +104,28 @@ extension MetalImageView {
         
         func filteredImage() async throws -> CGImage? {
             return try await processor?.filteredImage(
-                filterValues: filterValues,
-                rotationAngle: rotationAngle
+                filterValues: filterValues
             )
+        }
+        
+        @MainActor
+        func rotatedImage() {
+            self.image = image?.rotateCGImage(byAngleDegrees: 90)
+            guard let image else { return }
+            
+            Task { [weak self] in
+                do {
+                    try await self?.processor?.updateInputTexture(image)
+                    self?.view?.setNeedsDisplay()
+                } catch { print(error) }
+            }
         }
     }
 }
 
 extension MetalImageView.Coordinator: MTKViewDelegate {
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        self.view = view
         print("MTKView drawable size changed: \(size)")
     }
     
@@ -133,8 +143,7 @@ extension MetalImageView.Coordinator: MTKViewDelegate {
                     drawableSize: view.drawableSize,
                     renderPassDescriptor: renderPassDescriptor,
                     commandBuffer: commandBuffer,
-                    filterValues: filterValues,
-                    rotationAngle: rotationAngle
+                    filterValues: filterValues
                 )
                 commandBuffer.present(drawable)
                 commandBuffer.commit()

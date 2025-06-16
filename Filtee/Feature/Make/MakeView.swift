@@ -396,8 +396,8 @@ private extension MakeView {
                       )
                 else { return }
                 let files = try await filterClientFiles([
-                    filteredImageData,
-                    originalImageData
+                    originalImageData,
+                    filteredImageData
                 ])
                 filter.files = files
                 try await filterClientFilters(filter)
