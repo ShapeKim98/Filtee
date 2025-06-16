@@ -30,3 +30,10 @@ extension OrderClient: EnvironmentKey, NetworkClientConfigurable {
         )
     }()
 }
+
+extension EnvironmentValues {
+    var orderClient: OrderClient {
+        get { self[OrderClient.self] }
+        set { self[OrderClient.self] = newValue }
+    }
+}

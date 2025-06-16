@@ -1,5 +1,5 @@
 //
-//  OrderEndpoint.swift
+//  PaymentsEndpoint.swift
 //  Filtee
 //
 //  Created by 김도형 on 6/16/25.
@@ -9,19 +9,19 @@ import Foundation
 
 import Alamofire
 
-enum OrderEndpoint: Endpoint {
-    case ordersCreate(OrderCreateRequest)
+enum PaymentsEndpoint: Endpoint {
+    case paymentsValidation(impUid: String)
     
     var path: String {
         switch self {
-        case .ordersCreate:
-            return "/v1/orders"
+        case .paymentsValidation:
+            return "/v1/payments/validation"
         }
     }
     
     var method: HTTPMethod {
         switch self {
-        case .ordersCreate:
+        case .paymentsValidation:
             return .post
         }
     }
@@ -36,16 +36,15 @@ enum OrderEndpoint: Endpoint {
     
     var encoder: (any ParameterEncoder)? {
         switch self {
-        case .ordersCreate:
+        case .paymentsValidation:
             return .json
         }
     }
     
     var parameters: (any RequestDTO)? {
         switch self {
-        case let .ordersCreate(model):
-            return model
+        case let .paymentsValidation(impUid):
+            return ["imp_uid": impUid]
         }
     }
-    
 }

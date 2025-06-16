@@ -22,7 +22,7 @@ struct FilterDetailModel {
     let updatedAt: String
     let photoMetadata: PhotoMetadataModel?
     let filterValues: FilterValuesModel
-    let isDownloaded: Bool
+    var isDownloaded: Bool
     let price: Int
 }
 

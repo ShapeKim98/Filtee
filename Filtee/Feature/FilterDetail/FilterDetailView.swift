@@ -19,6 +19,12 @@ struct FilterDetailView: View {
     private var filterClientFilterDetail
     @Environment(\.filterClient.filterLike)
     private var filterClientFilterLike
+    @Environment(\.orderClient.ordersCreate)
+    private var orderClientOrdersCreate
+    @Environment(\.iamportClient.requestIamport)
+    private var iamportClientRequestIamport
+    @Environment(\.paymentsClient.paymentsValidation)
+    private var paymentsClientPaymentsValidation
     
     @State
     private var filter: FilterDetailModel?
@@ -32,6 +38,10 @@ struct FilterDetailView: View {
     private var imageSectionHeight: CGFloat = 0
     @State
     private var photoAddress: String?
+    @State
+    private var iamportPayload: IamportPaymentPayloadModel?
+    @State
+    private var name: String?
     
     private let filterId: String
     
@@ -50,6 +60,9 @@ struct FilterDetailView: View {
                 scrollViewBackground
             }
             .task(bodyTask)
+            .fullScreenCover(item: $iamportPayload) { payload in
+                paymentWeb(payload)
+            }
     }
 }
 
@@ -245,7 +258,7 @@ private extension FilterDetailView {
             
             let isDownloaded = filter?.isDownloaded ?? false
             Button(isDownloaded ? "구매완료" : "결제하기") {
-                
+                paymentButtonAction()
             }
             .buttonStyle(.filteeCTA)
             .disabled(isDownloaded)
@@ -328,6 +341,21 @@ private extension FilterDetailView {
         }
         .frame(maxWidth: .infinity)
     }
+    
+    func paymentWeb(_ payload: IamportPaymentPayloadModel) -> some View {
+        NavigationStack {
+            PaymentWebViewModeView(payload: payload)
+                .task(paymentWebViewModeViewTask)
+                .toolbar {
+                    ToolbarItemGroup(placement: .navigationBarTrailing) {
+                        Button("취소") {
+                            iamportPayload = nil
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+        }
+    }
 }
 
 // MARK: - Functions
@@ -348,16 +376,20 @@ private extension FilterDetailView {
         }
     }
     
-    func fetchImage(urlString: String?) async throws -> Image? {
-        guard let urlString, let url = URL(string: urlString) else {
-            return nil
-        }
-        let image = try await ImagePipeline.shared.imageTask(with: url).response.image
-        guard image.imageOrientation == .up,
-              let cgImage = image.cgImage
-        else { return Image(uiImage: image) }
-        let upImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
-        return Image(uiImage: upImage)
+    @Sendable
+    func paymentWebViewModeViewTask() async {
+        do {
+            guard let iamport = try await iamportClientRequestIamport(),
+                  iamport.success
+            else { return }
+            try await paymentsClientPaymentsValidation(iamport.impUid)
+            iamportPayload = nil
+            filter?.isDownloaded = true
+        } catch { print(error) }
+    }
+    
+    func paymentButtonAction() {
+        fetchOrderCreate()
     }
     
     func filterSliderDragGestureOnChanged(
@@ -394,6 +426,33 @@ private extension FilterDetailView {
     
     func backButtonAction() {
         navigation.pop()
+    }
+    
+    func fetchImage(urlString: String?) async throws -> Image? {
+        guard let urlString, let url = URL(string: urlString) else {
+            return nil
+        }
+        let image = try await ImagePipeline.shared.imageTask(with: url).response.image
+        guard image.imageOrientation == .up,
+              let cgImage = image.cgImage
+        else { return Image(uiImage: image) }
+        let upImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+        return Image(uiImage: upImage)
+    }
+    
+    func fetchOrderCreate() {
+        guard let filter else { return }
+        Task {
+            do {
+                let order = try await orderClientOrdersCreate(filter.id, filter.price)
+                iamportPayload = IamportPaymentPayloadModel(
+                    orderCode: order.orderCode,
+                    price: order.totalPrice,
+                    name: filter.title,
+                    buyerName: "김도형"
+                )
+            } catch { print(error) }
+        }
     }
 }
 
