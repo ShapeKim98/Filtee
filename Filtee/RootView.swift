@@ -8,34 +8,26 @@
 import SwiftUI
 
 struct RootView: View {
-    @Environment(\.rootRouter)
-    private var rootRouter
-    
-    @State
-    private var flow: Root = .splash
+    @StateObject
+    private var rootRouter = FlowRouter<Root>(flow: .splash)
     
     var body: some View {
-        VStack {
-            switch flow {
-            case .login:
-                LoginView()
-            case .splash:
-                SplashView()
-            case .tab:
-                FilteeTabView()
-            }
-        }
-        .animation(.smooth, value: flow)
-        .task(bodyTask)
+        content
+            .animation(.smooth, value: rootRouter.flow)
     }
-}
-
-// MARK: - Functions
-private extension RootView {
-    @Sendable
-    func bodyTask() async {
-        for await flow in rootRouter.stream {
-            self.flow = flow
+    
+    @ViewBuilder
+    var content: some View {
+        switch rootRouter.flow {
+        case .login:
+            LoginView()
+                .environmentObject(rootRouter)
+        case .splash:
+            SplashView()
+                .environmentObject(rootRouter)
+        case .tab:
+            FilteeTabView()
+//                .environmentObject(rootRouter)
         }
     }
 }

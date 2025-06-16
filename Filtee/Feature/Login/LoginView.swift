@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct LoginView: View {
-    @Environment(\.rootRouter)
-    private var rootRouter
     @Environment(\.userClient.kakaoLogin)
     private var userClientKakaoLogin
     @Environment(\.userClient.appleLogin)
@@ -18,6 +16,9 @@ struct LoginView: View {
     private var socialLoginClientKakaoLogin
     @Environment(\.socialLoginClient.appleLogin)
     private var socialLoginClientAppleLogin
+    
+    @EnvironmentObject
+    private var rootRouter: FlowRouter<Root>
     
     @State
     private var isLoading = false
@@ -94,7 +95,7 @@ private extension LoginView {
                 let model = try await socialLoginClientKakaoLogin()
                 let kakaoLoginModel = KakaoLoginModel(oauthToken: model.token)
                 try await userClientKakaoLogin(kakaoLoginModel)
-                await rootRouter.switch(.tab)
+                rootRouter.switch(.tab)
             } catch {
                 print(error)
             }
@@ -113,7 +114,7 @@ private extension LoginView {
                     nick: model.nick
                 )
                 try await userClientAppleLogin(appleLoginModel)
-                await rootRouter.switch(.tab)
+                rootRouter.switch(.tab)
             } catch {
                 print(error)
             }

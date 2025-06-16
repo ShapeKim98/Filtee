@@ -34,7 +34,7 @@ extension View {
         }
     }
     
-    func clipRectangle(_ radius: CGFloat) -> some View {
+    nonisolated func clipRectangle(_ radius: CGFloat) -> some View {
         self.clipShape(RoundedRectangle(
             cornerRadius: radius,
             style: .continuous
@@ -95,6 +95,36 @@ extension View {
             self.toolbarVisibility(hidden ? .hidden : .visible, for: .navigationBar)
         } else {
             self.navigationBarBackButtonHidden()
+        }
+    }
+    
+    func size(completion: @escaping (CGSize) -> Void) -> some View {
+        self.background {
+            GeometryReader { proxy in
+                Color.clear.onAppear {
+                    completion(proxy.size)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func valueFeedback<T: Equatable>(trigger: T) -> some View {
+        if #available(iOS 17.0, *) {
+            self.sensoryFeedback(.levelChange, trigger: trigger)
+        } else {
+            self.onChange(of: trigger) { _ in
+                UISelectionFeedbackGenerator().selectionChanged()
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func tabBarHidden() -> some View {
+        if #available(iOS 18.0, *) {
+            self.toolbarVisibility(.hidden, for: .tabBar)
+        } else {
+            self.toolbar(.hidden, for: .tabBar)
         }
     }
 }

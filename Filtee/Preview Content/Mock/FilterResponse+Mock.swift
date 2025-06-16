@@ -7,9 +7,9 @@
 
 import Foundation
 
-extension FilterResponse {
+extension FilterSummaryResponseDTO {
     static let hotTrendMock = [
-        FilterResponse(
+        FilterSummaryResponseDTO(
             filterId: "670bcd66539a670e42b2a3d8",
             category: "풍경",
             title: "풍경 필터",

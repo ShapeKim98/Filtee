@@ -10,8 +10,8 @@ import SwiftUI
 import NukeUI
 
 struct MainView: View {
-    @Environment(\.mainNavigation)
-    private var navigation
+    @EnvironmentObject
+    private var navigation: NavigationRouter<MainPath>
     
     @Environment(\.userClient.todayAuthor)
     private var userClientTodayAuthor
@@ -59,6 +59,7 @@ private extension MainView {
             
             Spacer()
         }
+        .padding(.bottom, 68)
         .scrollOffset(
             $scrollOffset,
             coordinateSpace: "ScrollView"
@@ -259,20 +260,16 @@ private extension MainView {
     func useButtonAction() {
         Task {
             guard let id = todayFilter?.id else { return }
-            await navigation.push(.detail(id: id))
+            navigation.push(.detail(id: id))
         }
     }
     
     func hotTrendButtonAction(id: String) {
-        Task {
-            await navigation.push(.detail(id: id))
-        }
+        navigation.push(.detail(id: id))
     }
     
     func profileCellAction(_ filter: FilterModel) {
-        Task {
-            await navigation.push(.detail(id: filter.id))
-        }
+        navigation.push(.detail(id: filter.id))
     }
 }
 

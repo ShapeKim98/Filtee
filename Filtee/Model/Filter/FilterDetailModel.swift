@@ -26,10 +26,10 @@ struct FilterDetailModel {
     let price: Int
 }
 
-extension FilterDetailResponse {
+extension FilterResponseDTO {
     func toModel() -> FilterDetailModel {
-        let original = self.files.first
-        let filtered = self.files.last
+        let filtered = self.files.first(where: { $0.contains("filtered") }) ?? self.files.last
+        let original = self.files.last(where: { $0.contains("original") }) ?? self.files.first
         
         return FilterDetailModel(
             id: self.filterId,

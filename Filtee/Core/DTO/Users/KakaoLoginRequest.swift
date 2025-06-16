@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct KakaoLoginRequest: RequestData {
+struct KakaoLoginRequest: RequestDTO {
     let oauthToken: String
     let deviceToken: String?
 }

@@ -12,3 +12,5 @@ extension String {
         return Bundle.main.baseURL + "/v1" + self
     }
 }
+
+

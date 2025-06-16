@@ -7,8 +7,8 @@
 
 import Foundation
 
-extension ProfileResponse {
-    static let todayAuthorMock = ProfileResponse(
+extension UserInfoResponseDTO {
+    static let todayAuthorMock = UserInfoResponseDTO(
         userId: "6816ee1c6d1bff703149336f",
         email: nil,
         nick: "SESAC YOON",
@@ -20,7 +20,7 @@ extension ProfileResponse {
         hashTags: ["#섬세함"]
     )
     
-    static let creatorMock = ProfileResponse(
+    static let creatorMock = UserInfoResponseDTO(
         userId: "6816ee1c6d1bff703149336f",
         email: nil,
         nick: "sesac",
@@ -32,7 +32,7 @@ extension ProfileResponse {
         hashTags: ["#맑음"]
     )
     
-    static let detailMock = ProfileResponse(
+    static let detailMock = UserInfoResponseDTO(
         userId: "6816ee1c6d1bff703149336f",
         email: nil,
         nick: "sesac",

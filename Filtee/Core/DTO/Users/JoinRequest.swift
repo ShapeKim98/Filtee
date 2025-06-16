@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct JoinRequest: RequestData {
+struct JoinRequest: RequestDTO {
     let email: String
     let password: String
     let nick: String

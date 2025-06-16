@@ -71,7 +71,7 @@ enum UserEndpoint: Endpoint {
         }
     }
     
-    var parameters: (any RequestData)? {
+    var parameters: (any RequestDTO)? {
         switch self {
         case let .validationEmail(email):
             return ["email": email]

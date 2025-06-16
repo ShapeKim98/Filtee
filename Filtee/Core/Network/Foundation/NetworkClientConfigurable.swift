@@ -12,9 +12,9 @@ import Alamofire
 protocol NetworkClientConfigurable {
     associatedtype E: Endpoint
     
-    static func request<T: ResponseData>(_ endPoint: E) async throws -> T
+    static func request<T: ResponseDTO>(_ endPoint: E) async throws -> T
     static func request(_ endPoint: E) async throws
-    static func requestNonToken<T: ResponseData>(
+    static func requestNonToken<T: ResponseDTO>(
         _ endPoint: E,
         adaptable: Bool
     ) async throws -> T
@@ -25,7 +25,7 @@ protocol NetworkClientConfigurable {
 }
 
 extension NetworkClientConfigurable {
-    static func request<T: ResponseData>(_ endPoint: E) async throws -> T {
+    static func request<T: ResponseDTO>(_ endPoint: E) async throws -> T {
         let response = await filteeSession.request(
             endPoint,
             interceptor: Interceptor(
@@ -87,7 +87,46 @@ extension NetworkClientConfigurable {
         }
     }
     
-    static func requestNonToken<T: ResponseData>(
+    static func upload<T: ResponseDTO>(_ endPoint: E) async throws -> T {
+        let response = await filteeSession.upload(
+            multipartFormData: { multipartFormData in
+                for multipartForm in endPoint.multipartForm {
+                    multipartFormData.append(
+                        multipartForm.data,
+                        withName: multipartForm.withName,
+                        fileName: multipartForm.fileName,
+                        mimeType: multipartForm.mimeType
+                    )
+                }
+            },
+            with: endPoint,
+            interceptor: Interceptor(
+                adapters: [KeyAdapter()],
+                interceptors: [TokenInterceptor()]
+            )
+        )
+        .validate(statusCode: 200..<300)
+        .serializingDecodable(T.self, decoder: endPoint.decoder)
+        .response
+        
+        switch response.result {
+        case .success(let value):
+            return value
+        case .failure(let error):
+            if case let AFError.requestRetryFailed(
+                retryError: retryError,
+                originalError: _
+            ) = error {
+                throw retryError
+            }
+            guard let data = response.data else {
+                throw error
+            }
+            throw try endPoint.errorBody(data: data)
+        }
+    }
+    
+    static func requestNonToken<T: ResponseDTO>(
         _ endPoint: E,
         adaptable: Bool = true
     ) async throws -> T {

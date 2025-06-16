@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AppleLoginRequest: RequestData {
+struct AppleLoginRequest: RequestDTO {
     let idToken: String
     let deviceToken: String?
     let nick: String?

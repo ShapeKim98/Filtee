@@ -7,6 +7,8 @@
 
 import Foundation
 
-typealias ResponseData = Decodable & Sendable
+typealias ResponseDTO = Decodable & Sendable
 
-typealias RequestData = Encodable & Sendable
+typealias RequestDTO = Encodable & Sendable
+
+typealias DTO = Codable & Sendable

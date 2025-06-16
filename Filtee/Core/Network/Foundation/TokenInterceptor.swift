@@ -81,7 +81,7 @@ struct TokenInterceptor: RequestInterceptor {
         }
     }
     
-    func request<T: ResponseData>(_ endPoint: AuthEndpoint) async throws -> T {
+    func request<T: ResponseDTO>(_ endPoint: AuthEndpoint) async throws -> T {
         let response = await refreshSession.request(endPoint)
             .validate(statusCode: 200..<300)
             .serializingDecodable(T.self, decoder: endPoint.decoder)

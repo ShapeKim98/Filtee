@@ -7,9 +7,9 @@
 
 import Foundation
 
-extension TodayAuthorResponse {
-    static let mock = TodayAuthorResponse(
+extension TodayAuthorResponseDTO {
+    static let mock = TodayAuthorResponseDTO(
         author: .creatorMock,
-        filters: FilterResponse.hotTrendMock
+        filters: FilterSummaryResponseDTO.hotTrendMock
     )
 }

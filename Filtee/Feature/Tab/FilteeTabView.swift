@@ -8,22 +8,109 @@
 import SwiftUI
 
 struct FilteeTabView: View {
-    @Environment(\.rootRouter)
-    private var rootRouter
-    @Environment(\.userClient)
-    private var userClient
+    @StateObject
+    private var tabRouter = FlowRouter<TabItem>(flow: .main)
+    @StateObject
+    private var mainNavigation = NavigationRouter<MainPath>()
+    @StateObject
+    private var makeNavigation = NavigationRouter<MakePath>()
+    
+    @Namespace
+    private var namespaceId: Namespace.ID
+    
+    @State
+    private var showTabBar = true
     
     var body: some View {
-//        Button("로그아웃") {
-//            userClient.logout()
-//            Task {
-//                await rootRouter.switch(.login)
-//            }
-//        }
+        TabView(selection: $tabRouter.flow) {
+            MainNavigationView()
+                .environmentObject(mainNavigation)
+                .toolbarBackground(.hidden, for: .tabBar)
+                .tag(TabItem.main)
+            
+            MakeNavigationView()
+                .environmentObject(makeNavigation)
+                .toolbarBackground(.hidden, for: .tabBar)
+                .tag(TabItem.make)
+        }
+        .overlay(alignment: .bottom) {
+            if showTabBar {
+                tabBar
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .ignoresSafeArea(.keyboard)
+            }
+        }
+        .onChange(
+            of: makeNavigation.path,
+            perform: makePathOnChange
+        )
+    }
+}
+
+// MARK: - Configure Views
+private extension FilteeTabView {
+    var tabBar: some View {
+        HStack(spacing: 32) {
+            Spacer()
+            
+            ForEach(TabItem.allCases, id: \.self) { tab in
+                tabItem(tab)
+            }
+            
+            Spacer()
+        }
+        .frame(height: 68)
+        .background {
+            VisualEffect(style: .systemUltraThinMaterial)
+        }
+        .clipRectangle(9999)
+        .roundedRectangleStroke(
+            radius: 9999,
+            color: .secondary.opacity(0.6)
+        )
+        .padding(.horizontal, 20)
+        .animation(.filteeSpring, value: tabRouter.flow)
+    }
+    
+    @ViewBuilder
+    func tabItem(_ tab: TabItem) -> some View {
+        let isSelected = tabRouter.flow == tab
         
-        MainNavigationView()
-        
-//        FilterDetailView(filterId: "68235153a9c731eadbeffdb0")
+        Button(action: { tabRouter.switch(tab) }) {
+            VStack {
+                Spacer()
+                
+                Image(tab.image(isSelected))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .foregroundStyle(isSelected ? .gray15 : .secondary)
+                    .frame(width: 32, height: 32)
+                
+                Spacer()
+            }
+            .if(isSelected) { $0.background(alignment: .top) {
+                Rectangle().fill(.gray15)
+                    .frame(height: 4)
+                    .cornerRadius(
+                        radius: 2,
+                        corners: [.bottomLeft, .bottomRight]
+                    )
+                    .matchedGeometryEffect(id: "isSelected", in: namespaceId)
+            }}
+        }
+    }
+}
+
+// MARK: - Functions
+private extension FilteeTabView {
+    func makePathOnChange(_ newValue: [MakePath]) {
+        withAnimation(.filteeSpring) {
+            if case .edit = newValue.last {
+                showTabBar = false
+            } else {
+                showTabBar = true
+            }
+        }
     }
 }
 

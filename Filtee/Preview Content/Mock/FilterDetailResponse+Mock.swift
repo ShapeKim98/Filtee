@@ -7,8 +7,8 @@
 
 import Foundation
 
-extension FilterDetailResponse {
-    static let detailMock = FilterDetailResponse(
+extension FilterResponseDTO {
+    static let detailMock = FilterResponseDTO(
         filterId: "670bcd66539a670e42b2a3d8",
         category: "풍경",
         title: "풍경 필터",

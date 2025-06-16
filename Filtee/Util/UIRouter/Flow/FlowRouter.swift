@@ -7,21 +7,16 @@
 
 import Foundation
 
-
-final class FlowRouter<T: Sendable>: Sendable {
-    @MainActor
-    private var continuation: AsyncStream<T>.Continuation?
+@MainActor
+final class FlowRouter<T>: ObservableObject {
+    @Published
+    var flow: T
     
-    func `switch`(_ flow: T) async {
-        await continuation?.yield(flow)
+    init(flow: T) {
+        self.flow = flow
     }
     
-    @MainActor
-    var stream: AsyncStream<T> {
-        return AsyncStream { [weak self] continuation in
-            Task { @Sendable in
-                self?.continuation = continuation
-            }
-        }
+    func `switch`(_ flow: T) {
+        self.flow = flow
     }
 }

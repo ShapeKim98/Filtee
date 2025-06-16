@@ -54,7 +54,7 @@ enum SocialLoginEndpoint: Endpoint {
         }
     }
     
-    var parameters: (any RequestData)? {
+    var parameters: (any RequestDTO)? {
         switch self {
         case let .appleToken(model):
             return model

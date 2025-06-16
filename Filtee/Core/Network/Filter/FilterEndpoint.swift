@@ -14,6 +14,8 @@ enum FilterEndpoint: Endpoint {
     case todayFilter
     case filterDetail(id: String)
     case filterLike(id: String, isLike: Bool)
+    case files([MultipartForm])
+    case filters(FilterMakeRequest)
     
     var path: String {
         switch self {
@@ -25,6 +27,10 @@ enum FilterEndpoint: Endpoint {
             return "/v1/filters/\(id)"
         case let .filterLike(id, _):
             return "/v1/filters/\(id)/like"
+        case .files:
+            return "/v1/filters/files"
+        case .filters:
+            return "/v1/filters"
         }
     }
     
@@ -34,7 +40,9 @@ enum FilterEndpoint: Endpoint {
              .todayFilter,
              .filterDetail:
             return .get
-        case .filterLike:
+        case .filterLike,
+             .files,
+             .filters:
             return .post
         }
     }
@@ -51,21 +59,34 @@ enum FilterEndpoint: Endpoint {
         switch self {
         case .hotTrend,
              .todayFilter,
-             .filterDetail:
+             .filterDetail,
+             .files:
             return nil
-        case .filterLike:
+        case .filterLike,
+             .filters:
             return .json
         }
     }
     
-    var parameters: (any RequestData)? {
+    var parameters: (any RequestDTO)? {
         switch self {
         case .hotTrend,
              .todayFilter,
-             .filterDetail:
+             .filterDetail,
+             .files:
             return nil
         case let .filterLike(_, isLike):
             return ["like_status": isLike]
+        case let .filters(model):
+            return model
+        }
+    }
+    
+    var multipartForm: [MultipartForm] {
+        switch self {
+        case let .files(files):
+            return files
+        default: return []
         }
     }
 }

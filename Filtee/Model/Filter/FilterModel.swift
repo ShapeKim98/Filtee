@@ -30,10 +30,10 @@ struct FilterModel: Identifiable, Hashable {
     let filtered: String?
 }
 
-extension FilterResponse {
+extension FilterSummaryResponseDTO {
     func toModel() -> FilterModel {
-        let original = self.files.first
-        let filtered = self.files.last
+        let filtered = self.files.first(where: { $0.contains("filtered") }) ?? self.files.last
+        let original = self.files.last(where: { $0.contains("original") }) ?? self.files.first
         
         return FilterModel(
             id: self.filterId,

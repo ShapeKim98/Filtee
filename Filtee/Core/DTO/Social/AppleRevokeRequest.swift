@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AppleRevokeRequest: RequestData {
+struct AppleRevokeRequest: RequestDTO {
     let clientId: String
     let clientSecret: String
     let token: String

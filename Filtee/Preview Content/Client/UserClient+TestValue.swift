@@ -18,7 +18,7 @@ extension UserClient {
             deviceToken: { _ in },
             logout: { },
             todayAuthor: {
-                TodayAuthorResponse.mock.toModel()
+                TodayAuthorResponseDTO.mock.toModel()
             }
         )
     }()

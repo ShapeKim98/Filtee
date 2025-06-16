@@ -7,8 +7,8 @@
 
 import Foundation
 
-extension FilterValuesResponse {
-    static let detailMock = FilterValuesResponse(
+extension FilterValuesDTO {
+    static let detailMock = FilterValuesDTO(
         brightness: 0.15,
         exposure: 0.3,
         contrast: 1.05,

@@ -41,7 +41,7 @@ enum AuthEndpoint: Endpoint {
         }
     }
     
-    var parameters: (any RequestData)? {
+    var parameters: (any RequestDTO)? {
         switch self {
         case .refresh: return nil
         }

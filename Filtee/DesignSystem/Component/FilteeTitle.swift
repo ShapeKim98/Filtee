@@ -13,7 +13,7 @@ struct FilteeTitle<SubButton: View>: View {
     
     init(
         _ title: String,
-        subButton: @escaping () -> SubButton = { EmptyView() }
+        @ViewBuilder subButton: @escaping () -> SubButton = { EmptyView() }
     ) {
         self.title = title
         self.subButton = subButton()
