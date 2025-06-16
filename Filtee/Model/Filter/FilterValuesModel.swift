@@ -147,18 +147,18 @@ extension FilterValuesModel {
 extension FilterValuesModel {
     func toData() -> FilterValuesDTO {
         return FilterValuesDTO(
-            brightness: Double(self.brightness),
-            exposure: Double(self.exposure),
-            contrast: Double(self.contrast),
-            saturation: Double(self.saturation),
-            sharpness: Double(self.sharpness),
-            blur: Double(self.blur),
-            vignette: Double(self.vignette),
-            noiseReduction: Double(self.noiseReduction),
-            highlights: Double(self.highlights),
-            shadows: Double(self.shadows),
-            temperature: Double(self.temperature),
-            blackPoint: Double(self.blackPoint)
+            brightness: self.brightness,
+            exposure: self.exposure,
+            contrast: self.contrast,
+            saturation: self.saturation,
+            sharpness: self.sharpness,
+            blur: self.blur,
+            vignette: self.vignette,
+            noiseReduction: self.noiseReduction,
+            highlights: self.highlights,
+            shadows: self.shadows,
+            temperature: self.temperature,
+            blackPoint: self.blackPoint
         )
     }
 }
@@ -166,18 +166,18 @@ extension FilterValuesModel {
 extension FilterValuesDTO {
     func toModel() -> FilterValuesModel {
         return FilterValuesModel(
-            brightness: Float(self.brightness ?? 0),
-            exposure: Float(self.exposure ?? 0),
-            contrast: Float(self.contrast ?? 0),
-            saturation: Float(self.saturation ?? 0),
-            sharpness: Float(self.sharpness ?? 0),
-            blur: Float(self.blur ?? 0),
-            vignette: Float(self.vignette ?? 0),
-            noiseReduction: Float(self.noiseReduction ?? 0),
-            highlights: Float(self.highlights ?? 0),
-            shadows: Float(self.shadows ?? 0),
-            temperature: Float(self.temperature ?? 0),
-            blackPoint: Float(self.blackPoint ?? 0)
+            brightness: self.brightness ?? 0,
+            exposure: self.exposure ?? 0,
+            contrast: self.contrast ?? 0,
+            saturation: self.saturation ?? 0,
+            sharpness: self.sharpness ?? 0,
+            blur: self.blur ?? 0,
+            vignette: self.vignette ?? 0,
+            noiseReduction: self.noiseReduction ?? 0,
+            highlights: self.highlights ?? 0,
+            shadows: self.shadows ?? 0,
+            temperature: self.temperature ?? 0,
+            blackPoint: self.blackPoint ?? 0
         )
     }
 }

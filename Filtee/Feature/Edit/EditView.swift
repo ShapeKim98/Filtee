@@ -288,7 +288,6 @@ private extension EditView {
 // MARK: - Functions
 private extension EditView {
     func backButtonAction() {
-        filterValues = FilterValuesModel()
         navigation.pop()
     }
     

@@ -17,10 +17,15 @@ protocol Endpoint: URLRequestConvertible {
     var decoder: JSONDecoder { get }
     var encoder: ParameterEncoder? { get }
     var parameters: (RequestDTO)? { get }
+    var multipartForm: [MultipartForm] { get}
     func errorBody(data: Data) throws -> Error
 }
 
 extension Endpoint {
+    var multipartForm: [MultipartForm] {
+        return []
+    }
+    
     var baseURL: String {
         return Bundle.main.baseURL
     }
@@ -44,6 +49,13 @@ extension Endpoint {
         )
         throw error.toModel()
     }
+}
+
+struct MultipartForm {
+    let data: Data
+    let withName: String
+    let fileName: String
+    let mimeType: String
 }
 
 enum FilteeError: Error {

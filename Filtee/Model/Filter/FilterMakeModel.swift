@@ -11,11 +11,24 @@ struct FilterMakeModel {
     var category: String?
     var title: String = ""
     var description: String = ""
-    var original: String = ""
-    var filtered: String = ""
+    var files: [String] = []
     var photoMetadata: PhotoMetadataModel? = nil
     var filterValues: FilterValuesModel = FilterValuesModel()
     var price: Int = 0
+}
+
+extension FilterMakeModel {
+    func toData() -> FilterMakeRequest {
+        return FilterMakeRequest(
+            category: self.category ?? "",
+            title: self.title,
+            description: self.description,
+            files: self.files,
+            photoMetadata: self.photoMetadata?.toData(),
+            filterValues: self.filterValues.toData(),
+            price: self.price
+        )
+    }
 }
 
 extension FilterMakeModel {

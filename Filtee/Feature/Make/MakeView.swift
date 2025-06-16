@@ -8,8 +8,14 @@
 import SwiftUI
 import PhotosUI
 import ImageIO
+import UniformTypeIdentifiers
 
 struct MakeView: View {
+    @Environment(\.filterClient.files)
+    private var filterClientFiles
+    @Environment(\.filterClient.filters)
+    private var filterClientFilters
+    
     @EnvironmentObject
     private var navigation: NavigationRouter<MakePath>
     
@@ -21,6 +27,14 @@ struct MakeView: View {
     private var filteredImage: CGImage?
     @State
     private var originalImage: UIImage?
+    @State
+    private var nameState: FilteeTextFieldStyle.TextFieldState = .default
+    @State
+    private var descriptionState: FilteeTextFieldStyle.TextFieldState = .default
+    @State
+    private var priceState: FilteeTextFieldStyle.TextFieldState = .default
+    @State
+    private var imagePickerHeight: CGFloat = 0
     
     var body: some View {
         ScrollView(content: content)
@@ -41,7 +55,7 @@ private extension MakeView {
             TextField(text: $filter.title) {
                 Text("필터 이름을 입력해주세요.")
             }
-            .textFieldStyle(.filtee(.default, title: "필터명"))
+            .textFieldStyle(.filtee(nameState, title: "필터명"))
             .padding(.horizontal, 20)
             
             categorySection
@@ -51,15 +65,18 @@ private extension MakeView {
             TextField(text: $filter.description) {
                 Text("이 필터에 대해 간단하게 소개해주세요.")
             }
-            .textFieldStyle(.filtee(.default, title: "소개"))
+            .textFieldStyle(.filtee(descriptionState, title: "소개"))
             .padding(.horizontal, 20)
             
-            TextField(text: $filter.description) {
+            TextField(text: .init(
+                get: { filter.price.description },
+                set: { filter.price = Int($0) ?? 0 }
+            )) {
                 Text("1000")
             }
             .keyboardType(.numberPad)
             .textFieldStyle(.filtee(
-                .default,
+                priceState,
                 title: "판매가격",
                 subtitle: "원"
             ))
@@ -79,7 +96,7 @@ private extension MakeView {
     }
     
     func trailingItems() -> some View {
-        Button(action: {}) {
+        Button(action: saveButtonAction) {
             Image(.save)
                 .resizable()
         }
@@ -162,12 +179,19 @@ private extension MakeView {
     @ViewBuilder
     var photoPicker: some View {
         if let filteredImage {
-            PhotosPicker(selection: $pickerItem) {
-                Image(uiImage: UIImage(cgImage: filteredImage))
-                    .resizable()
+            GeometryReader { proxy in
+                let width = proxy.frame(in: .local).width
+                
+                PhotosPicker(selection: $pickerItem) { [imagePickerHeight] in
+                    Image(uiImage: UIImage(cgImage: filteredImage))
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: imagePickerHeight)
+                }
+                .frame(width: width, height: width)
+                .onAppear { imagePickerHeight = width }
             }
-            .aspectRatio(1, contentMode: .fill)
-            .frame(maxWidth: .infinity)
+            .frame(height: imagePickerHeight)
             .clipRectangle(12)
             .clipped()
             .padding(.horizontal, 20)
@@ -185,6 +209,7 @@ private extension MakeView {
                     .frame(height: 100)
             }
             .padding(.horizontal, 20)
+            .filteeBlurReplace()
         }
     }
 }
@@ -194,72 +219,146 @@ private extension MakeView {
     func pickerItemOnChange(_ newValue: PhotosPickerItem?) {
         guard let newValue else { return }
         filter.photoMetadata = nil
+        
         Task {
-            guard
-                let data = try? await newValue.loadTransferable(type: Data.self),
-                let uiImage = UIImage(data: data),
-                let source = CGImageSourceCreateWithData(data as CFData, nil),
-                let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any]
-            else { return }
-            
-            withAnimation(.filteeSpring) {
-            }
-            
-            let exifData = metadata[kCGImagePropertyExifDictionary as String] as? [String: Any]
-            let tiffData = metadata[kCGImagePropertyTIFFDictionary as String] as? [String: Any]
-            let gpsData = metadata[kCGImagePropertyGPSDictionary as String] as? [String: Any]
-            
-            let camera = exifData?[kCGImagePropertyTIFFModel as String] as? String ?? tiffData?[kCGImagePropertyTIFFModel as String] as? String
-            let focalLength = exifData?[kCGImagePropertyExifFocalLength as String] as? Double
-            let lensInfo: String?
-            switch focalLength ?? -1 {
-            case ..<20:
-                lensInfo = "초광각 카메라"
-            case 20..<35:
-                lensInfo = "광각 카메라"
-            case 35..<85:
-                lensInfo = "표준 카메라"
-            case 85...:
-                lensInfo = "망원 카메라"
-            default:
-                lensInfo = nil
-            }
-            let aperture = exifData?[kCGImagePropertyExifApertureValue as String] as? Double
-            let iso = (exifData?[kCGImagePropertyExifISOSpeedRatings as String] as? [Int])?.first
-            let shutterSpeed = (exifData?[kCGImagePropertyExifExposureTime as String] as? Double).map {
-                let denominator = Int(1 / $0)
-                return "1/\(denominator)"
-            }
-            let pixelHeight = metadata[kCGImagePropertyPixelHeight as String] as? Int
-            let pixelWidth = metadata[kCGImagePropertyPixelWidth as String] as? Int
-            let fileSize = data.count
-            let format = metadata[kCGImagePropertyFileContentsDictionary as String] as? String
-            let dateTimeOriginal = exifData?[kCGImagePropertyExifDateTimeOriginal as String] as? String
-            let latitude = gpsData?[kCGImagePropertyGPSLatitude as String] as? Double
-            let longitude = gpsData?[kCGImagePropertyGPSLongitude as String] as? Double
-            
-            let orientationValue = metadata[kCGImagePropertyOrientation as String] as? UInt32
-            let orientation = CGImagePropertyOrientation(rawValue: orientationValue ?? 1)
-            
-            withAnimation(.filteeSpring) {
-                filteredImage = uiImage.cgImage?.oriented(orientation ?? .up)
-                guard let cgImage = filteredImage else { return }
-                originalImage = UIImage(cgImage: cgImage)
-                filter.photoMetadata = PhotoMetadataModel(
-                    camera: camera,
-                    lensInfo: lensInfo,
-                    focalLength: focalLength,
-                    aperture: aperture,
-                    iso: iso,
-                    shutterSpeed: shutterSpeed,
-                    pixelHeight: pixelHeight,
-                    pixelWidth: pixelWidth,
-                    fileSize: fileSize,
-                    format: format,
-                    dateTimeOriginal: dateTimeOriginal,
-                    latitude: latitude,
-                    longitude: longitude
-                )
+            do {
+                // 에러 핸들링 개선
+                guard let data = try await newValue.loadTransferable(type: Data.self) else {
+                    print("이미지 데이터를 불러올 수 없습니다.")
+                    return
+                }
+                
+                guard let uiImage = UIImage(data: data) else {
+                    print("이미지 형식이 지원되지 않습니다.")
+                    return
+                }
+                
+                guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
+                    print("이미지 소스를 생성할 수 없습니다.")
+                    return
+                }
+                
+                guard let metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] else {
+                    print("이미지 메타데이터를 읽을 수 없습니다.")
+                    return
+                }
+                
+                // 메타데이터 추출 (개선된 버전)
+                let exifData = metadata[kCGImagePropertyExifDictionary as String] as? [String: Any]
+                let tiffData = metadata[kCGImagePropertyTIFFDictionary as String] as? [String: Any]
+                let gpsData = metadata[kCGImagePropertyGPSDictionary as String] as? [String: Any]
+                
+                // 카메라 정보 추출 개선
+                let camera = tiffData?[kCGImagePropertyTIFFModel as String] as? String
+                
+                // 렌즈 정보 추출 개선
+                let focalLength = exifData?[kCGImagePropertyExifFocalLength as String] as? Double
+                let focalLength35mm = exifData?[kCGImagePropertyExifFocalLenIn35mmFilm as String] as? Double
+                
+                let lensInfo: String? = {
+                    switch focalLength35mm ?? focalLength ?? 0 {
+                    case ...24:
+                        return "초광각 카메라"
+                    case 25...35:
+                        return "광각 카메라"
+                    case 35...50:
+                        return "표준 카메라"
+                    case 51...:
+                        return "망원 카메라"
+                    default:
+                        return nil
+                    }
+                }()
+                
+                // 조리개값 추출 개선
+                let aperture = exifData?[kCGImagePropertyExifFNumber as String] as? Double
+                
+                // ISO 추출 개선
+                let iso: Int? = {
+                    if let isoArray = exifData?[kCGImagePropertyExifISOSpeedRatings as String] as? [Int],
+                       let firstISO = isoArray.first {
+                        return firstISO
+                    }
+                    return exifData?[kCGImagePropertyExifISOSpeed as String] as? Int
+                }()
+                
+                // 셔터스피드 추출 개선
+                let shutterSpeed: String? = {
+                    if let exposureTime = exifData?[kCGImagePropertyExifExposureTime as String] as? Double {
+                        if exposureTime >= 1 {
+                            return String(format: "%.1fs", exposureTime)
+                        } else {
+                            let denominator = Int(round(1 / exposureTime))
+                            return "1/\(denominator) sec"
+                        }
+                    }
+                    return nil
+                }()
+                
+                // 이미지 크기 정보
+                let pixelHeight = metadata[kCGImagePropertyPixelHeight as String] as? Int
+                let pixelWidth = metadata[kCGImagePropertyPixelWidth as String] as? Int
+                let fileSize = data.count
+                
+                // 파일 포맷 감지 개선
+                let format: String = {
+                    if let typeIdentifier = CGImageSourceGetType(source) {
+                        let typeString = typeIdentifier as String
+                        switch typeString {
+                        case UTType.jpeg.identifier:
+                            return "JPEG"
+                        case UTType.heic.identifier:
+                            return "HEIC"
+                        case UTType.png.identifier:
+                            return "PNG"
+                        case UTType.tiff.identifier:
+                            return "TIFF"
+                        default:
+                            return typeString.components(separatedBy: ".").last?.uppercased() ?? "Unknown"
+                        }
+                    }
+                    return "Unknown"
+                }()
+                
+                // 날짜 정보
+                let dateTimeOriginal = exifData?[kCGImagePropertyExifDateTimeOriginal as String] as? String
+                
+                // GPS 정보 추출 개선
+                let (latitude, longitude): (Double?, Double?) = {
+                    guard let lat = gpsData?[kCGImagePropertyGPSLatitude as String] as? Double,
+                          let latRef = gpsData?[kCGImagePropertyGPSLatitudeRef as String] as? String,
+                          let lon = gpsData?[kCGImagePropertyGPSLongitude as String] as? Double,
+                          let lonRef = gpsData?[kCGImagePropertyGPSLongitudeRef as String] as? String
+                    else { return (nil, nil) }
+                    
+                    let finalLat = latRef == "S" ? -lat : lat
+                    let finalLon = lonRef == "W" ? -lon : lon
+                    return (finalLat, finalLon)
+                }()
+                
+                withAnimation(.filteeSpring) {
+                    filteredImage = uiImage.cgImage
+                    guard let cgImage = filteredImage else { return }
+                    originalImage = UIImage(cgImage: cgImage)
+                    filter.photoMetadata = PhotoMetadataModel(
+                        camera: camera,
+                        lensInfo: lensInfo,
+                        focalLength: Float(focalLength35mm ?? focalLength ?? 0),
+                        aperture: Float(aperture ?? 0),
+                        iso: iso,
+                        shutterSpeed: shutterSpeed,
+                        pixelHeight: pixelHeight,
+                        pixelWidth: pixelWidth,
+                        fileSize: fileSize,
+                        format: format,
+                        dateTimeOriginal: dateTimeOriginal,
+                        latitude: Float(latitude ?? 0),
+                        longitude: Float(longitude ?? 0)
+                    )
+                }
+                
+            } catch {
+                print("이미지 처리 중 오류가 발생했습니다: \(error.localizedDescription)")
             }
         }
     }
@@ -275,6 +374,44 @@ private extension MakeView {
             filterValues: $filter.filterValues
         ))
     }
+    
+    func saveButtonAction() {
+        Task {
+            do {
+                guard !filter.title.filter(\.isLetter).isEmpty else {
+                    nameState = .error("필터 제목을 공백 제외 한 글자 이상 입력해주세요.")
+                    return
+                }
+                guard !filter.description.filter(\.isLetter).isEmpty else {
+                    descriptionState = .error("필터 소개를 공백 제외 한 글자 이상 입력해주세요.")
+                    return
+                }
+                guard let filteredImage,
+                      let originalImage,
+                      let filteredImageData = UIImage(cgImage: filteredImage).jpegData(
+                        compressionQuality: 0.3
+                      ),
+                      let originalImageData = originalImage.jpegData(
+                        compressionQuality: 0.3
+                      )
+                else { return }
+                let files = try await filterClientFiles([
+                    filteredImageData,
+                    originalImageData
+                ])
+                filter.files = files
+                try await filterClientFilters(filter)
+                filter = FilterMakeModel()
+                self.filteredImage = nil
+                self.originalImage = nil
+                self.pickerItem = nil
+            } catch {
+                print(error)
+            }
+        }
+    }
+    
+    
 }
 
 #Preview {

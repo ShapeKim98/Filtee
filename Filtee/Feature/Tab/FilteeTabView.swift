@@ -37,6 +37,7 @@ struct FilteeTabView: View {
             if showTabBar {
                 tabBar
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .ignoresSafeArea(.keyboard)
             }
         }
         .onChange(

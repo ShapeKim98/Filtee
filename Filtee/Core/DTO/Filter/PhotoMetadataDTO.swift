@@ -10,8 +10,8 @@ import Foundation
 struct PhotoMetadataDTO: DTO {
     let camera: String?
     let lensInfo: String?
-    let focalLength: Double?
-    let aperture: Double?
+    let focalLength: Float?
+    let aperture: Float?
     let iso: Int?
     let shutterSpeed: String?
     let pixelHeight: Int?
@@ -19,8 +19,8 @@ struct PhotoMetadataDTO: DTO {
     let fileSize: Int?
     let format: String?
     let dateTimeOriginal: String?
-    let latitude: Double?
-    let longitude: Double?
+    let latitude: Float?
+    let longitude: Float?
     
     enum CodingKeys: String, CodingKey {
         case camera

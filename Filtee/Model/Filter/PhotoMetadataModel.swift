@@ -10,8 +10,8 @@ import Foundation
 struct PhotoMetadataModel: Equatable {
     let camera: String?
     let lensInfo: String?
-    let focalLength: Double?
-    let aperture: Double?
+    let focalLength: Float?
+    let aperture: Float?
     let iso: Int?
     let shutterSpeed: String?
     let pixelHeight: Int?
@@ -19,12 +19,14 @@ struct PhotoMetadataModel: Equatable {
     let fileSize: Int?
     let format: String?
     let dateTimeOriginal: String?
-    let latitude: Double?
-    let longitude: Double?
+    let latitude: Float?
+    let longitude: Float?
 }
 
 extension PhotoMetadataModel {
     func toData() -> PhotoMetadataDTO {
+        let date = self.dateTimeOriginal?.convertDateFormat(.metadata, to: .default)
+        
         return PhotoMetadataDTO(
             camera: self.camera,
             lensInfo: self.lensInfo,
@@ -36,7 +38,7 @@ extension PhotoMetadataModel {
             pixelWidth: self.pixelWidth,
             fileSize: self.fileSize,
             format: self.format,
-            dateTimeOriginal: self.dateTimeOriginal,
+            dateTimeOriginal: date,
             latitude: self.latitude,
             longitude: self.longitude
         )

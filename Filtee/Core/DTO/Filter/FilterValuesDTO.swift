@@ -8,18 +8,18 @@
 import Foundation
 
 struct FilterValuesDTO: DTO {
-    let brightness: Double?
-    let exposure: Double?
-    let contrast: Double?
-    let saturation: Double?
-    let sharpness: Double?
-    let blur: Double?
-    let vignette: Double?
-    let noiseReduction: Double?
-    let highlights: Double?
-    let shadows: Double?
-    let temperature: Double?
-    let blackPoint: Double?
+    let brightness: Float?
+    let exposure: Float?
+    let contrast: Float?
+    let saturation: Float?
+    let sharpness: Float?
+    let blur: Float?
+    let vignette: Float?
+    let noiseReduction: Float?
+    let highlights: Float?
+    let shadows: Float?
+    let temperature: Float?
+    let blackPoint: Float?
     
     enum CodingKeys: String, CodingKey {
         case brightness

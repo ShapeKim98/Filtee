@@ -17,6 +17,12 @@ struct FilterClient {
         _ id: String,
         _ isLike: Bool
     ) async throws -> Bool
+    var files: @Sendable (
+        _ datas: [Data]
+    ) async throws -> [String]
+    var filters: @Sendable (
+        _ model: FilterMakeModel
+    ) async throws -> Void
 }
 
 extension FilterClient: EnvironmentKey, NetworkClientConfigurable {
@@ -39,6 +45,29 @@ extension FilterClient: EnvironmentKey, NetworkClientConfigurable {
             filterLike: { id, isLike in
                 let response: [String: Bool] = try await request(.filterLike(id: id, isLike: isLike))
                 return response["like_status"] ?? false
+            },
+            files: { datas in
+                var forms = [MultipartForm]()
+                let fileName = UUID().uuidString
+                
+                for (index, data) in datas.enumerated() {
+                    guard let fileExtension = data.fileExtensionForData(),
+                          let mimeType = data.detectMimeType()
+                    else { continue }
+                    let imageType = index == 0 ? "filtered" : "original"
+                    forms.append(MultipartForm(
+                        data: data,
+                        withName: "files",
+                        fileName: "\(imageType)_\(fileName).\(fileExtension)",
+                        mimeType: mimeType
+                    ))
+                }
+                let response: FileResponseDTO = try await upload(.files(forms))
+                return response.files
+            },
+            filters: { model in
+                let request = model.toData()
+                try await Self.request(.filters(request))
             }
         )
     }()

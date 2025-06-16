@@ -11,9 +11,18 @@ struct FilterMakeRequest: RequestDTO {
     let category: String
     let title: String
     let description: String
-    let original: String
-    let filtered: String
+    let files: [String]
     let photoMetadata: PhotoMetadataDTO?
-    let filterValues: FilterValuesDTO?
+    let filterValues: FilterValuesDTO
     let price: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case category
+        case title
+        case description
+        case files
+        case photoMetadata = "photo_metadata"
+        case filterValues = "filter_values"
+        case price
+    }
 }

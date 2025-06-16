@@ -45,8 +45,8 @@ struct FilteeMetadataCell: View {
         if let latitude = photoMetadata.latitude,
            let longitude = photoMetadata.longitude {
             let center = CLLocationCoordinate2D(
-                latitude: latitude,
-                longitude: longitude
+                latitude: Double(latitude),
+                longitude: Double(longitude)
             )
             let region = MKCoordinateRegion(
                 center: center,
@@ -112,12 +112,12 @@ struct FilteeMetadataCell: View {
         }
     }
     
-    private func reverseGeocoder(latitude: Double?, longitude: Double?) async -> String? {
+    private func reverseGeocoder(latitude: Float?, longitude: Float?) async -> String? {
         do {
             guard let latitude, let longitude else { return nil }
             let location = CLLocation(
-                latitude: latitude,
-                longitude: longitude
+                latitude: Double(latitude),
+                longitude: Double(longitude)
             )
             let geocoder = CLGeocoder()
             let placemarks = try await geocoder.reverseGeocodeLocation(location)
