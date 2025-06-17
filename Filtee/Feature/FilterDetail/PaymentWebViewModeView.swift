@@ -91,6 +91,7 @@ final class PaymentWebViewModeViewController: UIViewController, WKNavigationDele
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .clear
         print("PaymentWebViewModeView viewDidLoad")
 
         view.backgroundColor = UIColor.white

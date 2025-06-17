@@ -61,7 +61,10 @@ struct FilterDetailView: View {
             }
             .task(bodyTask)
             .fullScreenCover(item: $iamportPayload) { payload in
-                paymentWeb(payload)
+                PaymentWebViewModeView(payload: payload)
+                    .background(.white)
+                    .background(ignoresSafeAreaEdges: .all)
+                    .task(paymentWebViewModeViewTask)
             }
     }
 }
@@ -341,21 +344,6 @@ private extension FilterDetailView {
         }
         .frame(maxWidth: .infinity)
     }
-    
-    func paymentWeb(_ payload: IamportPaymentPayloadModel) -> some View {
-        NavigationStack {
-            PaymentWebViewModeView(payload: payload)
-                .task(paymentWebViewModeViewTask)
-                .toolbar {
-                    ToolbarItemGroup(placement: .navigationBarTrailing) {
-                        Button("취소") {
-                            iamportPayload = nil
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-        }
-    }
 }
 
 // MARK: - Functions
@@ -378,12 +366,12 @@ private extension FilterDetailView {
     
     @Sendable
     func paymentWebViewModeViewTask() async {
+        defer { iamportPayload = nil }
         do {
             guard let iamport = try await iamportClientRequestIamport(),
                   iamport.success
             else { return }
             try await paymentsClientPaymentsValidation(iamport.impUid)
-            iamportPayload = nil
             filter?.isDownloaded = true
         } catch { print(error) }
     }

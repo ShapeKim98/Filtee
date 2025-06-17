@@ -38,8 +38,9 @@ final class IamportManager {
                 if let error = iamportResponse?.error_msg {
                     let error = NSError(domain: error, code: -1)
                     self?.continuation?.resume(throwing: error)
+                } else {
+                    self?.continuation?.resume(returning: iamportResponse)
                 }
-                self?.continuation?.resume(returning: iamportResponse)
             }
         }
     }
