@@ -19,6 +19,9 @@ extension UserClient {
             logout: { },
             todayAuthor: {
                 TodayAuthorResponseDTO.mock.toModel()
+            },
+            meProfile: {
+                MyInfoResponseDTO.mock.toModel()
             }
         )
     }()

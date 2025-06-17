@@ -28,6 +28,7 @@ struct UserClient {
     ) async throws -> Void
     var logout: @Sendable () -> Void
     var todayAuthor: @Sendable () async throws -> TodayAuthorModel
+    var meProfile: @Sendable () async throws -> MyInfoModel
 }
 
 extension UserClient: EnvironmentKey, NetworkClientConfigurable {
@@ -89,6 +90,10 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
             },
             todayAuthor: {
                 let response: TodayAuthorResponseDTO = try await request(.todayAuthor)
+                return response.toModel()
+            },
+            meProfile: {
+                let response: MyInfoResponseDTO = try await request(.meProfile)
                 return response.toModel()
             }
         )

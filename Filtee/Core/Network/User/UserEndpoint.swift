@@ -17,6 +17,7 @@ enum UserEndpoint: Endpoint {
     case appleLogin(AppleLoginRequest)
     case deviceToken(deviceToken: String)
     case todayAuthor
+    case meProfile
     
     var path: String {
         switch self {
@@ -34,6 +35,8 @@ enum UserEndpoint: Endpoint {
             return "/v1/users/deviceToken"
         case .todayAuthor:
             return "/v1/users/today-author"
+        case .meProfile:
+            return "/v1/users/me/profile"
         }
     }
     
@@ -46,7 +49,9 @@ enum UserEndpoint: Endpoint {
                 .appleLogin:
             return .post
         case .deviceToken: return .put
-        case .todayAuthor: return .get
+        case .todayAuthor,
+             .meProfile:
+            return .get
         }
     }
     
@@ -67,7 +72,9 @@ enum UserEndpoint: Endpoint {
              .appleLogin,
              .deviceToken:
             return .json
-        case .todayAuthor: return nil
+        case .todayAuthor,
+             .meProfile:
+            return nil
         }
     }
     
@@ -85,7 +92,9 @@ enum UserEndpoint: Endpoint {
             return model
         case let .deviceToken(deviceToken):
             return ["deviceToken": deviceToken]
-        case .todayAuthor: return nil
+        case .todayAuthor,
+             .meProfile:
+            return nil
         }
     }
 }

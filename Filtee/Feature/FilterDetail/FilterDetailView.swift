@@ -19,6 +19,14 @@ struct FilterDetailView: View {
     private var filterClientFilterDetail
     @Environment(\.filterClient.filterLike)
     private var filterClientFilterLike
+    @Environment(\.orderClient.ordersCreate)
+    private var orderClientOrdersCreate
+    @Environment(\.iamportClient.requestIamport)
+    private var iamportClientRequestIamport
+    @Environment(\.paymentsClient.paymentsValidation)
+    private var paymentsClientPaymentsValidation
+    @Environment(\.userClient.meProfile)
+    private var userClientMeProfile
     
     @State
     private var filter: FilterDetailModel?
@@ -32,6 +40,10 @@ struct FilterDetailView: View {
     private var imageSectionHeight: CGFloat = 0
     @State
     private var photoAddress: String?
+    @State
+    private var iamportPayload: IamportPaymentPayloadModel?
+    @State
+    private var name: String?
     
     private let filterId: String
     
@@ -50,6 +62,12 @@ struct FilterDetailView: View {
                 scrollViewBackground
             }
             .task(bodyTask)
+            .fullScreenCover(item: $iamportPayload) { payload in
+                PaymentWebViewModeView(payload: payload)
+                    .background(.white)
+                    .background(ignoresSafeAreaEdges: .all)
+                    .task(paymentWebViewModeViewTask)
+            }
     }
 }
 
@@ -245,7 +263,7 @@ private extension FilterDetailView {
             
             let isDownloaded = filter?.isDownloaded ?? false
             Button(isDownloaded ? "구매완료" : "결제하기") {
-                
+                paymentButtonAction()
             }
             .buttonStyle(.filteeCTA)
             .disabled(isDownloaded)
@@ -348,16 +366,20 @@ private extension FilterDetailView {
         }
     }
     
-    func fetchImage(urlString: String?) async throws -> Image? {
-        guard let urlString, let url = URL(string: urlString) else {
-            return nil
-        }
-        let image = try await ImagePipeline.shared.imageTask(with: url).response.image
-        guard image.imageOrientation == .up,
-              let cgImage = image.cgImage
-        else { return Image(uiImage: image) }
-        let upImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
-        return Image(uiImage: upImage)
+    @Sendable
+    func paymentWebViewModeViewTask() async {
+        defer { iamportPayload = nil }
+        do {
+            guard let iamport = try await iamportClientRequestIamport(),
+                  iamport.success
+            else { return }
+            try await paymentsClientPaymentsValidation(iamport.impUid)
+            filter?.isDownloaded = true
+        } catch { print(error) }
+    }
+    
+    func paymentButtonAction() {
+        fetchOrderCreate()
     }
     
     func filterSliderDragGestureOnChanged(
@@ -394,6 +416,38 @@ private extension FilterDetailView {
     
     func backButtonAction() {
         navigation.pop()
+    }
+    
+    func fetchImage(urlString: String?) async throws -> Image? {
+        guard let urlString, let url = URL(string: urlString) else {
+            return nil
+        }
+        let image = try await ImagePipeline.shared.imageTask(with: url).response.image
+        guard image.imageOrientation == .up,
+              let cgImage = image.cgImage
+        else { return Image(uiImage: image) }
+        let upImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+        return Image(uiImage: upImage)
+    }
+    
+    func fetchOrderCreate() {
+        guard let filter else { return }
+        Task {
+            do {
+                guard let name else {
+                    let myInfo = try await userClientMeProfile()
+                    self.name = myInfo.name ?? myInfo.nick
+                    return fetchOrderCreate()
+                }
+                let order = try await orderClientOrdersCreate(filter.id, filter.price)
+                iamportPayload = IamportPaymentPayloadModel(
+                    orderCode: order.orderCode,
+                    price: order.totalPrice,
+                    name: filter.title,
+                    buyerName: name
+                )
+            } catch { print(error) }
+        }
     }
 }
 
