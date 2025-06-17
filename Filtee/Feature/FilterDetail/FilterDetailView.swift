@@ -25,6 +25,8 @@ struct FilterDetailView: View {
     private var iamportClientRequestIamport
     @Environment(\.paymentsClient.paymentsValidation)
     private var paymentsClientPaymentsValidation
+    @Environment(\.userClient.meProfile)
+    private var userClientMeProfile
     
     @State
     private var filter: FilterDetailModel?
@@ -432,12 +434,17 @@ private extension FilterDetailView {
         guard let filter else { return }
         Task {
             do {
+                guard let name else {
+                    let myInfo = try await userClientMeProfile()
+                    self.name = myInfo.name ?? myInfo.nick
+                    return fetchOrderCreate()
+                }
                 let order = try await orderClientOrdersCreate(filter.id, filter.price)
                 iamportPayload = IamportPaymentPayloadModel(
                     orderCode: order.orderCode,
                     price: order.totalPrice,
                     name: filter.title,
-                    buyerName: "김도형"
+                    buyerName: name
                 )
             } catch { print(error) }
         }
