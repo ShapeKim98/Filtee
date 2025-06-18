@@ -40,9 +40,8 @@ extension SocialLoginClient: EnvironmentKey, NetworkClientConfigurable {
                     code: code
                 )
                 dump(request)
-                let response: AppleTokenResponse = try await requestNonToken(
-                    .appleToken(request),
-                    adaptable: false
+                let response: AppleTokenResponse = try await requestNonKey(
+                    .appleToken(request)
                 )
                 keychainManager.save(
                     response.refreshToken,
@@ -55,10 +54,7 @@ extension SocialLoginClient: EnvironmentKey, NetworkClientConfigurable {
                     clientSecret: manager.makeJWT(),
                     token: token
                 )
-                try await requestNonToken(
-                    .appleRevoke(request),
-                    adaptable: false
-                )
+                try await requestNonKey(.appleRevoke(request))
             },
             withdrawKakao: { manager.withdrawKakaoLogin() }
         )

@@ -18,7 +18,7 @@ struct FilteeApp: App {
         KakaoSDK.initSDK(appKey: Bundle.main.kakaoNativeAppKey)
         
         let pipeline = ImagePipeline {
-            $0.dataLoader = AlamofireDataLoader(session: imageSession)
+            $0.dataLoader = AlamofireDataLoader(session: defaultSession)
             $0.imageCache = ImageCache.shared
             $0.dataCachePolicy = .automatic
             $0.isRateLimiterEnabled = true
