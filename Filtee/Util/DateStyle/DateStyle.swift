@@ -10,6 +10,8 @@ import Foundation
 enum DateStyle: String, CaseIterable {
     case `default` = "yyyy-MM-dd'T'HH:mm:ss'Z'"
     case metadata = "yyyy:MM:dd HH:mm:ss"
+    case chatTime = "a H:mm"
+    
     
     static var cachedFormatter: [DateStyle: DateFormatter] {
         var formatters = [DateStyle: DateFormatter]()
