@@ -11,14 +11,6 @@ import Alamofire
 
 protocol NetworkClientConfigurable {
     associatedtype E: Endpoint
-    
-    static func request<T: ResponseDTO>(_ endPoint: E) async throws -> T
-    static func request(_ endPoint: E) async throws
-    static func requestNonToken<T: ResponseDTO>(_ endPoint: E) async throws -> T
-    static func requestNonToken(_ endPoint: E) async throws
-    static func cachedRequest<T: ResponseDTO>(_ endPoint: E) async throws -> T
-    static func requestNonKey<T: ResponseDTO>(_ endPoint: E) async throws -> T
-    static func requestNonKey(_ endPoint: E) async throws
 }
 
 extension NetworkClientConfigurable {
