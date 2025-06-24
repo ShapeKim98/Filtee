@@ -25,5 +25,6 @@ final class PersistenceProvider: Sendable {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
             }
         }
+        container.viewContext.automaticallyMergesChangesFromParent = true
     }
 }
