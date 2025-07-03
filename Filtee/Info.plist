@@ -29,33 +29,6 @@
 	</array>
 	<key>KAKAO_NATIVE_APP_KEY</key>
 	<string>$(KAKAO_NATIVE_APP_KEY)</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
-	<key>SESAC_KEY</key>
-	<string>$(SESAC_KEY)</string>
-	<key>TEAM_ID</key>
-	<string>$(TEAM_ID)</string>
-	<key>UIAppFonts</key>
-	<array>
-		<string>Pretendard-Black.otf</string>
-		<string>Pretendard-Bold.otf</string>
-		<string>Pretendard-ExtraBold.otf</string>
-		<string>Pretendard-ExtraLight.otf</string>
-		<string>Pretendard-Light.otf</string>
-		<string>Pretendard-Medium.otf</string>
-		<string>Pretendard-Regular.otf</string>
-		<string>Pretendard-SemiBold.otf</string>
-		<string>Pretendard-Thin.otf</string>
-		<string>HakgyoansimMulgyeolOTFB.otf</string>
-		<string>HakgyoansimMulgyeolOTFR.otf</string>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>kftc-bankpay</string>
@@ -92,6 +65,33 @@
 		<string>supertoss</string>
 		<string>newsmartpib</string>
 		<string>kakaobank</string>
+	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>SESAC_KEY</key>
+	<string>$(SESAC_KEY)</string>
+	<key>TEAM_ID</key>
+	<string>$(TEAM_ID)</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Pretendard-Black.otf</string>
+		<string>Pretendard-Bold.otf</string>
+		<string>Pretendard-ExtraBold.otf</string>
+		<string>Pretendard-ExtraLight.otf</string>
+		<string>Pretendard-Light.otf</string>
+		<string>Pretendard-Medium.otf</string>
+		<string>Pretendard-Regular.otf</string>
+		<string>Pretendard-SemiBold.otf</string>
+		<string>Pretendard-Thin.otf</string>
+		<string>HakgyoansimMulgyeolOTFB.otf</string>
+		<string>HakgyoansimMulgyeolOTFR.otf</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
 	</array>
 </dict>
 </plist>

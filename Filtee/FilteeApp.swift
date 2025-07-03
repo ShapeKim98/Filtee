@@ -25,11 +25,15 @@ struct FilteeApp: App {
         }
 
         ImagePipeline.shared = pipeline
+        
     }
     
     var body: some Scene {
         WindowGroup {
-            RootView()
+//            RootView()
+            
+            ChatView(roomId: "general")
+                .environment(\.managedObjectContext, PersistenceProvider.shared.container.viewContext)
         }
     }
 }

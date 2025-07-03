@@ -28,9 +28,8 @@ struct DynamicUITextView: UIViewRepresentable {
         textView.textContainer.lineFragmentPadding = 0
         textView.textContainer.widthTracksTextView = true
         textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        
         // 플레이스홀더 설정
-        updatePlaceholder(textView)
+//        updatePlaceholder(textView)
         
         return textView
     }
@@ -40,7 +39,7 @@ struct DynamicUITextView: UIViewRepresentable {
         if uiView.text != text && !(uiView.textColor == UIColor.placeholderText && text.isEmpty) {
             let wasFirstResponder = uiView.isFirstResponder
             if text.isEmpty {
-                updatePlaceholder(uiView)
+//                updatePlaceholder(uiView)
             } else {
                 uiView.text = text
                 uiView.textColor = UIColor.label

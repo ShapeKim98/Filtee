@@ -35,7 +35,7 @@ struct ChatMessageView: View {
 // MARK: - Configure Views
 private extension ChatMessageView {
     var message: some View {
-        LazyVStack(alignment: .leading, spacing: 8) {
+        LazyVStack(alignment: isMe ? .trailing : .leading, spacing: 8) {
             if !isMe {
                 Text("\(chatGroup.sender?.nick ?? "")")
                     .font(.pretendard(.body1(.bold)))
@@ -46,7 +46,7 @@ private extension ChatMessageView {
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: isMe ? .trailing : .leading)
     }
     
     @ViewBuilder
@@ -56,6 +56,12 @@ private extension ChatMessageView {
         HStack(alignment: .bottom, spacing: 8) {
             let pretendard = Pretendard.body1(.medium)
             
+            if isLast && isMe {
+                Text(chat.updatedAt?.toString(.chatTime) ?? "")
+                    .font(.pretendard(.caption2(.regular)))
+                    .foregroundStyle(.gray75)
+            }
+            
             Text(chat.content ?? "")
                 .font(.pretendard(pretendard))
                 .foregroundStyle(.gray45)
@@ -64,7 +70,7 @@ private extension ChatMessageView {
                 .background(isMe ? .brightTurquoise : .deepTurquoise)
                 .clipRectangle((pretendard.height + 16) / 2)
             
-            if isLast {
+            if isLast && !isMe {
                 Text(chat.updatedAt?.toString(.chatTime) ?? "")
                     .font(.pretendard(.caption2(.regular)))
                     .foregroundStyle(.gray75)
