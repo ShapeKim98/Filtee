@@ -35,7 +35,7 @@ struct ChatMessageView: View {
 // MARK: - Configure Views
 private extension ChatMessageView {
     var message: some View {
-        LazyVStack(alignment: isMe ? .trailing : .leading, spacing: 8) {
+        VStack(alignment: isMe ? .trailing : .leading, spacing: 8) {
             if !isMe {
                 Text("\(chatGroup.sender?.nick ?? "")")
                     .font(.pretendard(.body1(.bold)))

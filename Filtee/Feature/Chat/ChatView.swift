@@ -57,7 +57,7 @@ struct ChatView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView(content: content)
+            chatList
                 .rotation3DEffect(.degrees(180), axis: (0, 1, 0), anchor: .center)
                 .rotationEffect(.degrees(180))
             
@@ -70,39 +70,50 @@ struct ChatView: View {
 
 // MARK: Configure Views
 private extension ChatView {
-    func content() -> some View {
-        LazyVStack(spacing: 20) {
-            LazyVStack(spacing: 16) {
-                ForEach(chats) { chat in
-                    let isMe = userId == chat.sender?.userId
-                    let chatIndex = chats.index(id: chat.id) ?? 0
-                    let isLast = chatIndex == chats.count - 1
-                    let beforeChatIndex = chats.index(after: isLast ? chatIndex - 1 : chatIndex)
-                    let beforeChat = chats[beforeChatIndex]
-                    let calendar = Calendar.current
-                    let currentDay = calendar.component(.day, from: chat.latestedAt ?? .now)
-                    let beforeDay = calendar.component(.day, from: beforeChat.latestedAt ?? .now)
+    var chatList: some View {
+        List(chats) { chat in
+                .padding(.horizontal, 16)
+                .listRowInsets(.init(.zero))
+                .id(chat.id)
+        }
+        .listRowSpacing(16)
+        .listStyle(.plain)
+    }
+    
+    @ViewBuilder
+    func chatCell(_ chat: ChatGroupModel) -> some View {
+        let isMe = userId == chat.sender?.userId
+        let chatIndex = chats.index(id: chat.id) ?? 0
+        let isLast = chatIndex == chats.count - 1
+        let beforeChatIndex = chats.index(after: isLast ? chatIndex - 1 : chatIndex)
+        let beforeChat = chats[beforeChatIndex]
+        let calendar = Calendar.current
+        let currentDay = calendar.component(.day, from: chat.latestedAt ?? .now)
+        let beforeDay = calendar.component(.day, from: beforeChat.latestedAt ?? .now)
+        
+        ChatMessageView(chatGroup: chat, isMe: isMe)
+            .if(currentDay != beforeDay) { view in
+                VStack(spacing: 16) {
+                    dateDivider(chat.latestedAt)
                     
-                    ChatMessageView(chatGroup: chat, isMe: isMe)
-                        .if(currentDay != beforeDay) { view in
-                            VStack(spacing: 16) {
-                                view
-                                
-                                dateDivider(chat.latestedAt)
-                            }
-                        }
+                    view
                 }
             }
-            .rotation3DEffect(.degrees(-180), axis: (0, 1, 0), anchor: .center)
+            .rotation3DEffect(
+                .degrees(-180),
+                axis: (0, 1, 0),
+                anchor: .center
+            )
             .rotationEffect(.degrees(-180))
-            
-            if !chats.isEmpty && hasNext {
-                ProgressView()
-                    .controlSize(.large)
-                    .task(progressViewTask)
+            .if(!chats.isEmpty && hasNext && isLast) { view in
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .controlSize(.large)
+                        .task(progressViewTask)
+                    
+                    view
+                }
             }
-        }
-        .padding(.horizontal, 16)
     }
     
     var messageInput: some View {
@@ -179,13 +190,13 @@ private extension ChatView {
         let chats = try await chatPersistenceManager.paginationChatGroups(
             roomId: roomId,
             cursor: cursor
-        )?.reversed()
-        guard let chats, let cursor = chats.first?.latestedAt else {
+        )
+        guard let chats, let cursor = chats.last?.latestedAt else {
             hasNext = false
             return
         }
         self.cursor = cursor
-        self.chats.insert(contentsOf: chats, at: 0)
+        self.chats.append(contentsOf: chats)
     }
     
     func saveSendChat() {
@@ -199,13 +210,13 @@ private extension ChatView {
                     sender: sender,
                     createdAt: .now,
                     updatedAt: .now,
-                    lastChatGroup: chats.last
+                    lastChatGroup: chats.first
                 )
                 input = ""
-                if chats.last?.id == newChat.id {
-                    chats.update(newChat, at: chats.count - 1)
+                if chats.first?.id == newChat.id {
+                    chats.update(newChat, at: 0)
                 } else {
-                    chats.append(newChat)
+                    chats.insert(newChat, at: 0)
                 }
             } catch { print(error) }
         }
