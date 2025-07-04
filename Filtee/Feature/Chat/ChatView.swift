@@ -72,6 +72,7 @@ struct ChatView: View {
 private extension ChatView {
     var chatList: some View {
         List(chats) { chat in
+            chatCell(chat)
                 .padding(.horizontal, 16)
                 .listRowInsets(.init(.zero))
                 .id(chat.id)
