@@ -70,7 +70,7 @@ actor ChatPersistenceManager {
         let targetGroup: ChatGroupModel
         if let lastChatGroup,
             let latestedAt = lastChatGroup.latestedAt,
-            lastChatGroup.sender == sender {
+           lastChatGroup.sender?.userId == sender.userId {
             let calendar = Calendar.current
             let lastMinute = calendar.component(.minute, from: latestedAt)
             let currentMinute = calendar.component(.minute, from: createdAt)
