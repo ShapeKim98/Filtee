@@ -29,10 +29,7 @@ struct FilteeApp: App {
     
     var body: some Scene {
         WindowGroup {
-//            RootView()
-            
-            ChatView(roomId: "general")
-                .environment(\.managedObjectContext, PersistenceProvider.shared.container.viewContext)
+            RootView()
         }
     }
 }

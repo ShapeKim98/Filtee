@@ -16,3 +16,16 @@ struct ChatResponseDTO: ResponseDTO {
     let sender: UserInfoResponseDTO
     let files: [String]
 }
+
+extension ChatResponseDTO {
+    func toModel() -> ChatModel {
+        return ChatModel(
+            id: self.chatId,
+            roomId: self.roomId,
+            content: self.content,
+            createdAt: self.createdAt.toDate(.default) ?? .now,
+            updatedAt: self.updatedAt.toDate(.default) ?? .now,
+            sender: self.sender.toModel()
+        )
+    }
+}

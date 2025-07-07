@@ -14,6 +14,18 @@ struct ChatView: View {
     private var userClientMeProfile
     @Environment(\.chatPersistenceManager)
     private var chatPersistenceManager
+    @Environment(\.chatClient.chats)
+    private var chatClientChats
+    @Environment(\.chatClient.sendChats)
+    private var chatClientSendChats
+    @Environment(\.chatClient.createChats)
+    private var chatClientCreateChats
+    @Environment(\.chatClient.webSocketConnect)
+    private var chatClientWebSocketConnect
+    @Environment(\.chatClient.webSocketDisconnect)
+    private var chatClientWebSocketDisconnect
+    @Environment(\.chatClient.webSocketStream)
+    private var chatClientWebSocketStream
     
     @State
     private var room: RoomModel?
@@ -32,7 +44,7 @@ struct ChatView: View {
     @State
     private var hasNext: Bool = true
     
-    private let roomId: String
+    private let opponentId: String
     private var roomTitle: String {
         room?.participants
             .compactMap(\.nick)
@@ -40,8 +52,8 @@ struct ChatView: View {
             .joined(separator: ", ") ?? ""
     }
     
-    init(roomId: String) {
-        self.roomId = roomId
+    init(opponentId: String) {
+        self.opponentId = opponentId
     }
     
     var body: some View {
@@ -150,26 +162,24 @@ private extension ChatView {
     func bodyTask() async {
         defer { isLoading = false }
         do {
-//            async let myInfo = try userClientMeProfile()
-            async let room = chatPersistenceManager.readRoom(roomId)
-//            userId = try await myInfo.userId
-            do {
-                self.room = try await room
-            } catch {
-                
-            }
+            userId = try await userClientMeProfile().userId
+            self.room = try await chatClientCreateChats(opponentId)
+            guard let room else { return }
+            try await chatClientWebSocketConnect(room.id)
             try await paginationChats()
+            try await updateNewChats(roomId: room.id)
+            await observeChatStream()
         } catch {
             print(error)
         }
     }
     
     func sendButtonAction() {
-        saveSendChat()
+        Task { await sendChat() }
     }
     
     func inputTextEditorOnSubmit() {
-        saveSendChat()
+        Task { await sendChat() }
     }
     
     @Sendable
@@ -182,6 +192,7 @@ private extension ChatView {
     }
     
     func paginationChats() async throws {
+        guard let roomId = room?.id else { return }
         let chats = try await chatPersistenceManager.paginationChatGroups(
             roomId: roomId,
             cursor: cursor
@@ -194,34 +205,50 @@ private extension ChatView {
         self.chats.append(contentsOf: chats)
     }
     
-    func saveSendChat() {
-        Task {
-            do {
-                // 임시
-                let model = ChatModel(
-                    id: UUID().uuidString,
-                    roomId: roomId,
-                    content: input,
-                    createdAt: .now,
-                    updatedAt: .now,
-                    sender: sender
-                )
-                let newChat = try await chatPersistenceManager.createChat(
-                    chatModel: model,
-                    lastChatGroup: chats.first
-                )
-                input = ""
-                if chats.first?.id == newChat.id {
-                    chats.update(newChat, at: 0)
-                } else {
-                    chats.insert(newChat, at: 0)
-                }
-            } catch { print(error) }
+    func updateNewChats(roomId: String) async throws {
+        guard let next = chats.first?.latestedAt.toString(.default) else { return }
+        let newChats = try await chatClientChats(roomId, next).reversed()
+        for chat in newChats {
+            await saveChat(chat: chat)
+        }
+    }
+    
+    func saveChat(chat: ChatModel) async {
+        do {
+            let newChat = try await chatPersistenceManager.createChat(
+                chatModel: chat,
+                lastChatGroup: chats.first
+            )
+            input = ""
+            if chats.first?.id == newChat.id {
+                chats.update(newChat, at: 0)
+            } else {
+                chats.insert(newChat, at: 0)
+            }
+        } catch { print(error) }
+    }
+    
+    func sendChat() async {
+        guard let roomId = room?.id else { return }
+        do {
+            try await chatClientSendChats(roomId, input)
+        } catch {
+            print(error)
+        }
+    }
+    
+    func observeChatStream() async {
+        do {
+            for try await chat in chatClientWebSocketStream() {
+                await saveChat(chat: chat)
+            }
+        } catch {
+            print(error)
         }
     }
 }
 
 #Preview {
-    ChatView(roomId: "general")
+    ChatView(opponentId: "")
         .environment(\.managedObjectContext, PersistenceProvider(inMemory: true).container.viewContext)
 }
