@@ -10,13 +10,13 @@ import SwiftUI
 import NukeUI
 
 struct ChatMessageView: View {
-    private let chatGroup: ChatGroupModel
-    private let chats: [ChatModel]
+    private let chatGroup: ChatGroupDataModel
+    private let chats: [ChatDataModel]
     private let isMe: Bool
     
-    init(chatGroup: ChatGroupModel, isMe: Bool) {
+    init(chatGroup: ChatGroupDataModel, isMe: Bool) {
         self.chatGroup = chatGroup
-        let chats = chatGroup.chats as? Set<ChatModel> ?? []
+        let chats = chatGroup.chats as? Set<ChatDataModel> ?? []
         self.chats = chats.sorted { $0.createdAt ?? .now < $1.createdAt ?? .now }
         self.isMe = isMe
     }
@@ -50,7 +50,7 @@ private extension ChatMessageView {
     }
     
     @ViewBuilder
-    func bubble(_ chat: ChatModel) -> some View {
+    func bubble(_ chat: ChatDataModel) -> some View {
         let isLast = chats.last?.chatId == chat.chatId
         
         HStack(alignment: .bottom, spacing: 8) {

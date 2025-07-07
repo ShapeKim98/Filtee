@@ -47,7 +47,7 @@ struct MockDataGenerator {
     }
     
     // MARK: - 확장된 사용자 생성 (20명)
-    private static func createUsers(context: NSManagedObjectContext) -> [SenderModel] {
+    private static func createUsers(context: NSManagedObjectContext) -> [SenderDataModel] {
         let userData = [
             ("user001", "김철수", "https://picsum.photos/100/100?random=1"),
             ("user002", "이영희", "https://picsum.photos/100/100?random=2"),
@@ -71,10 +71,10 @@ struct MockDataGenerator {
             ("user020", "노지우", "https://picsum.photos/100/100?random=20"),
         ]
         
-        var users: [SenderModel] = []
+        var users: [SenderDataModel] = []
         
         for (userId, nick, profileImage) in userData {
-            let user = SenderModel(context: context)
+            let user = SenderDataModel(context: context)
             user.userId = userId
             user.nick = nick
             user.profileImage = profileImage
@@ -85,7 +85,7 @@ struct MockDataGenerator {
     }
     
     // MARK: - 채팅방 생성
-    private static func createRooms(context: NSManagedObjectContext) -> [RoomModel] {
+    private static func createRooms(context: NSManagedObjectContext) -> [RoomDataModel] {
         let roomData = [
             ("general", "일반 채팅방"),
             ("dev_team", "개발팀 채팅방"),
@@ -97,10 +97,10 @@ struct MockDataGenerator {
             ("social", "소셜 채팅"),
         ]
         
-        var rooms: [RoomModel] = []
+        var rooms: [RoomDataModel] = []
         
         for (roomId, _) in roomData {
-            let room = RoomModel(context: context)
+            let room = RoomDataModel(context: context)
             room.roomId = roomId
             room.createdAt = Date().addingTimeInterval(-Double.random(in: 86400*7...86400*30)) // 1주-1달 전
             room.updatedAt = Date()
@@ -111,7 +111,7 @@ struct MockDataGenerator {
     }
     
     // MARK: - 채팅방 참여자 할당
-    private static func assignParticipantsToRooms(rooms: [RoomModel], users: [SenderModel]) {
+    private static func assignParticipantsToRooms(rooms: [RoomDataModel], users: [SenderDataModel]) {
         for room in rooms {
             let participantCount = Int.random(in: 5...15) // 방마다 5~15명 참여
             let participants = users.shuffled().prefix(participantCount)
@@ -124,12 +124,12 @@ struct MockDataGenerator {
     
     // MARK: - 🚀 실제 채팅앱 방식의 메시지 및 그룹 생성
     private static func createMassiveMessagesAndGroups(
-        room: RoomModel,
-        users: [SenderModel],
+        room: RoomDataModel,
+        users: [SenderDataModel],
         targetGroupCount: Int,
         context: NSManagedObjectContext
     ) {
-        guard let roomParticipants = room.participants?.allObjects as? [SenderModel],
+        guard let roomParticipants = room.participants?.allObjects as? [SenderDataModel],
               !roomParticipants.isEmpty else { return }
         
         // 시간 설정: 30일 전부터 현재까지
@@ -137,8 +137,8 @@ struct MockDataGenerator {
         let endTime = Date()
         
         var currentTime = startTime
-        var currentGroup: ChatGroupModel?
-        var lastSender: SenderModel?
+        var currentGroup: ChatGroupDataModel?
+        var lastSender: SenderDataModel?
         var lastMinute: Int?
         var createdGroups = 0
         var totalMessages = 0
@@ -215,10 +215,10 @@ struct MockDataGenerator {
     
     // MARK: - 🔄 ChatGroup 생성 조건 확인
     private static func shouldCreateNewChatGroup(
-        currentSender: SenderModel,
-        lastSender: SenderModel?,
+        currentSender: SenderDataModel,
+        lastSender: SenderDataModel?,
         currentTime: Date,
-        lastGroup: ChatGroupModel?
+        lastGroup: ChatGroupDataModel?
     ) -> Bool {
         // 첫 번째 그룹인 경우
         guard let lastSender = lastSender,
@@ -257,10 +257,10 @@ struct MockDataGenerator {
     
     // MARK: - 👤 발신자 선택 (가중치 적용)
     private static func chooseSender(
-        participants: [SenderModel],
-        lastSender: SenderModel?,
+        participants: [SenderDataModel],
+        lastSender: SenderDataModel?,
         lastMessageTime: Date
-    ) -> SenderModel {
+    ) -> SenderDataModel {
         guard let lastSender = lastSender else {
             return participants.randomElement()!
         }
@@ -279,12 +279,12 @@ struct MockDataGenerator {
     
     // MARK: - 💬 연속 메시지 생성
     private static func generateContinuousMessages(
-        sender: SenderModel,
-        room: RoomModel,
+        sender: SenderDataModel,
+        room: RoomDataModel,
         startTime: Date,
         isNewGroup: Bool,
         context: NSManagedObjectContext
-    ) -> [ChatModel] {
+    ) -> [ChatDataModel] {
         
         // 새 그룹이면 더 많은 메시지, 기존 그룹이면 적은 메시지
         let messageCount: Int
@@ -296,7 +296,7 @@ struct MockDataGenerator {
             messageCount = Int.random(in: 1...2)
         }
         
-        var messages: [ChatModel] = []
+        var messages: [ChatDataModel] = []
         var currentTime = startTime
         
         for i in 0..<messageCount {
@@ -330,8 +330,8 @@ struct MockDataGenerator {
     
     // MARK: - 🧠 스마트 메시지 생성
     private static func generateSmartMessage(
-        sender: SenderModel,
-        room: RoomModel,
+        sender: SenderDataModel,
+        room: RoomDataModel,
         messageIndex: Int,
         totalMessages: Int,
         isNewGroup: Bool
@@ -454,11 +454,11 @@ struct MockDataGenerator {
     // MARK: - 패턴별 메시지 생성
     private static func generateMessagesForPattern(
         pattern: MessagePattern,
-        sender: SenderModel,
-        room: RoomModel,
+        sender: SenderDataModel,
+        room: RoomDataModel,
         startTime: Date,
         context: NSManagedObjectContext
-    ) -> [ChatModel] {
+    ) -> [ChatDataModel] {
         
         let messageCount: Int
         let timeGapRange: ClosedRange<TimeInterval>
@@ -478,7 +478,7 @@ struct MockDataGenerator {
             timeGapRange = 15...120 // 15초-2분 간격
         }
         
-        var messages: [ChatModel] = []
+        var messages: [ChatDataModel] = []
         var currentTime = startTime
         
         for i in 0..<messageCount {
@@ -512,8 +512,8 @@ struct MockDataGenerator {
     
     // MARK: - 현실적인 메시지 내용 생성
     private static func generateRealisticMessage(
-        sender: SenderModel,
-        room: RoomModel,
+        sender: SenderDataModel,
+        room: RoomDataModel,
         messageIndex: Int,
         totalMessages: Int,
         pattern: MessagePattern
@@ -596,15 +596,15 @@ struct MockDataGenerator {
     
     // MARK: - 헬퍼 메서드들
     
-    private static func createChatGroup(sender: SenderModel, room: RoomModel, context: NSManagedObjectContext) -> ChatGroupModel {
-        let group = ChatGroupModel(context: context)
+    private static func createChatGroup(sender: SenderDataModel, room: RoomDataModel, context: NSManagedObjectContext) -> ChatGroupDataModel {
+        let group = ChatGroupDataModel(context: context)
         group.room = room
         group.sender = sender
         return group
     }
     
-    private static func createMessage(content: String, sender: SenderModel, room: RoomModel, time: Date, context: NSManagedObjectContext) -> ChatModel {
-        let message = ChatModel(context: context)
+    private static func createMessage(content: String, sender: SenderDataModel, room: RoomDataModel, time: Date, context: NSManagedObjectContext) -> ChatDataModel {
+        let message = ChatDataModel(context: context)
         message.chatId = UUID().uuidString
         message.content = content
         message.createdAt = time
@@ -622,7 +622,7 @@ struct MockDataGenerator {
     }
     
     private static func clearAllData(context: NSManagedObjectContext) {
-        let entities = ["ChatModel", "ChatGroupModel", "RoomModel", "SenderModel"]
+        let entities = ["ChatDataModel", "ChatGroupDataModel", "RoomDataModel", "SenderDataModel"]
         
         for entityName in entities {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
@@ -675,9 +675,9 @@ extension MockDataGenerator {
 struct MockDataAnalyzer {
     
     static func analyzeGeneratedData(context: NSManagedObjectContext) {
-        let roomRequest: NSFetchRequest<RoomModel> = RoomModel.fetchRequest()
-        let groupRequest: NSFetchRequest<ChatGroupModel> = ChatGroupModel.fetchRequest()
-        let messageRequest: NSFetchRequest<ChatModel> = ChatModel.fetchRequest()
+        let roomRequest: NSFetchRequest<RoomDataModel> = RoomDataModel.fetchRequest()
+        let groupRequest: NSFetchRequest<ChatGroupDataModel> = ChatGroupDataModel.fetchRequest()
+        let messageRequest: NSFetchRequest<ChatDataModel> = ChatDataModel.fetchRequest()
         
         do {
             let roomCount = try context.count(for: roomRequest)

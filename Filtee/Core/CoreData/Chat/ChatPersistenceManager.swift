@@ -11,14 +11,14 @@ import SwiftUICore
 actor ChatPersistenceManager {
     private let context = PersistenceProvider.shared.container.newBackgroundContext()
     
-    func paginationChatGroups(roomId: String, cursor: Date?, page: Int = 20) async throws -> [ChatGroupModel]? {
+    func paginationChatGroups(roomId: String, cursor: Date?, page: Int = 20) async throws -> [ChatGroupDataModel]? {
         let context = self.context
         return try await context.perform { @Sendable in
-            let request: NSFetchRequest<ChatGroupModel> = ChatGroupModel.fetchRequest()
+            let request: NSFetchRequest<ChatGroupDataModel> = ChatGroupDataModel.fetchRequest()
             
             // 정렬: 최신순
             request.sortDescriptors = [
-                NSSortDescriptor(keyPath: \ChatGroupModel.latestedAt, ascending: false)
+                NSSortDescriptor(keyPath: \ChatGroupDataModel.latestedAt, ascending: false)
             ]
             
             // 필터 조건
@@ -46,18 +46,18 @@ actor ChatPersistenceManager {
     func createChat(
         chatId: String,
         content: String,
-        room: RoomModel,
-        sender: SenderModel,
+        room: RoomDataModel,
+        sender: SenderDataModel,
         filesData: Data? = nil,
         createdAt: Date,
         updatedAt: Date,
-        lastChatGroup: ChatGroupModel?
-    ) async throws -> ChatGroupModel {
-        let senderObject: SenderModel = try await read(sender.objectID)
-        let roomObject: RoomModel = try await read(room.objectID)
+        lastChatGroup: ChatGroupDataModel?
+    ) async throws -> ChatGroupDataModel {
+        let senderObject: SenderDataModel = try await read(sender.objectID)
+        let roomObject: RoomDataModel = try await read(room.objectID)
         
-        let chat: ChatModel = try await save { context in
-            let chat = ChatModel(context: context)
+        let chat: ChatDataModel = try await save { context in
+            let chat = ChatDataModel(context: context)
             chat.chatId = chatId
             chat.content = content
             chat.roomId = roomObject.roomId
@@ -67,7 +67,7 @@ actor ChatPersistenceManager {
             chat.updatedAt = updatedAt
             return chat
         }
-        let targetGroup: ChatGroupModel
+        let targetGroup: ChatGroupDataModel
         if let lastChatGroup,
             let latestedAt = lastChatGroup.latestedAt,
            lastChatGroup.sender?.userId == sender.userId {
@@ -96,9 +96,9 @@ actor ChatPersistenceManager {
     /// 채팅 그룹 업데이트 (latestedAt 갱신)
     @discardableResult
     private func _updateChatGroup(
-        chat: ChatModel,
-        in chatGroup: ChatGroupModel
-    ) async throws -> ChatGroupModel {
+        chat: ChatDataModel,
+        in chatGroup: ChatGroupDataModel
+    ) async throws -> ChatGroupDataModel {
         return try await save { context in
             chatGroup.addToChats(chat)
             chatGroup.latestedAt = Date()
@@ -108,11 +108,11 @@ actor ChatPersistenceManager {
     
     @discardableResult
     private func _createChatGroup(
-        sender: SenderModel,
-        in room: RoomModel
-    ) async throws -> ChatGroupModel {
+        sender: SenderDataModel,
+        in room: RoomDataModel
+    ) async throws -> ChatGroupDataModel {
         return try await save { context in
-            let chatGroup = ChatGroupModel(context: context)
+            let chatGroup = ChatGroupDataModel(context: context)
             chatGroup.sender = sender
             chatGroup.latestedAt = Date()
             
@@ -127,9 +127,9 @@ actor ChatPersistenceManager {
         userId: String,
         nick: String,
         profileImage: String? = nil
-    ) async throws -> SenderModel {
+    ) async throws -> SenderDataModel {
         return try await save { context in
-            let sender = SenderModel(context: context)
+            let sender = SenderDataModel(context: context)
             sender.userId = userId
             sender.nick = nick
             sender.profileImage = profileImage

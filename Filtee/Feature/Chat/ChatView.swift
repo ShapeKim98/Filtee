@@ -16,9 +16,9 @@ struct ChatView: View {
     private var chatPersistenceManager
     
     @FetchRequest
-    private var rooms: FetchedResults<RoomModel>
+    private var rooms: FetchedResults<RoomDataModel>
     @State
-    private var chats: IdentifiedArrayOf<ChatGroupModel> = []
+    private var chats: IdentifiedArrayOf<ChatGroupDataModel> = []
     @State
     private var input: String = ""
     @State
@@ -32,9 +32,9 @@ struct ChatView: View {
     
     private let roomId: String
     
-    private var room: RoomModel? { rooms.first }
-    private var participants: Set<SenderModel> {
-        return room?.participants as? Set<SenderModel> ?? []
+    private var room: RoomDataModel? { rooms.first }
+    private var participants: Set<SenderDataModel> {
+        return room?.participants as? Set<SenderDataModel> ?? []
     }
     private var roomTitle: String {
         participants
@@ -42,14 +42,14 @@ struct ChatView: View {
             .sorted(by: <)
             .joined(separator: ", ")
     }
-    private var sender: SenderModel? {
+    private var sender: SenderDataModel? {
         guard let userId else { return nil }
         return participants.first(where: { $0.userId == userId })
     }
     
     init(roomId: String) {
         self.roomId = roomId
-        self._rooms = FetchRequest<RoomModel>(
+        self._rooms = FetchRequest<RoomDataModel>(
             sortDescriptors: [],
             predicate: NSPredicate(format: "roomId == %@", roomId)
         )
@@ -82,7 +82,7 @@ private extension ChatView {
     }
     
     @ViewBuilder
-    func chatCell(_ chat: ChatGroupModel) -> some View {
+    func chatCell(_ chat: ChatGroupDataModel) -> some View {
         let isMe = userId == chat.sender?.userId
         let chatIndex = chats.index(id: chat.id) ?? 0
         let isLast = chatIndex == chats.count - 1
