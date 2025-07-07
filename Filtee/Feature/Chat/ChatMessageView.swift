@@ -10,14 +10,11 @@ import SwiftUI
 import NukeUI
 
 struct ChatMessageView: View {
-    private let chatGroup: ChatGroupDataModel
-    private let chats: [ChatDataModel]
+    private let chatGroup: ChatGroupModel
     private let isMe: Bool
     
-    init(chatGroup: ChatGroupDataModel, isMe: Bool) {
+    init(chatGroup: ChatGroupModel, isMe: Bool) {
         self.chatGroup = chatGroup
-        let chats = chatGroup.chats as? Set<ChatDataModel> ?? []
-        self.chats = chats.sorted { $0.createdAt ?? .now < $1.createdAt ?? .now }
         self.isMe = isMe
     }
     
@@ -41,7 +38,7 @@ private extension ChatMessageView {
                     .font(.pretendard(.body1(.bold)))
             }
             
-            ForEach(chats) { chat in
+            ForEach(chatGroup.chats) { chat in
                 bubble(chat)
             }
         }
@@ -50,19 +47,19 @@ private extension ChatMessageView {
     }
     
     @ViewBuilder
-    func bubble(_ chat: ChatDataModel) -> some View {
-        let isLast = chats.last?.chatId == chat.chatId
+    func bubble(_ chat: ChatModel) -> some View {
+        let isLast = chatGroup.chats.last?.id == chat.id
         
         HStack(alignment: .bottom, spacing: 8) {
             let pretendard = Pretendard.body1(.medium)
             
             if isLast && isMe {
-                Text(chat.updatedAt?.toString(.chatTime) ?? "")
+                Text(chat.updatedAt.toString(.chatTime))
                     .font(.pretendard(.caption2(.regular)))
                     .foregroundStyle(.gray75)
             }
             
-            Text(chat.content ?? "")
+            Text(chat.content)
                 .font(.pretendard(pretendard))
                 .foregroundStyle(.gray45)
                 .padding(.vertical, 8)
@@ -71,7 +68,7 @@ private extension ChatMessageView {
                 .clipRectangle((pretendard.height + 16) / 2)
             
             if isLast && !isMe {
-                Text(chat.updatedAt?.toString(.chatTime) ?? "")
+                Text(chat.updatedAt.toString(.chatTime))
                     .font(.pretendard(.caption2(.regular)))
                     .foregroundStyle(.gray75)
             }

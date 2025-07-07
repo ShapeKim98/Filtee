@@ -1,0 +1,14 @@
+//
+//  UserInfoModel.swift
+//  Filtee
+//
+//  Created by 김도형 on 7/7/25.
+//
+
+import Foundation
+
+struct UserInfoModel {
+    let id: String
+    let nick: String
+    let profileImage: String?
+}

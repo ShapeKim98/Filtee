@@ -14,3 +14,14 @@ struct ChatRoomResponseDTO: Decodable {
     let participants: [UserInfoResponseDTO]
     let lastChat: ChatResponseDTO
 }
+
+extension ChatRoomResponseDTO {
+    func toModel() -> RoomModel {
+        return RoomModel(
+            id: self.roomId,
+            createdAt: self.createdAt.toDate(.default) ?? .now,
+            updatedAt: self.updatedAt.toDate(.default) ?? .now,
+            participants: self.participants.map { $0.toModel() }
+        )
+    }
+}

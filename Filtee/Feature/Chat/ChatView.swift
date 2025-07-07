@@ -15,10 +15,12 @@ struct ChatView: View {
     @Environment(\.chatPersistenceManager)
     private var chatPersistenceManager
     
-    @FetchRequest
-    private var rooms: FetchedResults<RoomDataModel>
     @State
-    private var chats: IdentifiedArrayOf<ChatGroupDataModel> = []
+    private var room: RoomModel?
+    @State
+    private var sender: UserInfoModel?
+    @State
+    private var chats: IdentifiedArrayOf<ChatGroupModel> = []
     @State
     private var input: String = ""
     @State
@@ -31,28 +33,15 @@ struct ChatView: View {
     private var hasNext: Bool = true
     
     private let roomId: String
-    
-    private var room: RoomDataModel? { rooms.first }
-    private var participants: Set<SenderDataModel> {
-        return room?.participants as? Set<SenderDataModel> ?? []
-    }
     private var roomTitle: String {
-        participants
+        room?.participants
             .compactMap(\.nick)
             .sorted(by: <)
-            .joined(separator: ", ")
-    }
-    private var sender: SenderDataModel? {
-        guard let userId else { return nil }
-        return participants.first(where: { $0.userId == userId })
+            .joined(separator: ", ") ?? ""
     }
     
     init(roomId: String) {
         self.roomId = roomId
-        self._rooms = FetchRequest<RoomDataModel>(
-            sortDescriptors: [],
-            predicate: NSPredicate(format: "roomId == %@", roomId)
-        )
     }
     
     var body: some View {
@@ -82,15 +71,15 @@ private extension ChatView {
     }
     
     @ViewBuilder
-    func chatCell(_ chat: ChatGroupDataModel) -> some View {
-        let isMe = userId == chat.sender?.userId
+    func chatCell(_ chat: ChatGroupModel) -> some View {
+        let isMe = userId == chat.sender?.id
         let chatIndex = chats.index(id: chat.id) ?? 0
         let isLast = chatIndex == chats.count - 1
         let beforeChatIndex = chats.index(after: isLast ? chatIndex - 1 : chatIndex)
         let beforeChat = chats[beforeChatIndex]
         let calendar = Calendar.current
-        let currentDay = calendar.component(.day, from: chat.latestedAt ?? .now)
-        let beforeDay = calendar.component(.day, from: beforeChat.latestedAt ?? .now)
+        let currentDay = calendar.component(.day, from: chat.latestedAt)
+        let beforeDay = calendar.component(.day, from: beforeChat.latestedAt)
         
         ChatMessageView(chatGroup: chat, isMe: isMe)
             .if(currentDay != beforeDay) { view in
@@ -161,9 +150,14 @@ private extension ChatView {
     func bodyTask() async {
         defer { isLoading = false }
         do {
-//            let myInfo = try await userClientMeProfile()
-//            userId = myInfo.userId
-            userId = participants.first(where: { $0.nick == "장현우" })?.userId
+//            async let myInfo = try userClientMeProfile()
+            async let room = chatPersistenceManager.readRoom(roomId)
+//            userId = try await myInfo.userId
+            do {
+                self.room = try await room
+            } catch {
+                
+            }
             try await paginationChats()
         } catch {
             print(error)
@@ -202,15 +196,18 @@ private extension ChatView {
     
     func saveSendChat() {
         Task {
-            guard let sender, let room else { return }
             do {
-                let newChat = try await chatPersistenceManager.createChat(
-                    chatId: UUID().uuidString,
+                // 임시
+                let model = ChatModel(
+                    id: UUID().uuidString,
+                    roomId: roomId,
                     content: input,
-                    room: room,
-                    sender: sender,
                     createdAt: .now,
                     updatedAt: .now,
+                    sender: sender
+                )
+                let newChat = try await chatPersistenceManager.createChat(
+                    chatModel: model,
                     lastChatGroup: chats.first
                 )
                 input = ""

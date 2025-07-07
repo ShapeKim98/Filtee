@@ -25,7 +25,6 @@ struct FilteeApp: App {
         }
 
         ImagePipeline.shared = pipeline
-        
     }
     
     var body: some Scene {

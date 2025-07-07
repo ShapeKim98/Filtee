@@ -11,7 +11,7 @@ import SwiftUICore
 actor ChatPersistenceManager {
     private let context = PersistenceProvider.shared.container.newBackgroundContext()
     
-    func paginationChatGroups(roomId: String, cursor: Date?, page: Int = 20) async throws -> [ChatGroupDataModel]? {
+    func paginationChatGroups(roomId: String, cursor: Date?, page: Int = 20) async throws -> [ChatGroupModel]? {
         let context = self.context
         return try await context.perform { @Sendable in
             let request: NSFetchRequest<ChatGroupDataModel> = ChatGroupDataModel.fetchRequest()
@@ -38,59 +38,68 @@ actor ChatPersistenceManager {
             request.includesPropertyValues = true
             request.returnsObjectsAsFaults = false
             
-            return try context.fetch(request)
+            return try context.fetch(request).map { $0.toModel() }
         }
+    }
+    
+    func readRoom(_ id: String) async throws -> RoomModel {
+        return try await _readRoom(id).toModel()
     }
     
     @discardableResult
     func createChat(
-        chatId: String,
-        content: String,
-        room: RoomDataModel,
-        sender: SenderDataModel,
-        filesData: Data? = nil,
-        createdAt: Date,
-        updatedAt: Date,
-        lastChatGroup: ChatGroupDataModel?
-    ) async throws -> ChatGroupDataModel {
-        let senderObject: SenderDataModel = try await read(sender.objectID)
-        let roomObject: RoomDataModel = try await read(room.objectID)
+        chatModel: ChatModel,
+        lastChatGroup: ChatGroupModel?
+    ) async throws -> ChatGroupModel {
+        let room = try await _readRoom(chatModel.roomId)
+        let sender = try await _readSender(chatModel.sender?.id ?? "")
         
         let chat: ChatDataModel = try await save { context in
             let chat = ChatDataModel(context: context)
-            chat.chatId = chatId
-            chat.content = content
-            chat.roomId = roomObject.roomId
-            chat.sender = senderObject
-            chat.filesData = filesData
-            chat.createdAt = createdAt
-            chat.updatedAt = updatedAt
+            chat.chatId = chatModel.id
+            chat.content = chat.content
+            chat.roomId = chatModel.roomId
+            chat.sender = sender
+            chat.filesData = nil
+            chat.createdAt = chatModel.createdAt
+            chat.updatedAt = chatModel.updatedAt
             return chat
         }
         let targetGroup: ChatGroupDataModel
         if let lastChatGroup,
-            let latestedAt = lastChatGroup.latestedAt,
-           lastChatGroup.sender?.userId == sender.userId {
+           lastChatGroup.sender?.id == sender.userId {
             let calendar = Calendar.current
-            let lastMinute = calendar.component(.minute, from: latestedAt)
-            let currentMinute = calendar.component(.minute, from: createdAt)
-            let lastHour = calendar.component(.hour, from: latestedAt)
-            let currentHour = calendar.component(.hour, from: createdAt)
-            let lastDay = calendar.component(.day, from: latestedAt)
-            let currentDay = calendar.component(.day, from: createdAt)
+            let lastMinute = calendar.component(.minute, from: lastChatGroup.latestedAt)
+            let currentMinute = calendar.component(.minute, from: chatModel.createdAt)
+            let lastHour = calendar.component(.hour, from: lastChatGroup.latestedAt)
+            let currentHour = calendar.component(.hour, from: chatModel.createdAt)
+            let lastDay = calendar.component(.day, from: lastChatGroup.latestedAt)
+            let currentDay = calendar.component(.day, from: chatModel.createdAt)
             let isNewGroup = lastDay != currentDay || lastHour != currentHour || lastMinute != currentMinute
             
             if isNewGroup {
-                targetGroup = try await _createChatGroup(sender: senderObject, in: roomObject)
+                targetGroup = try await _createChatGroup(sender: sender, in: room)
             } else {
-                targetGroup = lastChatGroup
+                targetGroup = try await read(NSManagedObjectID())
             }
         } else {
-            targetGroup = try await _createChatGroup(sender: senderObject, in: roomObject)
+            targetGroup = try await _createChatGroup(sender: sender, in: room)
         }
         try await _updateChatGroup(chat: chat, in: targetGroup)
         
-        return targetGroup
+        return targetGroup.toModel()
+    }
+    
+    private func _readRoom(_ id: String) async throws -> RoomDataModel {
+        return try await read(id, query: "roomId == %@", of: RoomDataModel.self)
+    }
+    
+    private func _readSender(_ id: String) async throws -> SenderDataModel {
+        return try await read(id, query: "userId == %@", of: SenderDataModel.self)
+    }
+    
+    private func _readChatGroup(_ id: String) async throws -> ChatGroupDataModel {
+        return try await read(id, query: "id == %@", of: ChatGroupDataModel.self)
     }
     
     /// 채팅 그룹 업데이트 (latestedAt 갱신)
@@ -113,6 +122,7 @@ actor ChatPersistenceManager {
     ) async throws -> ChatGroupDataModel {
         return try await save { context in
             let chatGroup = ChatGroupDataModel(context: context)
+            chatGroup.id = UUID().uuidString
             chatGroup.sender = sender
             chatGroup.latestedAt = Date()
             
@@ -162,6 +172,19 @@ actor ChatPersistenceManager {
             }
             return object
         }
+    }
+    
+    private func read<I: CVarArg, O: NSManagedObject>(
+        _ id: I,
+        query: String,
+        of: O.Type
+    ) async throws -> O {
+        let request: NSFetchRequest<O> = NSFetchRequest(entityName: O.description())
+        request.predicate = NSPredicate(format: query, id)
+        guard let object = try context.fetch(request).first else {
+            throw NSError(domain: "Query로 Object 찾기 실패", code: -1)
+        }
+        return object
     }
 }
 
