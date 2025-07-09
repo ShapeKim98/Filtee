@@ -36,19 +36,7 @@ struct DynamicUITextView: UIViewRepresentable {
     
     func updateUIView(_ uiView: UITextView, context: Context) {
         // 텍스트가 다를 때만 업데이트 (무한 루프 방지)
-        if uiView.text != text && !(uiView.textColor == UIColor.placeholderText && text.isEmpty) {
-            let wasFirstResponder = uiView.isFirstResponder
-            if text.isEmpty {
-//                updatePlaceholder(uiView)
-            } else {
-                uiView.text = text
-                uiView.textColor = UIColor.label
-            }
-            
-            if wasFirstResponder {
-                uiView.becomeFirstResponder()
-            }
-        }
+        uiView.text = text
         
         // 높이 계산
         calculateHeight(for: uiView)

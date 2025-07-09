@@ -48,6 +48,8 @@ struct ChatView: View {
     private var cursor: Date?
     @State
     private var hasNext: Bool = true
+    @FocusState
+    private var inputFocused: Bool
     
     private let opponentId: String
     private var roomTitle: String {
@@ -74,6 +76,7 @@ struct ChatView: View {
             title: roomTitle,
             leadingItems: toolbarLeading
         )
+        .dismissKeyboard(focused: $inputFocused)
         .onChange(of: scenePhase, perform: onChangeScenePhase)
         .task(bodyTask)
         .onDisappear(perform: bodyOnDisappear)
@@ -142,6 +145,7 @@ private extension ChatView {
             let font = Pretendard.body2(.medium)
             
             FilteeTextEditor(text: $input, font: font)
+                .focused($inputFocused)
                 .padding(.vertical, 4)
                 .padding(.horizontal, 12)
                 .background(.deepTurquoise)

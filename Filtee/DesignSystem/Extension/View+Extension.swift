@@ -127,4 +127,28 @@ extension View {
             self.toolbar(.hidden, for: .tabBar)
         }
     }
+    
+    @ViewBuilder
+    func dismissKeyboard(
+        focused: FocusState<Bool>.Binding
+    ) -> some View {
+        self
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard focused.wrappedValue else { return }
+                focused.wrappedValue = false
+            }
+    }
+    
+    @ViewBuilder
+    func dismissKeyboard<Value: Hashable>(
+        focused: FocusState<Value?>.Binding
+    ) -> some View {
+        self
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard focused.wrappedValue != nil else { return }
+                focused.wrappedValue = nil
+            }
+    }
 }
