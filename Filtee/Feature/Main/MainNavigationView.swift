@@ -22,6 +22,7 @@ struct MainNavigationView: View {
                             .environmentObject(navigation)
                     case let .chat(opponentId):
                         ChatView(opponentId: opponentId)
+                            .environmentObject(navigation)
                     }
                 }
         }

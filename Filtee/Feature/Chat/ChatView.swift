@@ -10,6 +10,9 @@ import SwiftUI
 import IdentifiedCollections
 
 struct ChatView: View {
+    @EnvironmentObject
+    private var navigation: NavigationRouter<MainPath>
+    
     @Environment(\.userClient.meProfile)
     private var userClientMeProfile
     @Environment(\.chatPersistenceManager)
@@ -26,6 +29,8 @@ struct ChatView: View {
     private var chatClientWebSocketDisconnect
     @Environment(\.chatClient.webSocketStream)
     private var chatClientWebSocketStream
+    @Environment(\.scenePhase)
+    private var scenePhase
     
     @State
     private var room: RoomModel?
@@ -47,6 +52,7 @@ struct ChatView: View {
     private let opponentId: String
     private var roomTitle: String {
         room?.participants
+            .filter { $0.id != userId }
             .compactMap(\.nick)
             .sorted(by: <)
             .joined(separator: ", ") ?? ""
@@ -64,18 +70,31 @@ struct ChatView: View {
             
             messageInput
         }
-        .filteeNavigation(title: roomTitle)
+        .filteeNavigation(
+            title: roomTitle,
+            leadingItems: toolbarLeading
+        )
+        .onChange(of: scenePhase, perform: onChangeScenePhase)
         .task(bodyTask)
+        .onDisappear(perform: bodyOnDisappear)
     }
 }
 
 // MARK: Configure Views
 private extension ChatView {
+    func toolbarLeading() -> some View {
+        Button(action: backButtonAction) {
+            Image(.chevron).resizable()
+        }
+        .buttonStyle(.filteeToolbar)
+    }
+    
     var chatList: some View {
         List(chats) { chat in
             chatCell(chat)
                 .padding(.horizontal, 16)
                 .listRowInsets(.init(.zero))
+                .listRowSeparator(.hidden)
                 .id(chat.id)
         }
         .listRowSpacing(16)
@@ -165,10 +184,8 @@ private extension ChatView {
             userId = try await userClientMeProfile().userId
             let room = try await chatClientCreateChats(opponentId)
             self.room = try await chatPersistenceManager.createRoom(room)
-            try await chatClientWebSocketConnect(room.id)
-            try await paginationChats()
-            try await updateNewChats(roomId: room.id)
-            await observeChatStream()
+            await connectChatWebSocket()
+            print(#function)
         } catch {
             print(error)
         }
@@ -189,6 +206,26 @@ private extension ChatView {
         } catch {
             print(error)
         }
+    }
+    
+    func onChangeScenePhase(_ scenePhase: ScenePhase) {
+        Task {
+            switch scenePhase {
+            case .background, .inactive:
+                try await chatClientWebSocketDisconnect()
+            case .active:
+                await connectChatWebSocket()
+            @unknown default: break
+            }
+        }
+    }
+    
+    func bodyOnDisappear() {
+        Task { try await chatClientWebSocketDisconnect() }
+    }
+    
+    func backButtonAction() {
+        navigation.pop()
     }
     
     func paginationChats() async throws {
@@ -238,6 +275,18 @@ private extension ChatView {
             for try await chat in chatClientWebSocketStream() {
                 await saveChat(chat: chat)
             }
+        } catch {
+            print(error)
+        }
+    }
+    
+    func connectChatWebSocket() async {
+        guard let room else { return }
+        do {
+            try await chatClientWebSocketConnect(room.id)
+            try await paginationChats()
+            try await updateNewChats(roomId: room.id)
+            await observeChatStream()
         } catch {
             print(error)
         }
