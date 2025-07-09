@@ -19,6 +19,7 @@ enum DateStyle: String, CaseIterable {
         var formatters = [DateStyle: DateFormatter]()
         for style in Self.allCases {
             let formatter = DateFormatter()
+            formatter.timeZone = TimeZone(identifier: "Asia/Seoul")
             formatter.locale = Locale(identifier: "ko_KR")
             formatter.dateFormat = style.rawValue
             formatters[style] = formatter
@@ -36,7 +37,9 @@ extension Date {
             return ""
         }
         formatter.locale = Locale(identifier: identifier)
-        return formatter.string(from: self)
+        let secondsFromGMT = formatter.timeZone.secondsFromGMT()
+        let newDate = self.addingTimeInterval(TimeInterval(secondsFromGMT))
+        return formatter.string(from: newDate)
     }
 }
 
@@ -48,7 +51,6 @@ extension String {
         guard let formatter = DateStyle.cachedFormatter[style] else {
             return nil
         }
-        formatter.locale = Locale(identifier: identifier)
         return formatter.date(from: self)
     }
     
