@@ -13,15 +13,18 @@ struct FilteeProfile: View {
     private let profile: ProfileModel
     private let filters: [FilterModel]?
     private let cellAction: ((FilterModel) -> Void)?
+    private let chatButtonAction: (() -> Void)?
     
     init(
         profile: ProfileModel,
         filters: [FilterModel]? = nil,
-        cellAction: ((FilterModel) -> Void)? = nil
+        cellAction: ((FilterModel) -> Void)? = nil,
+        chatButtonAction: (() -> Void)? = nil
     ) {
         self.profile = profile
         self.filters = filters
         self.cellAction = cellAction
+        self.chatButtonAction = chatButtonAction
     }
     
     var body: some View {
@@ -69,6 +72,19 @@ private extension FilteeProfile {
             }
             
             Spacer()
+            
+            if let chatButtonAction {
+                Button(action: chatButtonAction) {
+                    Image(.message)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .foregroundStyle(.gray30)
+                        .frame(width: 32, height: 32)
+                        .padding(6)
+                        .background(.deepTurquoise)
+                        .clipRectangle(8)
+                }
+            }
         }
     }
     
@@ -235,9 +251,10 @@ private extension FilteeProfile.FilterList {
 #Preview {
     FilteeProfile(
         profile: UserInfoResponseDTO.todayAuthorMock.toModel(),
-        filters: FilterSummaryResponseDTO.hotTrendMock.map { $0.toModel() }
+        filters: FilterSummaryResponseDTO.hotTrendMock.map { $0.toModel() },
+        chatButtonAction: { }
     )
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .fixedSize()
     .filteeBackground()
     .ignoresSafeArea()
 }

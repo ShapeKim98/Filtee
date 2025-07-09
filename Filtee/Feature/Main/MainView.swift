@@ -215,7 +215,8 @@ private extension MainView {
                 FilteeProfile(
                     profile: todayAuthor.author,
                     filters: todayAuthor.filters,
-                    cellAction: profileCellAction
+                    cellAction: profileCellAction,
+                    chatButtonAction: { chatButtonAction(todayAuthor) }
                 )
             }
         }
@@ -270,6 +271,10 @@ private extension MainView {
     
     func profileCellAction(_ filter: FilterModel) {
         navigation.push(.detail(id: filter.id))
+    }
+    
+    func chatButtonAction(_ author: TodayAuthorModel) {
+        navigation.push(.chat(opponentId: author.author.id))
     }
 }
 
