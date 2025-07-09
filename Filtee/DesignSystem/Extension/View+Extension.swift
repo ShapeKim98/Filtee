@@ -98,6 +98,15 @@ extension View {
         }
     }
     
+    @ViewBuilder
+    func systemTabBarHidden() -> some View {
+        if #available(iOS 18.0, *) {
+            self.toolbarVisibility(.hidden, for: .tabBar)
+        } else {
+            self.toolbar(.hidden, for: .tabBar)
+        }
+    }
+    
     func size(completion: @escaping (CGSize) -> Void) -> some View {
         self.background {
             GeometryReader { proxy in

@@ -76,6 +76,7 @@ struct ChatView: View {
             title: roomTitle,
             leadingItems: toolbarLeading
         )
+        .ignoresSafeArea(.container, edges: .bottom)
         .dismissKeyboard(focused: $inputFocused)
         .onChange(of: scenePhase, perform: onChangeScenePhase)
         .task(bodyTask)

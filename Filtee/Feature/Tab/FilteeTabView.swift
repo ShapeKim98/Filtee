@@ -25,17 +25,18 @@ struct FilteeTabView: View {
         TabView(selection: $tabRouter.flow) {
             MainNavigationView()
                 .environmentObject(mainNavigation)
-                .toolbarBackground(.hidden, for: .tabBar)
+                .systemTabBarHidden()
                 .tag(TabItem.main)
             
             MakeNavigationView()
                 .environmentObject(makeNavigation)
-                .toolbarBackground(.hidden, for: .tabBar)
+                .systemTabBarHidden()
                 .tag(TabItem.make)
         }
         .overlay(alignment: .bottom) {
             if showTabBar {
                 tabBar
+                    .disabled(!showTabBar)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .ignoresSafeArea(.keyboard)
             }
@@ -43,6 +44,10 @@ struct FilteeTabView: View {
         .onChange(
             of: makeNavigation.path,
             perform: makePathOnChange
+        )
+        .onChange(
+            of: mainNavigation.path,
+            perform: mainPathOnChange
         )
     }
 }
@@ -108,6 +113,17 @@ private extension FilteeTabView {
             if case .edit = newValue.last {
                 showTabBar = false
             } else {
+                showTabBar = true
+            }
+        }
+    }
+    
+    func mainPathOnChange(_ newValue: [MainPath]) {
+        withAnimation(.filteeSpring) {
+            switch newValue.last {
+            case .chat, .detail:
+                showTabBar = false
+            default:
                 showTabBar = true
             }
         }
