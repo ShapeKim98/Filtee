@@ -12,6 +12,7 @@ enum DateStyle: String, CaseIterable {
     case metadata = "yyyy:MM:dd HH:mm:ss"
     case chatTime = "a hh:mm"
     case chatDateDivider = "yyyy년 M월 d일 EEEE"
+    case chat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     
     
     static var cachedFormatter: [DateStyle: DateFormatter] {

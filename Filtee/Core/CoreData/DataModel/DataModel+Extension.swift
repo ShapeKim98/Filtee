@@ -32,7 +32,7 @@ extension ChatGroupDataModel {
         let chats = chatSet.sorted { $0.createdAt ?? .now < $1.createdAt ?? .now }
         
         return ChatGroupModel(
-            id: self.objectID.description,
+            id: self.id ?? "",
             latestedAt: self.latestedAt ?? .now,
             chats: chats.map { $0.toModel() },
             sender: self.sender?.toModel()

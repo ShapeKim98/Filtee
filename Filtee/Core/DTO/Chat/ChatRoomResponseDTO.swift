@@ -12,15 +12,23 @@ struct ChatRoomResponseDTO: Decodable {
     let createdAt: String
     let updatedAt: String
     let participants: [UserInfoResponseDTO]
-    let lastChat: ChatResponseDTO
+    let lastChat: ChatResponseDTO?
+    
+    enum CodingKeys: String, CodingKey {
+        case roomId = "room_id"
+        case createdAt
+        case updatedAt
+        case participants
+        case lastChat
+    }
 }
 
 extension ChatRoomResponseDTO {
     func toModel() -> RoomModel {
         return RoomModel(
             id: self.roomId,
-            createdAt: self.createdAt.toDate(.default) ?? .now,
-            updatedAt: self.updatedAt.toDate(.default) ?? .now,
+            createdAt: self.createdAt.toDate(.chat) ?? .now,
+            updatedAt: self.updatedAt.toDate(.chat) ?? .now,
             participants: self.participants.map { $0.toModel() }
         )
     }

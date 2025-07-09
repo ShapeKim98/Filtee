@@ -163,8 +163,8 @@ private extension ChatView {
         defer { isLoading = false }
         do {
             userId = try await userClientMeProfile().userId
-            self.room = try await chatClientCreateChats(opponentId)
-            guard let room else { return }
+            let room = try await chatClientCreateChats(opponentId)
+            self.room = try await chatPersistenceManager.createRoom(room)
             try await chatClientWebSocketConnect(room.id)
             try await paginationChats()
             try await updateNewChats(roomId: room.id)
@@ -206,8 +206,8 @@ private extension ChatView {
     }
     
     func updateNewChats(roomId: String) async throws {
-        guard let next = chats.first?.latestedAt.toString(.default) else { return }
-        let newChats = try await chatClientChats(roomId, next).reversed()
+        let next = chats.first?.latestedAt.toString(.chat)
+        let newChats = try await chatClientChats(roomId, next)
         for chat in newChats {
             await saveChat(chat: chat)
         }
@@ -220,11 +220,7 @@ private extension ChatView {
                 lastChatGroup: chats.first
             )
             input = ""
-            if chats.first?.id == newChat.id {
-                chats.update(newChat, at: 0)
-            } else {
-                chats.insert(newChat, at: 0)
-            }
+            chats.updateOrInsert(newChat, at: 0)
         } catch { print(error) }
     }
     

@@ -53,6 +53,8 @@ private extension ChatMessageView {
         HStack(alignment: .bottom, spacing: 8) {
             let pretendard = Pretendard.body1(.medium)
             
+            if isMe { Spacer() }
+            
             if isLast && isMe {
                 Text(chat.updatedAt.toString(.chatTime))
                     .font(.pretendard(.caption2(.regular)))
@@ -72,7 +74,10 @@ private extension ChatMessageView {
                     .font(.pretendard(.caption2(.regular)))
                     .foregroundStyle(.gray75)
             }
+            
+            if !isMe { Spacer() }
         }
+        .frame(maxWidth: .infinity)
     }
     
     func profileImage(_ profileImage: String?) -> some View {

@@ -46,7 +46,14 @@ actor ChatPersistenceManager {
         return try await _readRoom(id).toModel()
     }
     
-    @discardableResult
+    func createRoom(_ roomModel: RoomModel) async throws -> RoomModel {
+        if let room = try? await readRoom(roomModel.id) {
+            return room
+        } else {
+            return try await _createRoom(roomModel: roomModel).toModel()
+        }
+    }
+    
     func createChat(
         chatModel: ChatModel,
         lastChatGroup: ChatGroupModel?
@@ -57,7 +64,7 @@ actor ChatPersistenceManager {
         let chat: ChatDataModel = try await save { context in
             let chat = ChatDataModel(context: context)
             chat.chatId = chatModel.id
-            chat.content = chat.content
+            chat.content = chatModel.content
             chat.roomId = chatModel.roomId
             chat.sender = sender
             chat.filesData = nil
@@ -66,8 +73,7 @@ actor ChatPersistenceManager {
             return chat
         }
         let targetGroup: ChatGroupDataModel
-        if let lastChatGroup,
-           lastChatGroup.sender?.id == sender.userId {
+        if let lastChatGroup, lastChatGroup.sender?.id == sender.userId {
             let calendar = Calendar.current
             let lastMinute = calendar.component(.minute, from: lastChatGroup.latestedAt)
             let currentMinute = calendar.component(.minute, from: chatModel.createdAt)
@@ -78,14 +84,23 @@ actor ChatPersistenceManager {
             let isNewGroup = lastDay != currentDay || lastHour != currentHour || lastMinute != currentMinute
             
             if isNewGroup {
-                targetGroup = try await _createChatGroup(sender: sender, in: room)
+                targetGroup = try await _createChatGroup(
+                    chat: chat,
+                    sender: sender,
+                    in: room
+                )
             } else {
-                targetGroup = try await read(NSManagedObjectID())
+                print(chatModel.createdAt, lastChatGroup.latestedAt, lastChatGroup.id)
+                targetGroup = try await _readChatGroup(lastChatGroup.id)
+                try await _updateChatGroup(chat: chat, in: targetGroup)
             }
         } else {
-            targetGroup = try await _createChatGroup(sender: sender, in: room)
+            targetGroup = try await _createChatGroup(
+                chat: chat,
+                sender: sender,
+                in: room
+            )
         }
-        try await _updateChatGroup(chat: chat, in: targetGroup)
         
         return targetGroup.toModel()
     }
@@ -110,13 +125,14 @@ actor ChatPersistenceManager {
     ) async throws -> ChatGroupDataModel {
         return try await save { context in
             chatGroup.addToChats(chat)
-            chatGroup.latestedAt = Date()
+            chatGroup.latestedAt = chat.createdAt
             return chatGroup
         }
     }
     
     @discardableResult
     private func _createChatGroup(
+        chat: ChatDataModel,
         sender: SenderDataModel,
         in room: RoomDataModel
     ) async throws -> ChatGroupDataModel {
@@ -124,12 +140,40 @@ actor ChatPersistenceManager {
             let chatGroup = ChatGroupDataModel(context: context)
             chatGroup.id = UUID().uuidString
             chatGroup.sender = sender
-            chatGroup.latestedAt = Date()
+            chatGroup.addToChats(chat)
+            chatGroup.latestedAt = chat.createdAt
             
             room.addToChats(chatGroup)
             return chatGroup
         }
     }
+    
+    @discardableResult
+    private func _createRoom(roomModel: RoomModel) async throws -> RoomDataModel {
+        var participants: [SenderDataModel] = []
+        for sender in roomModel.participants {
+            let newSender = try await _createSender(
+                userId: sender.id,
+                nick: sender.nick,
+                profileImage: sender.profileImage
+            )
+            participants.append(newSender)
+        }
+        
+        return try await save { [participants] context in
+            let room = RoomDataModel(context: context)
+            room.roomId = roomModel.id
+            room.createdAt = roomModel.createdAt
+            room.updatedAt = roomModel.updatedAt
+            room.chats = []
+            for sender in participants {
+                room.addToParticipants(sender)
+            }
+            
+            return room
+        }
+    }
+    
     
     /// 새 발신자 생성
     @discardableResult
@@ -182,7 +226,7 @@ actor ChatPersistenceManager {
         let request: NSFetchRequest<O> = NSFetchRequest(entityName: O.description())
         request.predicate = NSPredicate(format: query, id)
         guard let object = try context.fetch(request).first else {
-            throw NSError(domain: "Query로 Object 찾기 실패", code: -1)
+            throw NSError(domain: "Query로 Object 찾기 실패, \(O.description())", code: -1)
         }
         return object
     }

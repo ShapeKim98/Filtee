@@ -15,6 +15,16 @@ struct ChatResponseDTO: ResponseDTO {
     let updatedAt: String
     let sender: UserInfoResponseDTO
     let files: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case chatId = "chat_id"
+        case roomId = "room_id"
+        case content
+        case createdAt
+        case updatedAt
+        case sender
+        case files
+    }
 }
 
 extension ChatResponseDTO {
@@ -23,8 +33,8 @@ extension ChatResponseDTO {
             id: self.chatId,
             roomId: self.roomId,
             content: self.content,
-            createdAt: self.createdAt.toDate(.default) ?? .now,
-            updatedAt: self.updatedAt.toDate(.default) ?? .now,
+            createdAt: self.createdAt.toDate(.chat) ?? .now,
+            updatedAt: self.updatedAt.toDate(.chat) ?? .now,
             sender: self.sender.toModel()
         )
     }

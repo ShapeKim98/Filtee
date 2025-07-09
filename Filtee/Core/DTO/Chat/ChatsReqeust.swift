@@ -9,5 +9,5 @@ import Foundation
 
 struct ChatsReqeust: RequestDTO {
     let roomId: String
-    let next: String
+    let next: String?
 }
