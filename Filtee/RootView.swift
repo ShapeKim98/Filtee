@@ -27,7 +27,7 @@ struct RootView: View {
                 .environmentObject(rootRouter)
         case .tab:
             FilteeTabView()
-//                .environmentObject(rootRouter)
+                .environmentObject(rootRouter)
         }
     }
 }

@@ -27,6 +27,7 @@ private struct FilteeNavigationModifier<LeadingItems: View, TrailingItems: View>
         VStack(spacing: 0) {
             Text(title)
                 .font(.mulgyeol(.body1))
+                .lineLimit(1)
                 .padding(.vertical, 18)
                 .frame(maxWidth: .infinity)
                 .overlay(alignment: .leading) {

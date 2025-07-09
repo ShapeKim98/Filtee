@@ -98,6 +98,15 @@ extension View {
         }
     }
     
+    @ViewBuilder
+    func systemTabBarHidden() -> some View {
+        if #available(iOS 18.0, *) {
+            self.toolbarVisibility(.hidden, for: .tabBar)
+        } else {
+            self.toolbar(.hidden, for: .tabBar)
+        }
+    }
+    
     func size(completion: @escaping (CGSize) -> Void) -> some View {
         self.background {
             GeometryReader { proxy in
@@ -126,5 +135,29 @@ extension View {
         } else {
             self.toolbar(.hidden, for: .tabBar)
         }
+    }
+    
+    @ViewBuilder
+    func dismissKeyboard(
+        focused: FocusState<Bool>.Binding
+    ) -> some View {
+        self
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard focused.wrappedValue else { return }
+                focused.wrappedValue = false
+            }
+    }
+    
+    @ViewBuilder
+    func dismissKeyboard<Value: Hashable>(
+        focused: FocusState<Value?>.Binding
+    ) -> some View {
+        self
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard focused.wrappedValue != nil else { return }
+                focused.wrappedValue = nil
+            }
     }
 }

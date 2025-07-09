@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		C911F83A2DDAF28300C2DF89 /* SwiftJWT in Frameworks */ = {isa = PBXBuildFile; productRef = C911F8392DDAF28300C2DF89 /* SwiftJWT */; };
+		C9155FC62E1BD9B000B3DBC1 /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = C9155FC52E1BD9B000B3DBC1 /* SocketIO */; };
 		C96367EE2DDF10AB0050FA26 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = C96367ED2DDF10AB0050FA26 /* Nuke */; };
 		C96367F02DDF10AB0050FA26 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = C96367EF2DDF10AB0050FA26 /* NukeUI */; };
 		C96368DF2DDF6B090050FA26 /* NukeAlamofirePlugin in Frameworks */ = {isa = PBXBuildFile; productRef = C96368DE2DDF6B090050FA26 /* NukeAlamofirePlugin */; };
@@ -54,6 +55,7 @@
 				C96367F02DDF10AB0050FA26 /* NukeUI in Frameworks */,
 				C9D67FB52DD072340097A10C /* Alamofire in Frameworks */,
 				C9D67FBA2DD072C30097A10C /* KakaoSDKCommon in Frameworks */,
+				C9155FC62E1BD9B000B3DBC1 /* SocketIO in Frameworks */,
 				C96803C42E00099300A37605 /* iamport-ios in Frameworks */,
 				C96367EE2DDF10AB0050FA26 /* Nuke in Frameworks */,
 				C96368DF2DDF6B090050FA26 /* NukeAlamofirePlugin in Frameworks */,
@@ -111,6 +113,7 @@
 				C96368DE2DDF6B090050FA26 /* NukeAlamofirePlugin */,
 				C96368E32DE076F20050FA26 /* IdentifiedCollections */,
 				C96803C32E00099300A37605 /* iamport-ios */,
+				C9155FC52E1BD9B000B3DBC1 /* SocketIO */,
 			);
 			productName = Filtee;
 			productReference = C9D67F992DD060C00097A10C /* Filtee.app */;
@@ -149,6 +152,7 @@
 				C96368DD2DDF6B090050FA26 /* XCRemoteSwiftPackageReference "Nuke-Alamofire-Plugin" */,
 				C96368E22DE076F10050FA26 /* XCRemoteSwiftPackageReference "swift-identified-collections" */,
 				C96803C22E00099300A37605 /* XCRemoteSwiftPackageReference "iamport-ios" */,
+				C9155FC42E1BD9B000B3DBC1 /* XCRemoteSwiftPackageReference "socket" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C9D67F9A2DD060C00097A10C /* Products */;
@@ -327,6 +331,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -364,6 +369,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -408,6 +414,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 4.0.2;
+			};
+		};
+		C9155FC42E1BD9B000B3DBC1 /* XCRemoteSwiftPackageReference "socket" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/socketio/socket.io-client-swift";
+			requirement = {
+				branch = master;
+				kind = branch;
 			};
 		};
 		C96367EC2DDF10AB0050FA26 /* XCRemoteSwiftPackageReference "Nuke" */ = {
@@ -465,6 +479,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C911F8382DDAF28300C2DF89 /* XCRemoteSwiftPackageReference "Swift-JWT" */;
 			productName = SwiftJWT;
+		};
+		C9155FC52E1BD9B000B3DBC1 /* SocketIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C9155FC42E1BD9B000B3DBC1 /* XCRemoteSwiftPackageReference "socket" */;
+			productName = SocketIO;
 		};
 		C96367ED2DDF10AB0050FA26 /* Nuke */ = {
 			isa = XCSwiftPackageProductDependency;

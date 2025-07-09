@@ -101,7 +101,10 @@ private extension FilterDetailView {
             informationSection
             
             if let creator = filter?.creator {
-                FilteeProfile(profile: creator)
+                FilteeProfile(
+                    profile: creator,
+                    chatButtonAction: { chatButtonAction(creator) }
+                )
             }
         }
     }
@@ -416,6 +419,10 @@ private extension FilterDetailView {
     
     func backButtonAction() {
         navigation.pop()
+    }
+    
+    func chatButtonAction(_ creator: ProfileModel) {
+        navigation.push(.chat(opponentId: creator.id))
     }
     
     func fetchImage(urlString: String?) async throws -> Image? {

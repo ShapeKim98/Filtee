@@ -56,6 +56,8 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
                     response.refreshToken,
                     key: .refreshToken
                 )
+                let _: MyInfoResponseDTO = try await Self.request(.meProfile)
+                return
             },
             kakaoLogin: { model in
                 let request = model.toData()
@@ -68,6 +70,7 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
                     response.refreshToken,
                     key: .refreshToken
                 )
+                let _: MyInfoResponseDTO = try await Self.request(.meProfile)
             },
             appleLogin: { model in
                 let request = model.toData()
@@ -80,6 +83,7 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
                     response.refreshToken,
                     key: .refreshToken
                 )
+                let _: MyInfoResponseDTO = try await Self.request(.meProfile)
             },
             deviceToken: { deviceToken in
                 try await requestNonToken(.deviceToken(deviceToken: deviceToken))
@@ -87,6 +91,7 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
             logout: {
                 keychainManager.delete(.accessToken)
                 keychainManager.delete(.refreshToken)
+                URLCache.shared.removeAllCachedResponses()
             },
             todayAuthor: {
                 let response: TodayAuthorResponseDTO = try await request(.todayAuthor)

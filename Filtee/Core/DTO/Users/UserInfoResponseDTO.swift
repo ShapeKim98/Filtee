@@ -30,3 +30,13 @@ struct UserInfoResponseDTO: ResponseDTO {
         case hashTags
     }
 }
+
+extension UserInfoResponseDTO {
+    func toModel() -> UserInfoModel {
+        return UserInfoModel(
+            id: self.userId,
+            nick: self.nick,
+            profileImage: self.profileImage
+        )
+    }
+}
