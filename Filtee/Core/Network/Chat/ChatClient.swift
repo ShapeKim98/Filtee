@@ -15,7 +15,7 @@ struct ChatClient {
     ) async throws -> RoomModel
     var chats: @Sendable(
         _ roomId: String,
-        _ next: String
+        _ next: String?
     ) async throws -> [ChatModel]
     var sendChats: @Sendable(
         _ roomId: String,
@@ -49,7 +49,7 @@ extension ChatClient: EnvironmentKey, NetworkClientConfigurable {
                 try await request(.sendChats(requestModel))
             },
             webSocketConnect: { roomId in
-                try await webSocketManager.connect(E.webSocket(roomId))
+                try await webSocketManager.connect(E.webSocket(roomId), event: "chat")
             },
             webSocketDisconnect: {
                 await webSocketManager.disconnect()

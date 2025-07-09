@@ -30,7 +30,7 @@ enum ChatEndpoint: Endpoint {
     
     var method: HTTPMethod {
         switch self {
-        case .webSocket: return .connect
+        case .webSocket: return .get
         case .createChats: return .post
         case .chats: return .get
         case .sendChats: return .post
@@ -38,6 +38,13 @@ enum ChatEndpoint: Endpoint {
     }
     
     var headers: HTTPHeaders {
+        if case .webSocket = self {
+            let accessToken = KeychainManager.shared.read(.accessToken) ?? ""
+            return [
+                "authorization": accessToken,
+                "sesackey": Bundle.main.sesacKey
+            ]
+        }
         return [:]
     }
     
@@ -60,7 +67,8 @@ enum ChatEndpoint: Endpoint {
         case let .createChats(id):
             return ["opponent_id": id]
         case let .chats(model):
-            return ["next": model.next]
+            guard let next = model.next else { return nil }
+            return ["next": next]
         case let .sendChats(model):
             return ["content": model.content]
         }

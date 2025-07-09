@@ -90,7 +90,6 @@ actor ChatPersistenceManager {
                     in: room
                 )
             } else {
-                print(chatModel.createdAt, lastChatGroup.latestedAt, lastChatGroup.id)
                 targetGroup = try await _readChatGroup(lastChatGroup.id)
                 try await _updateChatGroup(chat: chat, in: targetGroup)
             }
