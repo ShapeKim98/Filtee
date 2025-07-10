@@ -9,9 +9,9 @@ import SwiftUI
 
 import IdentifiedCollections
 
-struct ChatView: View {
+struct ChatView<Path: Hashable & Sendable>: View {
     @EnvironmentObject
-    private var navigation: NavigationRouter<MainPath>
+    private var navigation: NavigationRouter<Path>
     
     @Environment(\.userClient.meProfile)
     private var userClientMeProfile
@@ -298,6 +298,6 @@ private extension ChatView {
 }
 
 #Preview {
-    ChatView(opponentId: "")
+    ChatView<MainPath>(opponentId: "")
         .environment(\.managedObjectContext, PersistenceProvider(inMemory: true).container.viewContext)
 }

@@ -63,13 +63,17 @@ private extension SearchView {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(users) { user in
-                    FilteeProfile(
-                        profile: user,
-                        showInformation: false,
-                        chatButtonAction: { chatButtonAction(user: user) }
-                    )
+                    Button(action: { profileButtonAction(user: user) }) {
+                        FilteeProfile(
+                            profile: user,
+                            showInformation: false,
+                            chatButtonAction: { chatButtonAction(user: user) }
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
+            .padding(.bottom, 68)
         }
     }
     
@@ -120,6 +124,10 @@ private extension SearchView {
     
     func chatButtonAction(user: ProfileModel) {
         navigation.push(.chat(opponentId: user.id))
+    }
+    
+    func profileButtonAction(user: ProfileModel) {
+        navigation.push(.userDetail(user: user))
     }
     
     func fetchUsersSearch() async {

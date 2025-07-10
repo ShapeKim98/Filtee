@@ -8,6 +8,6 @@
 import Foundation
 
 enum SearchPath: Hashable, Sendable {
-    case userDetail(userId: String)
     case chat(opponentId: String)
+    case userDetail(user: ProfileModel)
 }

@@ -17,10 +17,11 @@ struct SearchNavigationView: View {
                 .environmentObject(navigation)
                 .navigationDestination(for: SearchPath.self) { path in
                     switch path {
-                    case let .userDetail(userId):
-                        EmptyView()
+                    case let .userDetail(user):
+                        UserDetailView<SearchPath>(user: user)
+                            .environmentObject(navigation)
                     case let .chat(opponentId):
-                        ChatView(opponentId: opponentId)
+                        ChatView<SearchPath>(opponentId: opponentId)
                             .environmentObject(navigation)
                     }
                 }

@@ -40,7 +40,6 @@ struct MakeView: View {
         ScrollView(content: content)
             .filteeNavigation(
                 title: "MAKE",
-                leadingItems: leadingItems,
                 trailingItems: trailingItems
             )
             .background(content: scrollViewBackground)
@@ -85,14 +84,6 @@ private extension MakeView {
             Spacer()
         }
         .padding(.bottom, 68)
-    }
-    
-    func leadingItems() -> some View {
-        Button(action: { }) {
-            Image(.chevron)
-                .resizable()
-        }
-        .buttonStyle(.filteeToolbar)
     }
     
     func trailingItems() -> some View {

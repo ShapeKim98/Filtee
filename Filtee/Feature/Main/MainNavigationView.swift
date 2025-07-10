@@ -21,7 +21,10 @@ struct MainNavigationView: View {
                         FilterDetailView(filterId: id)
                             .environmentObject(navigation)
                     case let .chat(opponentId):
-                        ChatView(opponentId: opponentId)
+                        ChatView<MainPath>(opponentId: opponentId)
+                            .environmentObject(navigation)
+                    case let .userDetail(user):
+                        UserDetailView<MainPath>(user: user)
                             .environmentObject(navigation)
                     }
                 }

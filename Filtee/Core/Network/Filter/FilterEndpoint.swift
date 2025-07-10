@@ -16,6 +16,12 @@ enum FilterEndpoint: Endpoint {
     case filterLike(id: String, isLike: Bool)
     case files([MultipartForm])
     case filters(FilterMakeRequest)
+    case users(
+        userId: String,
+        next: String?,
+        limit: Int,
+        category: String?
+    )
     
     var path: String {
         switch self {
@@ -31,6 +37,8 @@ enum FilterEndpoint: Endpoint {
             return "/v1/filters/files"
         case .filters:
             return "/v1/filters"
+        case let .users(userId, _, _, _):
+            return "/v1/filters/users/\(userId)"
         }
     }
     
@@ -38,7 +46,8 @@ enum FilterEndpoint: Endpoint {
         switch self {
         case .hotTrend,
              .todayFilter,
-             .filterDetail:
+             .filterDetail,
+             .users:
             return .get
         case .filterLike,
              .files,
@@ -65,6 +74,8 @@ enum FilterEndpoint: Endpoint {
         case .filterLike,
              .filters:
             return .json
+        case .users:
+            return .urlEncodedForm
         }
     }
     
@@ -79,6 +90,15 @@ enum FilterEndpoint: Endpoint {
             return ["like_status": isLike]
         case let .filters(model):
             return model
+        case let .users(_, next, limit, category):
+            var parameters = ["limit": "\(limit)"]
+            if let next {
+                parameters.updateValue(next, forKey: "next")
+            }
+            if let category {
+                parameters.updateValue(category, forKey: "category")
+            }
+            return parameters
         }
     }
     
