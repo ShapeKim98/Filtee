@@ -23,6 +23,9 @@ struct SearchNavigationView: View {
                     case let .chat(opponentId):
                         ChatView<SearchPath>(opponentId: opponentId)
                             .environmentObject(navigation)
+                    case let .detail(id):
+                        FilterDetailView<SearchPath>(filterId: id)
+                            .environmentObject(navigation)
                     }
                 }
         }

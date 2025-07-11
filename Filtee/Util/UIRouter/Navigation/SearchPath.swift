@@ -10,4 +10,5 @@ import Foundation
 enum SearchPath: Hashable, Sendable {
     case chat(opponentId: String)
     case userDetail(user: ProfileModel)
+    case detail(id: String)
 }

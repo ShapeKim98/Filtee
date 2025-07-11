@@ -44,6 +44,7 @@ struct FilteeProfile: View {
                     .padding(.horizontal, 20)
             }
         }
+        .contentShape(Rectangle())
     }
 }
 

@@ -11,9 +11,9 @@ import Contacts
 
 import Nuke
 
-struct FilterDetailView: View {
+struct FilterDetailView<Path: Hashable & Sendable>: View {
     @EnvironmentObject
-    private var navigation: NavigationRouter<MainPath>
+    private var navigation: NavigationRouter<Path>
     
     @Environment(\.filterClient.filterDetail)
     private var filterClientFilterDetail
@@ -425,11 +425,23 @@ private extension FilterDetailView {
     }
     
     func chatButtonAction(_ creator: ProfileModel) {
-        navigation.push(.chat(opponentId: creator.id))
+        switch Path.self {
+        case is SearchPath.Type:
+            navigation.push(SearchPath.chat(opponentId: creator.id))
+        case is MainPath.Type:
+            navigation.push(MainPath.chat(opponentId: creator.id))
+        default: return
+        }
     }
     
     func profileButtonAction(_ creator: ProfileModel) {
-        navigation.push(.userDetail(user: creator))
+        switch Path.self {
+        case is SearchPath.Type:
+            navigation.push(SearchPath.userDetail(user: creator))
+        case is MainPath.Type:
+            navigation.push(MainPath.userDetail(user: creator))
+        default: return
+        }
     }
     
     func fetchImage(urlString: String?) async throws -> Image? {
@@ -478,7 +490,7 @@ private extension Image {
 
 #if DEBUG
 #Preview {
-    FilterDetailView(filterId: "")
+    FilterDetailView<MainPath>(filterId: "")
         .environment(\.filterClient, .testValue)
 }
 #endif

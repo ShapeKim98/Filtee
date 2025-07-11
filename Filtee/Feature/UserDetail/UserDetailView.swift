@@ -50,7 +50,7 @@ private extension UserDetailView {
     }
     
     func leadingItems() -> some View {
-        Button(action: { }) {
+        Button(action: backButtonAction) {
             Image(.chevron)
                 .resizable()
         }
@@ -89,16 +89,20 @@ private extension UserDetailView {
             ForEach(filters.data) { filter in
                 let isLast = filters.data.last == filter
                 
-                filterListCell(filter)
-                    .if(filters.nextCursor != "0" && isLast) { view in
-                        VStack(spacing: 20) {
-                            view
-                            
-                            ProgressView()
-                                .controlSize(.large)
-                                .task(progressViewTask)
-                        }
+                Button(action: { filterListCellButtonAction(filter) }) {
+                    filterListCell(filter)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .if(filters.nextCursor != "0" && isLast) { view in
+                    VStack(spacing: 20) {
+                        view
+                        
+                        ProgressView()
+                            .controlSize(.large)
+                            .task(progressViewTask)
                     }
+                }
             }
         }
     }
@@ -173,21 +177,25 @@ private extension UserDetailView {
     func chatButtonAction() {
         switch Path.self {
         case is SearchPath.Type:
-            guard let path = SearchPath.chat(opponentId: user.id) as? Path else {
-                return
-            }
-            navigation.push(path)
+            navigation.push(SearchPath.chat(opponentId: user.id))
         case is MainPath.Type:
-            guard let path = MainPath.chat(opponentId: user.id) as? Path else {
-                return
-            }
-            navigation.push(path)
+            navigation.push(MainPath.chat(opponentId: user.id))
         default: return
         }
     }
     
     func backButtonAction() {
         navigation.pop()
+    }
+    
+    func filterListCellButtonAction(_ filter: FilterModel) {
+        switch Path.self {
+        case is SearchPath.Type:
+            navigation.push(SearchPath.detail(id: filter.id))
+        case is MainPath.Type:
+            navigation.push(MainPath.detail(id: filter.id))
+        default: return
+        }
     }
     
     func paginationFilters() async {

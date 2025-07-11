@@ -16,6 +16,13 @@ final class NavigationRouter<P: Hashable & Sendable>: ObservableObject {
         self.path.append(path)
     }
     
+    func push<T: Hashable & Sendable>(_ path: T) {
+        guard let path = path as? P else {
+            return
+        }
+        self.path.append(path)
+    }
+    
     func pop() {
         let _ = path.popLast()
     }

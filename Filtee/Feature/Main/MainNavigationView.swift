@@ -18,7 +18,7 @@ struct MainNavigationView: View {
                 .navigationDestination(for: MainPath.self) { path in
                     switch path {
                     case let .detail(id):
-                        FilterDetailView(filterId: id)
+                        FilterDetailView<MainPath>(filterId: id)
                             .environmentObject(navigation)
                     case let .chat(opponentId):
                         ChatView<MainPath>(opponentId: opponentId)
