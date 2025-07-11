@@ -7,8 +7,10 @@
 
 import Foundation
 
-struct UserInfoModel {
+struct UserInfoModel: Identifiable {
     let id: String
     let nick: String
     let profileImage: String?
+    let name: String?
+    let hashTags: [String]
 }

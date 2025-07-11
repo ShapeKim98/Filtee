@@ -23,6 +23,12 @@ struct FilterClient {
     var filters: @Sendable (
         _ model: FilterMakeModel
     ) async throws -> Void
+    var users: @Sendable (
+        _ userId: String,
+        _ next: String?,
+        _ limit: Int,
+        _ category: String?
+    ) async throws -> PaginationModel<FilterModel>
 }
 
 extension FilterClient: EnvironmentKey, NetworkClientConfigurable {
@@ -68,6 +74,15 @@ extension FilterClient: EnvironmentKey, NetworkClientConfigurable {
             filters: { model in
                 let request = model.toData()
                 try await Self.request(.filters(request))
+            },
+            users: { userId, next, limit, category in
+                let response: PaginationDTO<FilterSummaryResponseDTO> = try await request(.users(
+                    userId: userId,
+                    next: next,
+                    limit: limit,
+                    category: category
+                ))
+                return response.toModel()
             }
         )
     }()

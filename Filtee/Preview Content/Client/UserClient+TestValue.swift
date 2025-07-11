@@ -7,6 +7,8 @@
 
 import Foundation
 
+import IdentifiedCollections
+
 extension UserClient {
     static let testValue: UserClient = {
         return UserClient(
@@ -22,6 +24,9 @@ extension UserClient {
             },
             meProfile: {
                 MyInfoResponseDTO.mock.toModel()
+            },
+            search: { _ in
+                IdentifiedArrayOf(uniqueElements: [UserInfoResponseDTO.mock.toProfileModel()])
             }
         )
     }()

@@ -212,12 +212,15 @@ private extension MainView {
             FilteeTitle("오늘의 작가")
             
             if let todayAuthor {
-                FilteeProfile(
-                    profile: todayAuthor.author,
-                    filters: todayAuthor.filters,
-                    cellAction: profileCellAction,
-                    chatButtonAction: { chatButtonAction(todayAuthor) }
-                )
+                Button(action: { profileButtonAction(todayAuthor.author) }) {
+                    FilteeProfile(
+                        profile: todayAuthor.author,
+                        filters: todayAuthor.filters,
+                        cellAction: profileCellAction,
+                        chatButtonAction: { chatButtonAction(todayAuthor) }
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -275,6 +278,10 @@ private extension MainView {
     
     func chatButtonAction(_ author: TodayAuthorModel) {
         navigation.push(.chat(opponentId: author.author.id))
+    }
+    
+    func profileButtonAction(_ author: ProfileModel) {
+        navigation.push(.userDetail(user: author))
     }
 }
 

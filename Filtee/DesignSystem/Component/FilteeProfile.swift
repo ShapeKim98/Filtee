@@ -12,17 +12,20 @@ import NukeUI
 struct FilteeProfile: View {
     private let profile: ProfileModel
     private let filters: [FilterModel]?
+    private let showInformation: Bool
     private let cellAction: ((FilterModel) -> Void)?
     private let chatButtonAction: (() -> Void)?
     
     init(
         profile: ProfileModel,
         filters: [FilterModel]? = nil,
+        showInformation: Bool = true,
         cellAction: ((FilterModel) -> Void)? = nil,
         chatButtonAction: (() -> Void)? = nil
     ) {
         self.profile = profile
         self.filters = filters
+        self.showInformation = showInformation
         self.cellAction = cellAction
         self.chatButtonAction = chatButtonAction
     }
@@ -34,11 +37,14 @@ struct FilteeProfile: View {
             
             filterImagesSection
             
-            hashTagSection
-            
-            introductionSection
-                .padding(.horizontal, 20)
+            if showInformation {
+                hashTagSection
+                
+                introductionSection
+                    .padding(.horizontal, 20)
+            }
         }
+        .contentShape(Rectangle())
     }
 }
 

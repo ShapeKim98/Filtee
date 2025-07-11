@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct FilterModel: Identifiable, Hashable {
+struct FilterModel: Identifiable, Hashable, Sendable {
     static func == (lhs: FilterModel, rhs: FilterModel) -> Bool {
         return lhs.id == rhs.id
     }

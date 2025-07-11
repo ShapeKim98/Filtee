@@ -10,4 +10,5 @@ import SwiftUICore
 enum MainPath: Hashable, Sendable {
     case detail(id: String)
     case chat(opponentId: String)
+    case userDetail(user: ProfileModel)
 }

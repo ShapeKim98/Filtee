@@ -7,6 +7,8 @@
 
 import SwiftUICore
 
+import IdentifiedCollections
+
 struct UserClient {
     var validationEmail: @Sendable (
         _ email: String
@@ -29,6 +31,9 @@ struct UserClient {
     var logout: @Sendable () -> Void
     var todayAuthor: @Sendable () async throws -> TodayAuthorModel
     var meProfile: @Sendable () async throws -> MyInfoModel
+    var search: @Sendable (
+        _ nick: String
+    ) async throws -> IdentifiedArrayOf<ProfileModel>
 }
 
 extension UserClient: EnvironmentKey, NetworkClientConfigurable {
@@ -100,6 +105,11 @@ extension UserClient: EnvironmentKey, NetworkClientConfigurable {
             meProfile: {
                 let response: MyInfoResponseDTO = try await request(.meProfile)
                 return response.toModel()
+            },
+            search: { nick in
+                let response: ListDTO<[UserInfoResponseDTO]> = try await request(.search(nick: nick))
+                let list: [ProfileModel] = response.data.map { $0.toProfileModel() }
+                return IdentifiedArrayOf<ProfileModel>(uniqueElements: list)
             }
         )
     }()

@@ -11,9 +11,9 @@ import Contacts
 
 import Nuke
 
-struct FilterDetailView: View {
+struct FilterDetailView<Path: Hashable & Sendable>: View {
     @EnvironmentObject
-    private var navigation: NavigationRouter<MainPath>
+    private var navigation: NavigationRouter<Path>
     
     @Environment(\.filterClient.filterDetail)
     private var filterClientFilterDetail
@@ -44,6 +44,8 @@ struct FilterDetailView: View {
     private var iamportPayload: IamportPaymentPayloadModel?
     @State
     private var name: String?
+    @State
+    private var isLoading: Bool = true
     
     private let filterId: String
     
@@ -52,7 +54,7 @@ struct FilterDetailView: View {
     }
     
     var body: some View {
-        ScrollView(content: content)
+        bodyContent
             .filteeNavigation(
                 title: filter?.title ?? "",
                 leadingItems: toolbarLeading,
@@ -92,6 +94,17 @@ private extension FilterDetailView {
         .animation(.filteeDefault, value: isLike)
     }
     
+    @ViewBuilder
+    var bodyContent: some View {
+        if isLoading {
+            ProgressView()
+                .controlSize(.large)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView(content: content)
+        }
+    }
+    
     func content() -> some View {
         VStack(spacing: 28) {
             imageSection
@@ -101,10 +114,13 @@ private extension FilterDetailView {
             informationSection
             
             if let creator = filter?.creator {
-                FilteeProfile(
-                    profile: creator,
-                    chatButtonAction: { chatButtonAction(creator) }
-                )
+                Button(action: { profileButtonAction(creator) }) {
+                    FilteeProfile(
+                        profile: creator,
+                        chatButtonAction: { chatButtonAction(creator) }
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -364,6 +380,9 @@ private extension FilterDetailView {
             
             self.originalImage = try await originalImage
             self.filteredImage = try await filteredImage
+            withAnimation(.filteeDefault) {
+                isLoading = false
+            }
         } catch {
             print(error)
         }
@@ -422,7 +441,23 @@ private extension FilterDetailView {
     }
     
     func chatButtonAction(_ creator: ProfileModel) {
-        navigation.push(.chat(opponentId: creator.id))
+        switch Path.self {
+        case is SearchPath.Type:
+            navigation.push(SearchPath.chat(opponentId: creator.id))
+        case is MainPath.Type:
+            navigation.push(MainPath.chat(opponentId: creator.id))
+        default: return
+        }
+    }
+    
+    func profileButtonAction(_ creator: ProfileModel) {
+        switch Path.self {
+        case is SearchPath.Type:
+            navigation.push(SearchPath.userDetail(user: creator))
+        case is MainPath.Type:
+            navigation.push(MainPath.userDetail(user: creator))
+        default: return
+        }
     }
     
     func fetchImage(urlString: String?) async throws -> Image? {
@@ -471,7 +506,7 @@ private extension Image {
 
 #if DEBUG
 #Preview {
-    FilterDetailView(filterId: "")
+    FilterDetailView<MainPath>(filterId: "")
         .environment(\.filterClient, .testValue)
 }
 #endif

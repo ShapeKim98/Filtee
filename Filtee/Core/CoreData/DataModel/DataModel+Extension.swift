@@ -62,7 +62,9 @@ extension SenderDataModel {
         return UserInfoModel(
             id: self.userId ?? "",
             nick: self.nick ?? "",
-            profileImage: self.profileImage ?? ""
+            profileImage: self.profileImage ?? "",
+            name: nil,
+            hashTags: []
         )
     }
 }

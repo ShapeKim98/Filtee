@@ -18,6 +18,7 @@ enum UserEndpoint: Endpoint {
     case deviceToken(deviceToken: String)
     case todayAuthor
     case meProfile
+    case search(nick: String)
     
     var path: String {
         switch self {
@@ -37,20 +38,23 @@ enum UserEndpoint: Endpoint {
             return "/v1/users/today-author"
         case .meProfile:
             return "/v1/users/me/profile"
+        case .search:
+            return "/v1/users/search"
         }
     }
     
     var method: HTTPMethod {
         switch self {
         case .validationEmail,
-                .join,
-                .login,
-                .kakoLogin,
-                .appleLogin:
+            .join,
+            .login,
+            .kakoLogin,
+            .appleLogin:
             return .post
         case .deviceToken: return .put
         case .todayAuthor,
-             .meProfile:
+             .meProfile,
+             .search:
             return .get
         }
     }
@@ -75,6 +79,8 @@ enum UserEndpoint: Endpoint {
         case .todayAuthor,
              .meProfile:
             return nil
+        case .search:
+            return .urlEncodedForm
         }
     }
     
@@ -95,6 +101,8 @@ enum UserEndpoint: Endpoint {
         case .todayAuthor,
              .meProfile:
             return nil
+        case let .search(nick):
+            return ["nick": nick]
         }
     }
 }

@@ -14,6 +14,8 @@ struct FilteeTabView: View {
     private var mainNavigation = NavigationRouter<MainPath>()
     @StateObject
     private var makeNavigation = NavigationRouter<MakePath>()
+    @StateObject
+    private var searchNavigation = NavigationRouter<SearchPath>()
     
     @Namespace
     private var namespaceId: Namespace.ID
@@ -32,15 +34,20 @@ struct FilteeTabView: View {
                 .environmentObject(makeNavigation)
                 .systemTabBarHidden()
                 .tag(TabItem.make)
+            
+            SearchNavigationView()
+                .environmentObject(searchNavigation)
+                .systemTabBarHidden()
+                .tag(TabItem.search)
         }
         .overlay(alignment: .bottom) {
             if showTabBar {
                 tabBar
                     .disabled(!showTabBar)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .ignoresSafeArea(.keyboard)
             }
         }
+        .ignoresSafeArea(.keyboard, edges: .all)
         .onChange(
             of: makeNavigation.path,
             perform: makePathOnChange
@@ -48,6 +55,10 @@ struct FilteeTabView: View {
         .onChange(
             of: mainNavigation.path,
             perform: mainPathOnChange
+        )
+        .onChange(
+            of: searchNavigation.path,
+            perform: searchPathOnChange
         )
     }
 }
@@ -122,6 +133,17 @@ private extension FilteeTabView {
         withAnimation(.filteeSpring) {
             switch newValue.last {
             case .chat, .detail:
+                showTabBar = false
+            default:
+                showTabBar = true
+            }
+        }
+    }
+    
+    func searchPathOnChange(_ newValue: [SearchPath]) {
+        withAnimation(.filteeSpring) {
+            switch newValue.last {
+            case .chat, .userDetail, .detail:
                 showTabBar = false
             default:
                 showTabBar = true

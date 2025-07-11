@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ProfileModel: Identifiable {
+struct ProfileModel: Identifiable, Hashable {
     let id: String
     let email: String?
     let nick: String

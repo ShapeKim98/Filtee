@@ -32,11 +32,27 @@ struct UserInfoResponseDTO: ResponseDTO {
 }
 
 extension UserInfoResponseDTO {
-    func toModel() -> UserInfoModel {
+    func toUserInfoModel() -> UserInfoModel {
         return UserInfoModel(
             id: self.userId,
             nick: self.nick,
-            profileImage: self.profileImage
+            profileImage: self.profileImage,
+            name: self.name,
+            hashTags: self.hashTags
+        )
+    }
+    
+    func toProfileModel() -> ProfileModel {
+        return ProfileModel(
+            id: self.userId,
+            email: self.email,
+            nick: self.nick,
+            name: self.nick,
+            introduction: self.introduction,
+            description: self.description,
+            profileImage: self.profileImage,
+            phoneNum: self.phoneNum,
+            hashTags: self.hashTags
         )
     }
 }

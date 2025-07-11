@@ -10,6 +10,7 @@ import SwiftUICore
 enum TabItem: CaseIterable {
     case main
     case make
+    case search
     
     func image(_ isSelected: Bool) -> ImageResource {
         switch self {
@@ -17,6 +18,8 @@ enum TabItem: CaseIterable {
             return isSelected ? .homeFill : .homeEmpty
         case .make:
             return isSelected ? .filterFill : .filterEmpty
+        case .search:
+            return isSelected ? .searchFill : .searchEmpty
         }
     }
 }
