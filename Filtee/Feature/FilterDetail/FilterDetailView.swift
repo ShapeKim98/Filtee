@@ -44,6 +44,8 @@ struct FilterDetailView<Path: Hashable & Sendable>: View {
     private var iamportPayload: IamportPaymentPayloadModel?
     @State
     private var name: String?
+    @State
+    private var isLoading: Bool = true
     
     private let filterId: String
     
@@ -52,7 +54,7 @@ struct FilterDetailView<Path: Hashable & Sendable>: View {
     }
     
     var body: some View {
-        ScrollView(content: content)
+        bodyContent
             .filteeNavigation(
                 title: filter?.title ?? "",
                 leadingItems: toolbarLeading,
@@ -90,6 +92,17 @@ private extension FilterDetailView {
         }
         .buttonStyle(.filteeToolbar)
         .animation(.filteeDefault, value: isLike)
+    }
+    
+    @ViewBuilder
+    var bodyContent: some View {
+        if isLoading {
+            ProgressView()
+                .controlSize(.large)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView(content: content)
+        }
     }
     
     func content() -> some View {
@@ -367,6 +380,9 @@ private extension FilterDetailView {
             
             self.originalImage = try await originalImage
             self.filteredImage = try await filteredImage
+            withAnimation(.filteeDefault) {
+                isLoading = false
+            }
         } catch {
             print(error)
         }

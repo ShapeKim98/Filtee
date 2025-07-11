@@ -143,7 +143,7 @@ private extension FilteeTabView {
     func searchPathOnChange(_ newValue: [SearchPath]) {
         withAnimation(.filteeSpring) {
             switch newValue.last {
-            case .chat, .userDetail:
+            case .chat, .userDetail, .detail:
                 showTabBar = false
             default:
                 showTabBar = true
