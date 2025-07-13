@@ -29,7 +29,8 @@ extension ChatRoomResponseDTO {
             id: self.roomId,
             createdAt: self.createdAt.toDate(.chat) ?? .now,
             updatedAt: self.updatedAt.toDate(.chat) ?? .now,
-            participants: self.participants.map { $0.toUserInfoModel() }
+            participants: self.participants.map { $0.toUserInfoModel() },
+            lastChat: self.lastChat?.toModel()
         )
     }
 }

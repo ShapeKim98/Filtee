@@ -8,11 +8,11 @@
 import Foundation
 import CoreData
 
-// MARK: - 🎯 대용량 채팅 데이터 목업 생성기 (DataModel 버전)
+// MARK: - 🎯 대용량 채팅 데이터 목업 생성기 (isFirst 기반)
 struct MockDataGenerator {
     
     // MARK: - 메인 생성 메서드
-    static func createMockData(context: NSManagedObjectContext, chatGroupsPerRoom: Int = 500) {
+    static func createMockData(context: NSManagedObjectContext, messagesPerRoom: Int = 2000) {
         print("🚀 목 데이터 생성 시작...")
         
         // 기존 데이터 삭제 (선택사항)
@@ -33,23 +33,23 @@ struct MockDataGenerator {
         // 기본 구조 저장
         saveContext(context)
         
-        // 4. 대용량 메시지 및 그룹 생성 (저장 후 다시 fetch)
+        // 4. 대용량 메시지 생성 (저장 후 다시 fetch)
         let savedUsers = refetchUsers(context: context)
         let savedRooms = refetchRooms(context: context)
         
         for (index, room) in savedRooms.enumerated() {
-            print("💬 \(room.roomId ?? "unknown") 채팅방 데이터 생성 중... (\(index + 1)/\(savedRooms.count))")
-            createMassiveMessagesAndGroups(
+            print("💬 \(room.roomId) 채팅방 데이터 생성 중... (\(index + 1)/\(savedRooms.count))")
+            createMassiveMessages(
                 room: room,
                 users: savedUsers,
-                targetGroupCount: chatGroupsPerRoom,
+                targetMessageCount: messagesPerRoom,
                 context: context
             )
         }
         
         // 최종 저장
         saveContext(context)
-        print("✅ 총 \(savedRooms.count)개 방, 각각 약 \(chatGroupsPerRoom)개 그룹 생성 완료!")
+        print("✅ 총 \(savedRooms.count)개 방, 각각 약 \(messagesPerRoom)개 메시지 생성 완료!")
     }
     
     // MARK: - 확장된 사용자 생성 (20명)
@@ -70,9 +70,9 @@ struct MockDataGenerator {
             ("user013", "류태현", "https://picsum.photos/100/100?random=13"),
             ("user014", "강민정", "https://picsum.photos/100/100?random=14"),
             ("user015", "조성훈", "https://picsum.photos/100/100?random=15"),
-            ("user016", "배하늘", nil), // 프로필 없음
+            ("user016", "배하늘", "https://picsum.photos/100/100?random=16"),
             ("user017", "임재원", "https://picsum.photos/100/100?random=17"),
-            ("user018", "문지현", nil), // 프로필 없음
+            ("user018", "문지현", "https://picsum.photos/100/100?random=18"),
             ("user019", "황민석", "https://picsum.photos/100/100?random=19"),
             ("user020", "노지우", "https://picsum.photos/100/100?random=20"),
         ]
@@ -180,24 +180,23 @@ struct MockDataGenerator {
         }
     }
     
-    // MARK: - 🚀 실제 채팅앱 방식의 메시지 및 그룹 생성 (Context 안전)
-    private static func createMassiveMessagesAndGroups(
+    // MARK: - 🚀 실제 채팅앱 방식의 메시지 생성 (isFirst 기반)
+    private static func createMassiveMessages(
         room: RoomDataModel,
         users: [SenderDataModel],
-        targetGroupCount: Int,
+        targetMessageCount: Int,
         context: NSManagedObjectContext
     ) {
         // 현재 context에서 방의 참여자들을 안전하게 가져오기
-        guard let roomId = room.roomId,
-              let currentRoom = safeGetRoom(by: roomId, context: context) else {
-            print("❌ 방 조회 실패: \(room.roomId ?? "unknown")")
+        guard let currentRoom = safeGetRoom(by: room.roomId, context: context) else {
+            print("❌ 방 조회 실패: \(room.roomId)")
             return
         }
         
         // 참여자들의 userId를 가져와서 현재 context에서 다시 조회
         guard let participants = currentRoom.participants?.allObjects as? [SenderDataModel],
               !participants.isEmpty else {
-            print("❌ 참여자가 없습니다: \(roomId)")
+            print("❌ 참여자가 없습니다: \(room.roomId)")
             return
         }
         
@@ -206,13 +205,13 @@ struct MockDataGenerator {
         let endTime = Date()
         
         var currentTime = startTime
-        var currentGroup: ChatGroupDataModel?
         var lastSenderUserId: String?
-        var createdGroups = 0
-        var totalMessages = 0
+        var lastMessageTime: Date?
+        var createdMessages = 0
+        var firstMessageCount = 0
         
         // 메시지 스트림 생성 (더 자연스러운 방식)
-        while createdGroups < targetGroupCount && currentTime < endTime {
+        while createdMessages < targetMessageCount && currentTime < endTime {
             // 다음 메시지 시간 결정
             let timeGap = generateRealisticTimeGap()
             currentTime = currentTime.addingTimeInterval(timeGap)
@@ -223,82 +222,70 @@ struct MockDataGenerator {
             let senderUserId = chooseSenderUserId(
                 participants: participants,
                 lastSenderUserId: lastSenderUserId,
-                lastMessageTime: currentTime
+                lastMessageTime: lastMessageTime
             )
             
             guard let sender = safeGetSender(by: senderUserId, context: context) else {
                 continue
             }
             
-            // ChatGroup 생성 조건 확인
-            let shouldCreateNewGroup = shouldCreateNewChatGroup(
+            // isFirst 설정 조건 확인
+            let isFirstMessage = shouldSetAsFirstMessage(
                 currentSenderUserId: senderUserId,
                 lastSenderUserId: lastSenderUserId,
                 currentTime: currentTime,
-                lastGroup: currentGroup
+                lastMessageTime: lastMessageTime
             )
             
-            if shouldCreateNewGroup {
-                // 새로운 ChatGroupDataModel 생성
-                currentGroup = createChatGroup(sender: sender, room: currentRoom, context: context)
-                currentRoom.addToChats(currentGroup!)
-                createdGroups += 1
-                
-                // 중간 저장 및 context 갱신
-                if createdGroups % 50 == 0 {
-                    saveContext(context)
-                    print("  📊 \(createdGroups)/\(targetGroupCount) 그룹 생성 완료")
-                    
-                    // 저장 후 현재 그룹 다시 조회 (context 안전성)
-                    if let groupObjectID = currentGroup?.objectID {
-                        do {
-                            currentGroup = try context.existingObject(with: groupObjectID) as? ChatGroupDataModel
-                        } catch {
-                            print("❌ 그룹 재조회 실패: \(error)")
-                            currentGroup = nil
-                        }
-                    }
-                }
+            if isFirstMessage {
+                firstMessageCount += 1
             }
             
-            // 현재 그룹에 메시지 추가 (연속 메시지 패턴 고려)
+            // 연속 메시지 생성 (같은 발신자의 연속 메시지들)
             let messagesToAdd = generateContinuousMessages(
                 sender: sender,
                 room: currentRoom,
                 startTime: currentTime,
-                isNewGroup: shouldCreateNewGroup,
+                isFirstMessage: isFirstMessage,
                 context: context
             )
             
+            // 방에 메시지들 추가
             for message in messagesToAdd {
-                currentGroup?.addToChats(message)
-                totalMessages += 1
-            }
-            
-            // 그룹의 최신 시간 업데이트
-            if let lastMessage = messagesToAdd.last {
-                currentGroup?.latestedAt = lastMessage.createdAt ?? currentTime
-                currentTime = lastMessage.createdAt ?? currentTime
+                currentRoom.addToChats(message)
+                createdMessages += 1
+                
+                // lastChat 업데이트 (가장 최신 메시지로)
+                currentRoom.lastChat = message
+                
+                
+                currentTime = message.createdAt
+                lastMessageTime = message.createdAt
             }
             
             // 상태 업데이트
             lastSenderUserId = senderUserId
+            
+            // 중간 저장 및 진행 상황 출력
+            if createdMessages % 200 == 0 {
+                saveContext(context)
+                print("  📊 \(createdMessages)/\(targetMessageCount) 메시지 생성 완료 (그룹 시작: \(firstMessageCount)개)")
+            }
         }
         
-        print("  ✅ \(roomId) 방: \(createdGroups)개 그룹, \(totalMessages)개 메시지 생성 완료")
+        print("  ✅ \(room.roomId) 방: \(createdMessages)개 메시지, \(firstMessageCount)개 그룹 생성 완료")
     }
     
-    // MARK: - 🔄 ChatGroup 생성 조건 확인 (userId 기반)
-    private static func shouldCreateNewChatGroup(
+    // MARK: - 🔄 isFirst 설정 조건 확인
+    private static func shouldSetAsFirstMessage(
         currentSenderUserId: String,
         lastSenderUserId: String?,
         currentTime: Date,
-        lastGroup: ChatGroupDataModel?
+        lastMessageTime: Date?
     ) -> Bool {
-        // 첫 번째 그룹인 경우
+        // 첫 번째 메시지인 경우
         guard let lastSenderUserId = lastSenderUserId,
-              let lastGroup = lastGroup,
-              let lastMessageTime = lastGroup.latestedAt else {
+              let lastMessageTime = lastMessageTime else {
             return true
         }
         
@@ -316,7 +303,7 @@ struct MockDataGenerator {
         let lastDay = calendar.component(.day, from: lastMessageTime)
         let currentDay = calendar.component(.day, from: currentTime)
         
-        // 다른 일, 시, 분이면 새 그룹
+        // 다른 일, 시, 분이면 새 그룹 시작
         if lastDay != currentDay || lastHour != currentHour || lastMinute != currentMinute {
             return true
         }
@@ -334,7 +321,7 @@ struct MockDataGenerator {
     private static func chooseSenderUserId(
         participants: [SenderDataModel],
         lastSenderUserId: String?,
-        lastMessageTime: Date
+        lastMessageTime: Date?
     ) -> String {
         guard let lastSenderUserId = lastSenderUserId else {
             return participants.randomElement()?.userId ?? "user001"
@@ -357,13 +344,13 @@ struct MockDataGenerator {
         sender: SenderDataModel,
         room: RoomDataModel,
         startTime: Date,
-        isNewGroup: Bool,
+        isFirstMessage: Bool,
         context: NSManagedObjectContext
     ) -> [ChatDataModel] {
         
         // 새 그룹이면 더 많은 메시지, 기존 그룹이면 적은 메시지
         let messageCount: Int
-        if isNewGroup {
+        if isFirstMessage {
             // 새 그룹: 1-5개 메시지
             messageCount = Int.random(in: 1...5)
         } else {
@@ -380,8 +367,7 @@ struct MockDataGenerator {
             safeSender = sender
         } else {
             // 다른 context의 sender라면 현재 context에서 다시 조회
-            guard let senderUserId = sender.userId,
-                  let contextSender = safeGetSender(by: senderUserId, context: context) else {
+            guard let contextSender = safeGetSender(by: sender.userId, context: context) else {
                 print("⚠️ Sender context 불일치, 메시지 생성 건너뜀")
                 return []
             }
@@ -393,8 +379,7 @@ struct MockDataGenerator {
             safeRoom = room
         } else {
             // 다른 context의 room이라면 현재 context에서 다시 조회
-            guard let roomId = room.roomId,
-                  let contextRoom = safeGetRoom(by: roomId, context: context) else {
+            guard let contextRoom = safeGetRoom(by: room.roomId, context: context) else {
                 print("⚠️ Room context 불일치, 메시지 생성 건너뜀")
                 return []
             }
@@ -407,14 +392,18 @@ struct MockDataGenerator {
                 room: safeRoom,
                 messageIndex: i,
                 totalMessages: messageCount,
-                isNewGroup: isNewGroup
+                isFirstMessage: isFirstMessage
             )
+            
+            // 첫 번째 메시지만 isFirst = true
+            let isFirst = isFirstMessage && i == 0
             
             let message = createMessage(
                 content: content,
                 sender: safeSender,
                 room: safeRoom,
                 time: currentTime,
+                isFirst: isFirst,
                 context: context
             )
             
@@ -436,14 +425,14 @@ struct MockDataGenerator {
         room: RoomDataModel,
         messageIndex: Int,
         totalMessages: Int,
-        isNewGroup: Bool
+        isFirstMessage: Bool
     ) -> String {
         
-        let roomType = room.roomId ?? "general"
-        let senderName = sender.nick ?? "Unknown"
+        let roomType = room.roomId
+        let senderName = sender.nick
         
         // 첫 메시지와 연속 메시지 구분
-        if isNewGroup && messageIndex == 0 {
+        if isFirstMessage && messageIndex == 0 {
             // 새 그룹의 첫 메시지 (주제 시작)
             return generateTopicStarterMessage(roomType: roomType, senderName: senderName)
         } else {
@@ -542,19 +531,12 @@ struct MockDataGenerator {
     
     // MARK: - 헬퍼 메서드들 (Context 안전)
     
-    private static func createChatGroup(sender: SenderDataModel, room: RoomDataModel, context: NSManagedObjectContext) -> ChatGroupDataModel {
-        let group = ChatGroupDataModel(context: context)
-        group.id = UUID().uuidString  // 새로운 id 속성 설정
-        group.room = room
-        group.sender = sender
-        return group
-    }
-    
     private static func createMessage(
         content: String,
         sender: SenderDataModel,
-        room: RoomDataModel, 
+        room: RoomDataModel,
         time: Date,
+        isFirst: Bool,
         context: NSManagedObjectContext
     ) -> ChatDataModel {
         let message = ChatDataModel(context: context)
@@ -563,17 +545,17 @@ struct MockDataGenerator {
         message.createdAt = time
         message.updatedAt = time
         message.roomId = room.roomId
+        message.isFirst = isFirst  // 새로운 그룹의 첫 메시지 여부
         
         // Context 안전성 확인 후 관계 설정
         if sender.managedObjectContext == context {
             message.sender = sender
         } else {
             // 다른 context의 객체라면 현재 context에서 다시 조회
-            if let senderUserId = sender.userId,
-               let safeSender = safeGetSender(by: senderUserId, context: context) {
+            if let safeSender = safeGetSender(by: sender.userId, context: context) {
                 message.sender = safeSender
             } else {
-                print("⚠️ Sender 관계 설정 실패: \(sender.userId ?? "unknown")")
+                print("⚠️ Sender 관계 설정 실패: \(sender.userId)")
             }
         }
         
@@ -587,7 +569,7 @@ struct MockDataGenerator {
     }
     
     private static func clearAllData(context: NSManagedObjectContext) {
-        let entities = ["ChatDataModel", "ChatGroupDataModel", "RoomDataModel", "SenderDataModel"]
+        let entities = ["ChatDataModel", "RoomDataModel", "SenderDataModel"]
         
         for entityName in entities {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
@@ -628,24 +610,24 @@ struct MockDataGenerator {
 // MARK: - 🎯 사용 예시 및 설정
 extension MockDataGenerator {
     
-    /// 빠른 테스트용 (방당 50개 그룹)
+    /// 빠른 테스트용 (방당 200개 메시지)
     static func createTestData(context: NSManagedObjectContext) {
-        createMockData(context: context, chatGroupsPerRoom: 50)
+        createMockData(context: context, messagesPerRoom: 200)
     }
     
-    /// 중간 규모 (방당 200개 그룹)
+    /// 중간 규모 (방당 1000개 메시지)
     static func createMediumData(context: NSManagedObjectContext) {
-        createMockData(context: context, chatGroupsPerRoom: 200)
+        createMockData(context: context, messagesPerRoom: 1000)
     }
     
-    /// 대용량 (방당 1000개 그룹)
+    /// 대용량 (방당 5000개 메시지)
     static func createLargeData(context: NSManagedObjectContext) {
-        createMockData(context: context, chatGroupsPerRoom: 1000)
+        createMockData(context: context, messagesPerRoom: 5000)
     }
     
-    /// 극대용량 (방당 5000개 그룹) - 페이지네이션 스트레스 테스트용
+    /// 극대용량 (방당 20000개 메시지) - 페이지네이션 스트레스 테스트용
     static func createMassiveData(context: NSManagedObjectContext) {
-        createMockData(context: context, chatGroupsPerRoom: 5000)
+        createMockData(context: context, messagesPerRoom: 20000)
     }
 }
 
@@ -654,24 +636,29 @@ struct MockDataAnalyzer {
     
     static func analyzeGeneratedData(context: NSManagedObjectContext) {
         let roomRequest: NSFetchRequest<RoomDataModel> = RoomDataModel.fetchRequest()
-        let groupRequest: NSFetchRequest<ChatGroupDataModel> = ChatGroupDataModel.fetchRequest()
         let messageRequest: NSFetchRequest<ChatDataModel> = ChatDataModel.fetchRequest()
+        let firstMessageRequest: NSFetchRequest<ChatDataModel> = ChatDataModel.fetchRequest()
+        firstMessageRequest.predicate = NSPredicate(format: "isFirst == YES")
         
         do {
             let roomCount = try context.count(for: roomRequest)
-            let groupCount = try context.count(for: groupRequest)
             let messageCount = try context.count(for: messageRequest)
+            let groupCount = try context.count(for: firstMessageRequest)
             
             print("📊 생성된 데이터 분석:")
             print("  🏠 채팅방: \(roomCount)개")
-            print("  📦 채팅그룹: \(groupCount)개 (평균 \(groupCount/max(roomCount,1))개/방)")
-            print("  💬 메시지: \(messageCount)개 (평균 \(messageCount/max(groupCount,1))개/그룹)")
+            print("  💬 메시지: \(messageCount)개 (평균 \(messageCount/max(roomCount,1))개/방)")
+            print("  📦 채팅그룹: \(groupCount)개 (평균 \(messageCount/max(groupCount,1))개/그룹)")
             
             // 방별 상세 분석
             let rooms = try context.fetch(roomRequest)
             for room in rooms {
-                let roomGroupCount = room.chats?.count ?? 0
-                print("    📍 \(room.roomId ?? "unknown"): \(roomGroupCount)개 그룹")
+                let roomMessageCount = room.chats?.count ?? 0
+                let roomGroupRequest: NSFetchRequest<ChatDataModel> = ChatDataModel.fetchRequest()
+                roomGroupRequest.predicate = NSPredicate(format: "roomId == %@ AND isFirst == YES", room.roomId)
+                let roomGroupCount = try context.count(for: roomGroupRequest)
+                
+                print("    📍 \(room.roomId): \(roomMessageCount)개 메시지, \(roomGroupCount)개 그룹")
             }
             
         } catch {

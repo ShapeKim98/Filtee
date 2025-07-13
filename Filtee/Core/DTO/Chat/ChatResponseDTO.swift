@@ -35,7 +35,9 @@ extension ChatResponseDTO {
             content: self.content,
             createdAt: self.createdAt.toDate(.chat) ?? .now,
             updatedAt: self.updatedAt.toDate(.chat) ?? .now,
-            sender: self.sender.toUserInfoModel()
+            sender: self.sender.toUserInfoModel(),
+            isFirst: false,
+            isLast: false
         )
     }
 }

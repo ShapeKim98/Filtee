@@ -1,31 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23231" systemVersion="24A348" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
-    <entity name="ChatDataModel" representedClassName="ChatDataModel" syncable="YES" codeGenerationType="class">
-        <attribute name="chatId" optional="YES" attributeType="String"/>
-        <attribute name="content" optional="YES" attributeType="String"/>
-        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+    <entity name="ChatDataModel" representedClassName="ChatDataModel" syncable="YES">
+        <attribute name="chatId" attributeType="String"/>
+        <attribute name="content" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="filesData" optional="YES" attributeType="Binary"/>
-        <attribute name="roomId" optional="YES" attributeType="String"/>
-        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="isFirst" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="isLast" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="roomId" attributeType="String"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="sender" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SenderDataModel"/>
     </entity>
-    <entity name="ChatGroupDataModel" representedClassName="ChatGroupDataModel" syncable="YES" codeGenerationType="class">
-        <attribute name="id" optional="YES" attributeType="String"/>
-        <attribute name="latestedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+    <entity name="RoomDataModel" representedClassName="RoomDataModel" syncable="YES">
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="roomId" attributeType="String"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="chats" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ChatDataModel"/>
-        <relationship name="room" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="RoomDataModel" inverseName="chats" inverseEntity="RoomDataModel"/>
-        <relationship name="sender" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SenderDataModel"/>
-    </entity>
-    <entity name="RoomDataModel" representedClassName="RoomDataModel" syncable="YES" codeGenerationType="class">
-        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="roomId" optional="YES" attributeType="String"/>
-        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="chats" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ChatGroupDataModel" inverseName="room" inverseEntity="ChatGroupDataModel"/>
+        <relationship name="lastChat" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ChatDataModel"/>
         <relationship name="participants" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="SenderDataModel"/>
     </entity>
-    <entity name="SenderDataModel" representedClassName="SenderDataModel" syncable="YES" codeGenerationType="class">
-        <attribute name="nick" optional="YES" attributeType="String"/>
+    <entity name="SenderDataModel" representedClassName="SenderDataModel" syncable="YES">
+        <attribute name="nick" attributeType="String"/>
         <attribute name="profileImage" optional="YES" attributeType="String"/>
-        <attribute name="userId" optional="YES" attributeType="String"/>
+        <attribute name="userId" attributeType="String"/>
     </entity>
 </model>
