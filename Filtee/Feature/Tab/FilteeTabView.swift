@@ -131,7 +131,7 @@ private extension FilteeTabView {
     func bodyTask() async {
         do {
             let token = try await firebaseManager.fetchFCMToken()
-            try await userClientDeviceToken(token)
+//            try await userClientDeviceToken(token)
             for try await payload in await notificationManager.payloadStream() {
                 print(payload)
             }
