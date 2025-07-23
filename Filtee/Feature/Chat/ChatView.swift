@@ -90,12 +90,14 @@ struct ChatView<Path: Hashable & Sendable>: View {
             
             messageInput
         }
-        .if(isSearching) { $0.ignoresSafeArea(.keyboard, edges: .bottom) }
         .overlay(alignment: .top) {
             if isSearching {
-                searchToolbar.filteeBlurReplace()
+                searchToolbar
+                    .filteeBlurReplace()
+                    .animation(.default, value: isSearching)
             }
         }
+        .if(isSearching) { $0.ignoresSafeArea(.keyboard, edges: .bottom) }
         .filteeNavigation(
             title: roomTitle,
             leadingItems: toolbarLeading,
@@ -347,9 +349,10 @@ private extension ChatView {
             if isSearching {
                 searchTask?.cancel()
                 searchTask = nil
-                searchKeyword = nil
                 searchResultIndex = 0
                 searchResult.removeAll(keepingCapacity: true)
+                searchKeyword = nil
+                searchFocused = false
             } else {
                 searchKeyword = ""
                 searchFocused = true
@@ -383,20 +386,14 @@ private extension ChatView {
     }
     
     func nextSearchButtonAction() {
-        nextButtonTask?.cancel()
         guard searchResultIndex < searchResult.count - 1 else { return }
         searchResultIndex += 1
         nextButtonTask = Task {
             await fetchChatGroupsFromDateToDate()
-            do {
-                try await Task.sleep(for: .milliseconds(500))
-                chatListProxy?.scrollTo(
-                    searchResult[searchResultIndex].id,
-                    anchor: .center
-                )
-            } catch {
-                print(error)
-            }
+            chatListProxy?.scrollTo(
+                searchResult[searchResultIndex].id,
+                anchor: .center
+            )
         }
     }
     
@@ -512,6 +509,9 @@ private extension ChatView {
                 in: roomId
             )
             self.chats.append(contentsOf: chats)
+            if chats.isEmpty {
+                try await Task.sleep(for: .milliseconds(300))
+            }
         } catch {
             print(error)
         }
