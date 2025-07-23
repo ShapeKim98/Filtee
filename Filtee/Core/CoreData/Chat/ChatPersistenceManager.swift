@@ -9,6 +9,8 @@ import SwiftUICore
 @preconcurrency import CoreData
 
 actor ChatPersistenceManager {
+    private init() { }
+    
     private let context = PersistenceProvider.shared.container.newBackgroundContext()
     
     func paginationChat(roomId: String, cursor: Date?, page: Int = 20) async throws -> [ChatModel]? {

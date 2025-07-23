@@ -11,6 +11,8 @@ import Firebase
 import FirebaseMessaging
 
 actor FirebaseManager: NSObject {
+    static let shared = FirebaseManager()
+    
     private override init() { }
     
     @MainActor

@@ -8,17 +8,16 @@
 import SwiftUI
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
-    @Environment(\.firebaseManager)
-    private var firebaseManager
-    @Environment(\.notificationManager)
-    private var notificationManager
-    
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil
     ) -> Bool {
-        firebaseManager.configureFirebase()
-        notificationManager.requestAuthorization(application)
+        FirebaseManager.shared.configureFirebase()
+        Task {
+            let granted = try await NotificationManager.shared.requestAuthorization()
+            guard granted else { return }
+            application.registerForRemoteNotifications()
+        }
         
         return true
     }
@@ -32,7 +31,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         }
         let token = tokenParts.joined()
         print("APNs Device Token: \(token)")
-        firebaseManager.updateAPNSToken(deviceToken)
+        FirebaseManager.shared.updateAPNSToken(deviceToken)
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: any Error) {

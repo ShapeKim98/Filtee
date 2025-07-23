@@ -11,25 +11,33 @@ import Combine
 import UserNotifications
 
 actor NotificationManager: NSObject {
+    static let shared = NotificationManager()
+    
+    private override init() { super.init() }
+    
     nonisolated(unsafe)
     private var continuation: AsyncThrowingStream<NotificationPayload, Error>.Continuation?
     nonisolated(unsafe)
     private var queue = [NotificationPayload]()
     
-    @MainActor
-    func requestAuthorization(
-        _ application: UIApplication
-    ) {
+    func requestAuthorization() async throws -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-        UNUserNotificationCenter.current().requestAuthorization(
-            options: authOptions,
-            completionHandler: { _, _ in }
-        )
-        application.registerForRemoteNotifications()
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            UNUserNotificationCenter.current().requestAuthorization(
+                options: [.alert, .badge, .sound],
+                completionHandler: { granted, error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    continuation.resume(returning: granted)
+                }
+            )
+        }
     }
     
-    func userInfoPublisher() -> AsyncThrowingStream<NotificationPayload, Error> {
+    func payloadStream() -> AsyncThrowingStream<NotificationPayload, Error> {
         return AsyncThrowingStream { [weak self] continuation in
             if let last = self?.queue.last {
                 continuation.yield(last)

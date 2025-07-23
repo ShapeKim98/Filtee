@@ -8,6 +8,13 @@
 import SwiftUI
 
 struct FilteeTabView: View {
+    @Environment(\.firebaseManager)
+    private var firebaseManager
+    @Environment(\.userClient.deviceToken)
+    private var userClientDeviceToken
+    @Environment(\.notificationManager)
+    private var notificationManager
+    
     @StateObject
     private var tabRouter = FlowRouter<TabItem>(flow: .main)
     @StateObject
@@ -48,6 +55,7 @@ struct FilteeTabView: View {
             }
         }
         .ignoresSafeArea(.keyboard, edges: .all)
+        .task(bodyTask)
         .onChange(
             of: makeNavigation.path,
             perform: makePathOnChange
@@ -119,6 +127,19 @@ private extension FilteeTabView {
 
 // MARK: - Functions
 private extension FilteeTabView {
+    @Sendable
+    func bodyTask() async {
+        do {
+            let token = try await firebaseManager.fetchFCMToken()
+            try await userClientDeviceToken(token)
+            for try await payload in await notificationManager.payloadStream() {
+                print(payload)
+            }
+        } catch {
+            print(error)
+        }
+    }
+    
     func makePathOnChange(_ newValue: [MakePath]) {
         withAnimation(.filteeSpring) {
             if case .edit = newValue.last {

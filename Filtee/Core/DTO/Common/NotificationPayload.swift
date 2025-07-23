@@ -9,6 +9,6 @@ import Foundation
 
 struct NotificationPayload: ResponseDTO {
     let title: String
-    let subtitle: String
+    let subtitle: String?
     let body: String
 }
