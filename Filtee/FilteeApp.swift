@@ -14,6 +14,9 @@ import NukeAlamofirePlugin
 
 @main
 struct FilteeApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self)
+    var appDelegate
+    
     init() {
         KakaoSDK.initSDK(appKey: Bundle.main.kakaoNativeAppKey)
         
