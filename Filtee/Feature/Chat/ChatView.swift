@@ -29,6 +29,8 @@ struct ChatView<Path: Hashable & Sendable>: View {
     private var chatClientWebSocketDisconnect
     @Environment(\.chatClient.webSocketStream)
     private var chatClientWebSocketStream
+    @Environment(\.pushClient.notificationsPushGroup)
+    private var pushClientNotificationsPushGroup
     @Environment(\.scenePhase)
     private var scenePhase
     
@@ -41,7 +43,7 @@ struct ChatView<Path: Hashable & Sendable>: View {
     @State
     private var input: String = ""
     @State
-    private var userId: String?
+    private var user: MyInfoModel?
     @State
     private var isLoading: Bool = true
     @State
@@ -69,7 +71,7 @@ struct ChatView<Path: Hashable & Sendable>: View {
     private let opponentId: String
     private var roomTitle: String {
         room?.participants
-            .filter { $0.id != userId }
+            .filter { $0.id != user?.userId }
             .compactMap(\.nick)
             .sorted(by: <)
             .joined(separator: ", ") ?? ""
@@ -210,7 +212,7 @@ private extension ChatView {
     
     @ViewBuilder
     func chatCell(_ chat: ChatModel) -> some View {
-        let isMe = userId == chat.sender?.id
+        let isMe = user?.userId == chat.sender?.id
         let chatIndex = chats.index(id: chat.id) ?? 0
         let isLast = chatIndex == chats.count - 1
         let beforeChatIndex = chats.index(after: isLast ? chatIndex - 1 : chatIndex)
@@ -297,7 +299,7 @@ private extension ChatView {
     @Sendable
     func bodyTask() async {
         do {
-            userId = try await userClientMeProfile().userId
+            user = try await userClientMeProfile()
             let room = try await chatClientCreateChats(opponentId)
             self.room = try await chatPersistenceManager.createRoom(room)
             await connectChatWebSocket()
@@ -446,7 +448,15 @@ private extension ChatView {
     func sendChat() async {
         guard let roomId = room?.id else { return }
         do {
+            let input = self.input
             try await chatClientSendChats(roomId, input)
+            guard let nick = user?.nick else { return }
+            let pushModel = PushModel(
+                userIds: [opponentId],
+                title: nick,
+                body: input
+            )
+            try await pushClientNotificationsPushGroup(pushModel)
         } catch {
             print(error)
         }
