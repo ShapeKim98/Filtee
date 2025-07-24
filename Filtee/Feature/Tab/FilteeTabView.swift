@@ -18,6 +18,8 @@ struct FilteeTabView: View {
     @StateObject
     private var tabRouter = FlowRouter<TabItem>(flow: .main)
     @StateObject
+    private var toastRouter = ToastRouter()
+    @StateObject
     private var mainNavigation = NavigationRouter<MainPath>()
     @StateObject
     private var makeNavigation = NavigationRouter<MakePath>()
@@ -34,6 +36,7 @@ struct FilteeTabView: View {
         TabView(selection: $tabRouter.flow) {
             MainNavigationView()
                 .environmentObject(mainNavigation)
+                .environmentObject(toastRouter)
                 .systemTabBarHidden()
                 .tag(TabItem.main)
             
@@ -52,6 +55,14 @@ struct FilteeTabView: View {
                 tabBar
                     .disabled(!showTabBar)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .overlay(alignment: .top) {
+            ZStack {
+                ForEach(toastRouter.messageQueue, id: \.self) { message in
+                    toastMessage(message)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
             }
         }
         .ignoresSafeArea(.keyboard, edges: .all)
@@ -123,6 +134,16 @@ private extension FilteeTabView {
             }}
         }
     }
+    
+    func toastMessage(_ message: String) -> some View {
+        Text(message)
+            .font(.pretendard(.body2(.bold)))
+            .foregroundStyle(.gray45)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(.ultraThinMaterial)
+            .clipRectangle(9999)
+    }
 }
 
 // MARK: - Functions
@@ -130,7 +151,7 @@ private extension FilteeTabView {
     @Sendable
     func bodyTask() async {
         do {
-            let token = try await firebaseManager.fetchFCMToken()
+//            let token = try await firebaseManager.fetchFCMToken()
 //            try await userClientDeviceToken(token)
             for try await payload in await notificationManager.payloadStream() {
                 print(payload)

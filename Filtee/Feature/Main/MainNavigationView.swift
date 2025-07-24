@@ -10,6 +10,8 @@ import SwiftUI
 struct MainNavigationView: View {
     @EnvironmentObject
     private var navigation: NavigationRouter<MainPath>
+    @EnvironmentObject
+    private var toastRouter: ToastRouter
     
     var body: some View {
         NavigationStack(path: $navigation.path) {
@@ -29,6 +31,7 @@ struct MainNavigationView: View {
                     case .bannerWeb:
                         BannerWebView()
                             .environmentObject(navigation)
+                            .environmentObject(toastRouter)
                     }
                 }
         }

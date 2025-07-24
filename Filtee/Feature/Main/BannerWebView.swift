@@ -11,6 +11,8 @@ import WebKit
 struct BannerWebView: View {
     @EnvironmentObject
     private var navigation: NavigationRouter<MainPath>
+    @EnvironmentObject
+    private var toastRouter: ToastRouter
     
     @Environment(\.keychainManager)
     private var keychainManager
@@ -68,11 +70,14 @@ private extension BannerWebView {
     }
     
     func completeAttendance(_ message: WKScriptMessage) async {
-        
+        toastRouter.present("출석 성공! \((message.body as? Int) ?? 0)번 출석")
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
     
     func attendanceFailed(_ message: WKScriptMessage) async {
         do {
+            toastRouter.present("예기치 못한 오류가 발생했어요. 다시 시도해주세요.")
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
             try await authClientRefresh()
             message.webView?.reload()
         } catch {
