@@ -270,15 +270,18 @@ private extension MainView {
     }
     
     func bannerCell(_ item: BannerModel) -> some View {
-        LazyImage(url: URL(string: item.imageURL)) { state in
-            lazyImageTransform(state) { image in
-                image.aspectRatio(contentMode: .fill)
+        Button(action: bannerButtonAction) {
+            LazyImage(url: URL(string: item.imageURL)) { state in
+                lazyImageTransform(state) { image in
+                    image.aspectRatio(contentMode: .fill)
+                }
+                .frame(height: 100)
+                .frame(maxWidth: .infinity)
             }
-            .frame(height: 100)
-            .frame(maxWidth: .infinity)
+            .clipRectangle(24)
+            .clipped()
         }
-        .clipRectangle(24)
-        .clipped()
+        .buttonStyle(.plain)
     }
 }
 
@@ -309,6 +312,10 @@ private extension MainView {
             guard let id = todayFilter?.id else { return }
             navigation.push(.detail(id: id))
         }
+    }
+    
+    func bannerButtonAction() {
+        navigation.push(.bannerWeb)
     }
     
     func hotTrendButtonAction(id: String) {

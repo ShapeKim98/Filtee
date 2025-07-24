@@ -26,6 +26,9 @@ struct MainNavigationView: View {
                     case let .userDetail(user):
                         UserDetailView<MainPath>(user: user)
                             .environmentObject(navigation)
+                    case .bannerWeb:
+                        BannerWebView()
+                            .environmentObject(navigation)
                     }
                 }
         }
