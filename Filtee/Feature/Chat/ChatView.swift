@@ -450,13 +450,6 @@ private extension ChatView {
         do {
             let input = self.input
             try await chatClientSendChats(roomId, input)
-            guard let nick = user?.nick else { return }
-            let pushModel = PushModel(
-                userIds: [opponentId],
-                title: nick,
-                body: input
-            )
-            try await pushClientNotificationsPushGroup(pushModel)
         } catch {
             print(error)
         }
