@@ -545,7 +545,7 @@ struct MockDataGenerator {
         message.createdAt = time
         message.updatedAt = time
         message.roomId = room.roomId
-        message.isFirst = isFirst  // 새로운 그룹의 첫 메시지 여부
+        message.isHead = isFirst  // 새로운 그룹의 첫 메시지 여부
         
         // Context 안전성 확인 후 관계 설정
         if sender.managedObjectContext == context {

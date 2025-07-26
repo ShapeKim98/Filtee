@@ -65,9 +65,9 @@ final class IamportManager {
         buyerName: String
     ) -> IamportPayment? {
         let req = IamportPayment(
-                pg: PG.html5_inicis.makePgRawName(pgId: "INIpayTest"),
-                merchant_uid: orderCode,
-                amount: String(price)
+            pg: PG.html5_inicis.makePgRawName(pgId: "INIpayTest"),
+            merchant_uid: orderCode,
+            amount: String(price)
         ).then {
             $0.pay_method = PayMethod.card.rawValue
             $0.name = name

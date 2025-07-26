@@ -150,8 +150,8 @@ actor ChatPersistenceManager {
             print(chat.content, isFirst)
             
             try await save { _ in
-                chat.isFirst = isFirst
-                lastChat.isLast = isFirst
+                chat.isHead = isFirst
+                lastChat.isTail = isFirst
             }
         }
         

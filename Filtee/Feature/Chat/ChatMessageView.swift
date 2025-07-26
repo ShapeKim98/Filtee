@@ -29,11 +29,11 @@ struct ChatMessageView: View {
     
     var body: some View {
         HStack(spacing: 8) {
-            if chat.isFirst && !isMe {
+            if chat.isHead && !isMe {
                 profileImage(chat.sender?.profileImage)
             }
             
-            message.if(!chat.isFirst) { view in
+            message.if(!chat.isHead) { view in
                 view.padding(.leading, 40)
             }
         }
@@ -44,7 +44,7 @@ struct ChatMessageView: View {
 private extension ChatMessageView {
     var message: some View {
         VStack(alignment: isMe ? .trailing : .leading, spacing: 8) {
-            if chat.isFirst && !isMe {
+            if chat.isHead && !isMe {
                 Text("\(chat.sender?.nick ?? "")")
                     .font(.pretendard(.body1(.bold)))
             }
@@ -56,7 +56,7 @@ private extension ChatMessageView {
     
     @ViewBuilder
     var bubble: some View {
-        let isLast = chat.isLast
+        let isLast = chat.isTail
         
         HStack(alignment: .bottom, spacing: 8) {
             let pretendard = Pretendard.body1(.medium)

@@ -237,7 +237,7 @@ private extension ChatView {
                 view
             }
         }
-        .if(chat.isFirst) { $0.padding(.top, 8) }
+        .if(chat.isHead) { $0.padding(.top, 8) }
         .rotation3DEffect(
             .degrees(-180),
             axis: (0, 1, 0),
@@ -439,7 +439,7 @@ private extension ChatView {
             input = ""
             chats.updateOrInsert(newChat, at: 0)
             if chats.count > 1 {
-                chats[1].isLast = newChat.isFirst
+                chats[1].isTail = newChat.isHead
             }
             
         } catch { print(error) }

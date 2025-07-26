@@ -42,7 +42,7 @@ extension SenderDataModel {
         return UserInfoModel(
             id: self.userId,
             nick: self.nick,
-            profileImage: self.profileImage ?? "",
+            profileImage: self.profileImage?.imageURL ?? "",
             name: nil,
             hashTags: []
         )

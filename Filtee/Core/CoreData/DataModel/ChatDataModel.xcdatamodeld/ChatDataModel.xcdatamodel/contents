@@ -5,8 +5,8 @@
         <attribute name="content" attributeType="String"/>
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="filesData" optional="YES" attributeType="Binary"/>
-        <attribute name="isFirst" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
-        <attribute name="isLast" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="isHead" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="isTail" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="roomId" attributeType="String"/>
         <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="sender" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SenderDataModel"/>

@@ -23,7 +23,7 @@ public class ChatDataModel: NSManagedObject, @unchecked Sendable {
         self.content = content
         self.roomId = roomId
         self.createdAt = Date()
-        self.isFirst = isFirst
+        self.isHead = isFirst
         self.sender = sender
     }
 }
@@ -40,8 +40,8 @@ extension ChatDataModel {
     @NSManaged public var content: String
     @NSManaged public var createdAt: Date
     @NSManaged public var updatedAt: Date
-    @NSManaged public var isFirst: Bool
-    @NSManaged public var isLast: Bool
+    @NSManaged public var isHead: Bool
+    @NSManaged public var isTail: Bool
     @NSManaged public var roomId: String
     
     // MARK: - Optional Properties
@@ -60,8 +60,8 @@ extension ChatDataModel {
             createdAt: self.createdAt,
             updatedAt: self.updatedAt,
             sender: self.sender?.toModel(),
-            isFirst: self.isFirst,
-            isLast: self.isLast
+            isHead: self.isHead,
+            isTail: self.isTail
         )
     }
 }
