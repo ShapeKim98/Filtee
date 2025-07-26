@@ -86,15 +86,12 @@ struct FilteeTabView: View {
 private extension FilteeTabView {
     var tabBar: some View {
         HStack(spacing: 32) {
-            Spacer()
-            
             ForEach(TabItem.allCases, id: \.self) { tab in
                 tabItem(tab)
             }
-            
-            Spacer()
         }
         .frame(height: 68)
+        .padding(.horizontal, 32)
         .background {
             VisualEffect(style: .systemUltraThinMaterial)
         }
