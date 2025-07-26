@@ -95,12 +95,12 @@ final class PaymentWebViewModeViewController: UIViewController, WKNavigationDele
         print("PaymentWebViewModeView viewDidLoad")
 
         view.backgroundColor = UIColor.white
+        attachWebView()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         print("PaymentWebViewModeView viewDidAppear")
-        attachWebView()
         Task { [weak self] in
             guard let `self` else { return }
             await iamportRequestPayment(wkWebView, payload)
