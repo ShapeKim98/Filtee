@@ -28,7 +28,7 @@ extension UserInfoResponseDTO {
             name: self.name,
             introduction: self.introduction,
             description: self.description,
-            profileImage: self.profileImage?.imageURL,
+            profileImage: self.profileImage?.url,
             phoneNum: self.phoneNum,
             hashTags: self.hashTags
         )

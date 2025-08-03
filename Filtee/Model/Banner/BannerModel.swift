@@ -34,7 +34,7 @@ extension BannerDTO {
     func toModel() -> BannerModel {
         return BannerModel(
             name: self.name,
-            imageURL: self.imageURL.imageURL,
+            imageURL: self.imageURL.url,
             payload: self.payload.toModel()
         )
     }

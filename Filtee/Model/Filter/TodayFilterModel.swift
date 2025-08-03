@@ -26,8 +26,8 @@ extension TodayFilterResponseDTO {
             title: self.title,
             introduction: self.introduction,
             description: self.description,
-            original: original?.imageURL,
-            filtered: filtered?.imageURL
+            original: original?.url,
+            filtered: filtered?.url
         )
     }
 }

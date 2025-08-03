@@ -8,7 +8,7 @@
 import Foundation
 
 extension String {
-    var imageURL: String {
+    var url: String {
         return Bundle.main.baseURL + "/v1" + self
     }
 }

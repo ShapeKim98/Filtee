@@ -26,7 +26,7 @@ extension MyInfoResponseDTO {
             nick: self.nick,
             name: self.name,
             introduction: self.introduction,
-            profileImage: self.profileImage?.imageURL,
+            profileImage: self.profileImage?.url,
             phoneNum: self.phoneNum,
             hashTags: self.hashTags
         )

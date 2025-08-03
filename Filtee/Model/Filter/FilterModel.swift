@@ -46,8 +46,8 @@ extension FilterSummaryResponseDTO {
             buyerCount: self.buyerCount,
             createdAt: self.createdAt,
             updatedAt: self.updatedAt,
-            original: original?.imageURL,
-            filtered: filtered?.imageURL
+            original: original?.url,
+            filtered: filtered?.url
         )
     }
 }
