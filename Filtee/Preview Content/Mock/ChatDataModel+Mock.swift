@@ -559,12 +559,6 @@ struct MockDataGenerator {
             }
         }
         
-        // 랜덤하게 일부 메시지에 파일 첨부 (5% 확률)
-        if Int.random(in: 1...20) == 1 {
-            let fileTypes = ["image_\(Int.random(in: 1...10)).jpg", "document_\(Int.random(in: 1...5)).pdf", "video_\(Int.random(in: 1...3)).mp4"]
-            message.filesData = try? JSONEncoder().encode([fileTypes.randomElement()!])
-        }
-        
         return message
     }
     

@@ -7,6 +7,8 @@
 
 import Foundation
 
+import IdentifiedCollections
+
 struct ChatResponseDTO: ResponseDTO {
     let chatId: String
     let roomId: String
@@ -29,6 +31,16 @@ struct ChatResponseDTO: ResponseDTO {
 
 extension ChatResponseDTO {
     func toModel() -> ChatModel {
+        let fileModels = self.files.enumerated().map { index, fileURL in
+            return FileModel(
+                id: UUID().uuidString,
+                sequence: Int16(index),
+                data: nil,
+                type: nil,
+                url: fileURL
+            )
+        }
+        
         return ChatModel(
             id: self.chatId,
             roomId: self.roomId,
@@ -37,7 +49,8 @@ extension ChatResponseDTO {
             updatedAt: self.updatedAt.toDate(.chat) ?? .now,
             sender: self.sender.toUserInfoModel(),
             isHead: false,
-            isTail: false
+            isTail: false,
+            files: IdentifiedArray(uniqueElements: fileModels)
         )
     }
 }

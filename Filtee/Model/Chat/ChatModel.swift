@@ -7,6 +7,8 @@
 
 import Foundation
 
+import IdentifiedCollections
+
 struct ChatModel: Identifiable {
     let id: String
     let roomId: String
@@ -16,4 +18,5 @@ struct ChatModel: Identifiable {
     let sender: UserInfoModel?
     let isHead: Bool
     var isTail: Bool
+    var files: IdentifiedArrayOf<FileModel>
 }

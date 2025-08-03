@@ -112,6 +112,22 @@ actor ChatPersistenceManager {
         }
     }
     
+    func createFile(
+        fileModel: FileModel,
+        chatModel: ChatModel
+    ) async throws -> FileModel {
+        let chat = try await _readChat(chatModel.id)
+        let file = try await _createFile(
+            id: fileModel.id,
+            data: fileModel.data,
+            type: fileModel.type,
+            url: fileModel.url,
+            sequence: fileModel.sequence
+        )
+        try await _updateChat(file: file, in: chat)
+        return file.toModel()
+    }
+    
     func createChat(
         chatModel: ChatModel,
         roomModel: RoomModel
@@ -124,7 +140,6 @@ actor ChatPersistenceManager {
             chat.content = chatModel.content
             chat.roomId = chatModel.roomId
             chat.sender = sender
-            chat.filesData = nil
             chat.createdAt = chatModel.createdAt
             chat.updatedAt = chatModel.updatedAt
             return chat
@@ -154,10 +169,29 @@ actor ChatPersistenceManager {
                 lastChat.isTail = isFirst
             }
         }
-        
         try await _updateRoom(chat: chat, in: room)
+        for fileModel in chatModel.files {
+            let file = try await _createFile(
+                id: fileModel.id,
+                data: fileModel.data,
+                type: fileModel.type,
+                url: fileModel.url,
+                sequence: fileModel.sequence
+            )
+            try await _updateChat(file: file, in: chat)
+        }
+        
         
         return chat.toModel()
+    }
+    
+    func updateDataInFile(_ data: Data, in file: FileModel) async throws -> FileModel {
+        let fileData = try await _readFile(file.id)
+        return try await save { _ in
+            fileData.data = data
+            fileData.type = data.detectMimeType()
+            return fileData
+        }.toModel()
     }
     
     private func _readRoom(_ id: String) async throws -> RoomDataModel {
@@ -172,6 +206,10 @@ actor ChatPersistenceManager {
         return try await read(id, query: "chatId == %@", of: ChatDataModel.self)
     }
     
+    private func _readFile(_ id: String) async throws -> FileDataModel {
+        return try await read(id, query: "id == %@", of: FileDataModel.self)
+    }
+    
     @discardableResult
     private func _updateRoom(
         chat: ChatDataModel,
@@ -181,6 +219,17 @@ actor ChatPersistenceManager {
             room.lastChat = chat
             room.addToChats(chat)
             return room
+        }
+    }
+    
+    @discardableResult
+    private func _updateChat(
+        file: FileDataModel,
+        in chat: ChatDataModel
+    ) async throws -> ChatDataModel {
+        return try await save { _ in
+            chat.addToFiles(file)
+            return chat
         }
     }
     
@@ -228,6 +277,25 @@ actor ChatPersistenceManager {
     }
     
     @discardableResult
+    private func _createFile(
+        id: String,
+        data: Data?,
+        type: String?,
+        url: String,
+        sequence: Int16
+    ) async throws -> FileDataModel {
+        return try await save { context in
+            let file = FileDataModel(context: context)
+            file.id = id
+            file.data = data
+            file.type = type
+            file.url = url
+            file.sequence = sequence
+            return file
+        }
+    }
+    
+    @discardableResult
     private func save<T: Sendable>(_ block: @Sendable @escaping (NSManagedObjectContext) throws -> T) async throws -> T {
         let context = self.context
         let object = try await context.perform { @Sendable in
@@ -243,6 +311,16 @@ actor ChatPersistenceManager {
         }
         
         return object
+    }
+    
+    func updateFile(_ fileModel: FileModel) async throws -> FileModel {
+        let file = try await _readFile(fileModel.id)
+        
+        return try await save { _ in
+            guard let data = fileModel.data else { return file }
+            file.data = data
+            return file
+        }.toModel()
     }
     
     private func read<T: Sendable>(_ objectId: NSManagedObjectID) async throws -> T {

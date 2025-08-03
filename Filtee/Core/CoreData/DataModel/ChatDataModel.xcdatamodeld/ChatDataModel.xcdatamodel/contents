@@ -4,12 +4,19 @@
         <attribute name="chatId" attributeType="String"/>
         <attribute name="content" attributeType="String"/>
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="filesData" optional="YES" attributeType="Binary"/>
         <attribute name="isHead" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="isTail" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="roomId" attributeType="String"/>
         <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="files" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="FileDataModel"/>
         <relationship name="sender" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SenderDataModel"/>
+    </entity>
+    <entity name="FileDataModel" representedClassName="FileDataModel" syncable="YES">
+        <attribute name="data" optional="YES" attributeType="Binary"/>
+        <attribute name="id" attributeType="String"/>
+        <attribute name="sequence" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
+        <attribute name="url" attributeType="String"/>
     </entity>
     <entity name="RoomDataModel" representedClassName="RoomDataModel" syncable="YES">
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>

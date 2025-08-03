@@ -7,8 +7,6 @@
 
 import SwiftUICore
 
-@preconcurrency import Combine
-
 struct ChatClient {
     var createChats: @Sendable(
         _ id: String
