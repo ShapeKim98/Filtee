@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Combine
 import SocketIO
 
 actor WebSocketManager<Message: ResponseDTO> {
