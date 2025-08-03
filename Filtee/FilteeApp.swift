@@ -9,6 +9,7 @@ import SwiftUI
 
 import Alamofire
 import KakaoSDKCommon
+import KakaoSDKAuth
 import Nuke
 import NukeAlamofirePlugin
 
@@ -33,6 +34,10 @@ struct FilteeApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .onOpenURL { url in
+                    guard AuthApi.isKakaoTalkLoginUrl(url) else { return }
+                    let _ = AuthController.handleOpenUrl(url: url)
+                }
         }
     }
 }
