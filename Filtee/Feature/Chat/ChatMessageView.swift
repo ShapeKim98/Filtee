@@ -10,18 +10,38 @@ import SwiftUI
 import NukeUI
 
 struct ChatMessageView: View {
-    private let chat: ChatModel
+    @Environment(\.dataClient)
+    private var dataClient
+    @Environment(\.chatPersistenceManager)
+    private var chatPersistenceManager
+    
+    @Binding
+    private var chat: ChatModel
+    
+    @State
+    private var filesLoading = false
+    @State
+    private var fileTask: Task<Void, Never>?
+    
     private let isMe: Bool
     private let keyword: String?
     private let isCurrent: Bool
+    private var rowSizes: [Int] { computeRowSizes(chat.files.count) }
+    private var cumulativeStarts: [Int] {
+        var starts: [Int] = [0]
+        for size in rowSizes {
+            starts.append(starts.last! + size)
+        }
+        return starts
+    }
     
     init(
-        chat: ChatModel,
+        chat: Binding<ChatModel>,
         isMe: Bool,
         keyword: String?,
         isCurrent: Bool
     ) {
-        self.chat = chat
+        self._chat = chat
         self.isMe = isMe
         self.keyword = keyword
         self.isCurrent = isCurrent
@@ -61,7 +81,7 @@ private extension ChatMessageView {
         HStack(alignment: .bottom, spacing: 8) {
             let pretendard = Pretendard.body1(.medium)
             
-            if isMe { Spacer() }
+            if isMe { Spacer(minLength: 50) }
             
             if isLast && isMe {
                 Text(chat.updatedAt.toString(.chatTime))
@@ -71,7 +91,10 @@ private extension ChatMessageView {
             
             Group {
                 if let keyword, isCurrent {
-                    let text = highlightString(from: chat.content, highlighting: keyword)
+                    let text = highlightString(
+                        from: chat.content,
+                        highlighting: keyword
+                    )
                     
                     Text(text)
                 } else {
@@ -80,11 +103,27 @@ private extension ChatMessageView {
             }
             .font(.pretendard(pretendard))
             .foregroundStyle(.gray45)
+            .if(filesLoading) { view in
+                VStack(alignment: .leading, spacing: 8) {
+                    view
+                    
+                    ProgressView()
+                        .controlSize(.regular)
+                }
+            }
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
             .background(isMe ? .brightTurquoise : .deepTurquoise)
             .clipRectangle((pretendard.height + 16) / 2)
             .clipped()
+            .if(!chat.files.isEmpty) { view in
+                VStack(alignment: .leading, spacing: 2) {
+                    view
+                    
+                    images(files: chat.files.compactMap { $0.data })
+                        .clipRectangle((pretendard.height + 16) / 2 - 4)
+                }
+            }
             
             if isLast && !isMe {
                 Text(chat.updatedAt.toString(.chatTime))
@@ -92,7 +131,7 @@ private extension ChatMessageView {
                     .foregroundStyle(.gray75)
             }
             
-            if !isMe { Spacer() }
+            if !isMe { Spacer(minLength: 50) }
         }
         .frame(maxWidth: .infinity)
     }
@@ -114,7 +153,10 @@ private extension ChatMessageView {
     }
     
     // MARK: - 단일 키워드 하이라이트
-    func highlightString(from text: String, highlighting keyword: String) -> AttributedString {
+    func highlightString(
+        from text: String,
+        highlighting keyword: String
+    ) -> AttributedString {
         var attributedString = AttributedString(text)
         
         // 대소문자 구분 없이 검색
@@ -130,9 +172,6 @@ private extension ChatMessageView {
             ),
             let attributedRange = Range(range, in: attributedString)
         {
-            // AttributedString의 범위로 변환
-            
-            
             // 배경색 적용
             attributedString[attributedRange].backgroundColor = .accentColor
             attributedString[attributedRange].foregroundColor = .gray45
@@ -142,5 +181,72 @@ private extension ChatMessageView {
         }
         
         return attributedString
+    }
+    
+    @ViewBuilder
+    func images(files: [Data]) -> some View {
+        if files.count == 1,
+            let data = files.first,
+            let uiImage = UIImage(data: data) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } else {
+            GeometryReader { geometry in
+                let rowCount = rowSizes.count
+                let spacing: CGFloat = 4
+                let totalHeight = geometry.size.height
+                let totalWidth = geometry.size.width
+                let rowHeight = (totalHeight - spacing * CGFloat(rowCount - 1)) / CGFloat(rowCount)
+                
+                VStack(spacing: spacing) {
+                    ForEach(0..<rowSizes.count, id: \.self) { rowIndex in
+                        let cols = rowSizes[rowIndex]
+                        let startIndex = cumulativeStarts[rowIndex]
+                        let endIndex = cumulativeStarts[rowIndex + 1]
+                        let colWidth = (totalWidth - spacing * CGFloat(cols - 1)) / CGFloat(cols)
+                        
+                        HStack(spacing: spacing) {
+                            ForEach(startIndex..<endIndex, id: \.self) { index in
+                                if let uiImage = UIImage(data: files[index]) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: colWidth, height: rowHeight)
+                                        .clipped()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .frame(height: CGFloat(rowSizes.count) * 100)
+        }
+    }
+}
+
+// MARK: - Functions
+private extension ChatMessageView {
+    func computeRowSizes(_ n: Int) -> [Int] {
+        if n <= 0 {
+            return []
+        }
+        let k = n / 3
+        let rem = n % 3
+        var sizes: [Int] = []
+        if rem == 0 {
+            sizes = Array(repeating: 3, count: k)
+        } else if rem == 1 {
+            if k > 0 {
+                sizes = Array(repeating: 3, count: k - 1)
+                sizes += [2, 2]
+            } else {
+                sizes = [1] // Fallback for n=1, though n >= 3 is assumed.
+            }
+        } else {
+            sizes = Array(repeating: 3, count: k)
+            sizes.append(2)
+        }
+        return sizes
     }
 }

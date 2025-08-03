@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+import Nuke
 import IdentifiedCollections
 
 struct ChatView<Path: Hashable & Sendable>: View {
@@ -31,6 +32,8 @@ struct ChatView<Path: Hashable & Sendable>: View {
     private var chatClientWebSocketStream
     @Environment(\.pushClient.notificationsPushGroup)
     private var pushClientNotificationsPushGroup
+    @Environment(\.dataClient)
+    private var dataClient
     @Environment(\.scenePhase)
     private var scenePhase
     
@@ -196,7 +199,7 @@ private extension ChatView {
     
     var chatList: some View {
         ScrollViewReader { proxy in
-            List(chats) { chat in
+            List($chats) { chat in
                 chatCell(chat)
                     .padding(.horizontal, 16)
                     .listRowInsets(.init(.zero))
@@ -211,14 +214,14 @@ private extension ChatView {
     }
     
     @ViewBuilder
-    func chatCell(_ chat: ChatModel) -> some View {
-        let isMe = user?.userId == chat.sender?.id
+    func chatCell(_ chat: Binding<ChatModel>) -> some View {
+        let isMe = user?.userId == chat.wrappedValue.sender?.id
         let chatIndex = chats.index(id: chat.id) ?? 0
         let isLast = chatIndex == chats.count - 1
         let beforeChatIndex = chats.index(after: isLast ? chatIndex - 1 : chatIndex)
         let beforeChat = chats[beforeChatIndex]
         let calendar = Calendar.current
-        let currentDay = calendar.component(.day, from: chat.createdAt)
+        let currentDay = calendar.component(.day, from: chat.wrappedValue.createdAt)
         let beforeDay = calendar.component(.day, from: beforeChat.createdAt)
         let isCurrent = searchResult.isEmpty
         ? false
@@ -232,12 +235,12 @@ private extension ChatView {
         )
         .if(currentDay != beforeDay) { view in
             VStack(spacing: 12) {
-                dateDivider(chat.createdAt)
+                dateDivider(chat.wrappedValue.createdAt)
                 
                 view
             }
         }
-        .if(chat.isHead) { $0.padding(.top, 8) }
+        .if(chat.wrappedValue.isHead) { $0.padding(.top, 8) }
         .rotation3DEffect(
             .degrees(-180),
             axis: (0, 1, 0),
@@ -303,7 +306,6 @@ private extension ChatView {
             let room = try await chatClientCreateChats(opponentId)
             self.room = try await chatPersistenceManager.createRoom(room)
             await connectChatWebSocket()
-            print(#function)
         } catch {
             print(error)
         }
@@ -441,8 +443,43 @@ private extension ChatView {
             if chats.count > 1 {
                 chats[1].isTail = newChat.isHead
             }
+            fetchDatas(chat: newChat)
             
         } catch { print(error) }
+    }
+    
+    func fetchDatas(chat: ChatModel) {
+        Task {
+            var chat = chat
+            guard !chat.files.isEmpty else { return }
+            do {
+                for file in chat.files {
+                    guard file.data == nil else {
+                        await downsampleInFile(chat: &chat, file)
+                        continue
+                    }
+                    let data = try await dataClient.requestData(file.url.url)
+                    let newFile = try await chatPersistenceManager.updateDataInFile(data, in: file)
+                    await downsampleInFile(chat: &chat, newFile)
+                }
+                guard let index = chats.index(id: chat.id) else {
+                    print(#function)
+                    return
+                }
+                chats[index] = chat
+            } catch {
+                print(error)
+            }
+        }
+    }
+    
+    func downsampleInFile(chat: inout ChatModel, _ file: FileModel) async {
+        guard let type = file.type,
+              type.contains("image")
+        else { return }
+        let index = Int(file.sequence)
+        chat.files[index] = file
+        await chat.files[index].data?.downsample()
     }
     
     func sendChat() async {

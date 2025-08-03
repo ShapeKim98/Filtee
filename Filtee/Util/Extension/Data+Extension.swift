@@ -5,8 +5,10 @@
 //  Created by 김도형 on 6/11/25.
 //
 
-import Foundation
+import SwiftUI
 import UniformTypeIdentifiers
+
+import Nuke
 
 extension Data {
     func detectMimeType() -> String? {
@@ -49,6 +51,62 @@ extension Data {
             return nil
         }
         return fileExtensionForMimeType(mimeType)
+    }
+    
+    mutating func downsample(
+        maxWidth: CGFloat = 300,
+        quality: CGFloat = 0.8
+    ) async {
+        
+        // 1. 원본 크기 확인 (메모리 효율적)
+        guard let imageSource = CGImageSourceCreateWithData(self as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any],
+              let originalWidth = properties[kCGImagePropertyPixelWidth] as? CGFloat,
+              let originalHeight = properties[kCGImagePropertyPixelHeight] as? CGFloat else {
+            return
+        }
+        
+        // 2. 이미 작으면 원본 반환
+        if originalWidth <= maxWidth {
+            return
+        }
+        
+        // 3. 목표 크기 계산
+        let scale = maxWidth / originalWidth
+        let targetSize = CGSize(width: maxWidth, height: originalHeight * scale)
+        
+        // 4. 메모리 효율적으로 썸네일 생성
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxWidth
+        ]
+        
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(
+            imageSource,
+            0,
+            options as CFDictionary
+        ) else { return }
+        
+        let uiImage = UIImage(cgImage: cgImage)
+        
+        // 5. Nuke 프로세서로 정확한 크기 조정
+        let processor = ImageProcessors.Resize(
+            size: targetSize,
+            contentMode: .aspectFit,
+            crop: false,
+            upscale: false
+        )
+        
+        guard let processedImage = processor.process(uiImage) else {
+            return
+        }
+        
+        // 6. JPEG 데이터로 변환
+        guard let newData = processedImage.jpegData(compressionQuality: quality) else {
+            return
+        }
+        self = newData
     }
 }
 
