@@ -12,4 +12,5 @@ struct RoomModel {
     let createdAt: Date
     let updatedAt: Date
     let participants: [UserInfoModel]
+    let lastChat: ChatModel?
 }

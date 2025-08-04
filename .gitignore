@@ -139,12 +139,7 @@ iOSInjectionProject/
 /*.gcno
 **/xcshareddata/WorkspaceSettings.xcsettings
 
-# End of https://www.toptal.com/developers/gitignore/api/cocoapods,xcode,swift,macos
-ShowPot/ShowPot.xcodeproj/project.xcworkspace
-ShowPot/ShowPot/GoogleService-Info.plist
-ShowPot/ShowPot/GoogleService-Info.plist
-ShowPot/ShowPot/Resource/Configuration/ShowPot-Debug.xcconfig
-ShowPot/ShowPot/Resource/Configuration/ShowPot-Release.xcconfig
+Filtee/GoogleService-Info.plist
 
 ### Auth Key
 *.p8

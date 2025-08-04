@@ -8,8 +8,17 @@
 import SwiftUI
 
 struct FilteeTabView: View {
+    @Environment(\.firebaseManager)
+    private var firebaseManager
+    @Environment(\.userClient.deviceToken)
+    private var userClientDeviceToken
+    @Environment(\.notificationManager)
+    private var notificationManager
+    
     @StateObject
     private var tabRouter = FlowRouter<TabItem>(flow: .main)
+    @StateObject
+    private var toastRouter = ToastRouter()
     @StateObject
     private var mainNavigation = NavigationRouter<MainPath>()
     @StateObject
@@ -27,6 +36,7 @@ struct FilteeTabView: View {
         TabView(selection: $tabRouter.flow) {
             MainNavigationView()
                 .environmentObject(mainNavigation)
+                .environmentObject(toastRouter)
                 .systemTabBarHidden()
                 .tag(TabItem.main)
             
@@ -47,7 +57,16 @@ struct FilteeTabView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .overlay(alignment: .top) {
+            ZStack {
+                ForEach(toastRouter.messageQueue, id: \.self) { message in
+                    toastMessage(message)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+        }
         .ignoresSafeArea(.keyboard, edges: .all)
+        .task(bodyTask)
         .onChange(
             of: makeNavigation.path,
             perform: makePathOnChange
@@ -67,15 +86,12 @@ struct FilteeTabView: View {
 private extension FilteeTabView {
     var tabBar: some View {
         HStack(spacing: 32) {
-            Spacer()
-            
             ForEach(TabItem.allCases, id: \.self) { tab in
                 tabItem(tab)
             }
-            
-            Spacer()
         }
         .frame(height: 68)
+        .padding(.horizontal, 32)
         .background {
             VisualEffect(style: .systemUltraThinMaterial)
         }
@@ -115,10 +131,33 @@ private extension FilteeTabView {
             }}
         }
     }
+    
+    func toastMessage(_ message: String) -> some View {
+        Text(message)
+            .font(.pretendard(.body2(.bold)))
+            .foregroundStyle(.gray45)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(.ultraThinMaterial)
+            .clipRectangle(9999)
+    }
 }
 
 // MARK: - Functions
 private extension FilteeTabView {
+    @Sendable
+    func bodyTask() async {
+        do {
+//            let token = try await firebaseManager.fetchFCMToken()
+//            try await userClientDeviceToken(token)
+            for try await payload in await notificationManager.payloadStream() {
+                print(payload)
+            }
+        } catch {
+            print(error)
+        }
+    }
+    
     func makePathOnChange(_ newValue: [MakePath]) {
         withAnimation(.filteeSpring) {
             if case .edit = newValue.last {
@@ -132,7 +171,7 @@ private extension FilteeTabView {
     func mainPathOnChange(_ newValue: [MainPath]) {
         withAnimation(.filteeSpring) {
             switch newValue.last {
-            case .chat, .detail:
+            case .chat, .detail, .bannerWeb:
                 showTabBar = false
             default:
                 showTabBar = true

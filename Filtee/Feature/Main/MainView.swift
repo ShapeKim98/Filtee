@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+import IdentifiedCollections
 import NukeUI
 
 struct MainView: View {
@@ -19,6 +20,8 @@ struct MainView: View {
     private var filterClientHotTrend
     @Environment(\.filterClient.todayFilter)
     private var filterClientTodayFilter
+    @Environment(\.bannerClient.bannersMain)
+    private var bannerClientBannersMain
     
     @State
     private var todayFilter: TodayFilterModel?
@@ -30,6 +33,17 @@ struct MainView: View {
     private var scrollOffset: CGFloat = 0
     @State
     private var isLoading: Bool = true
+    @State
+    private var currentBanner: BannerModel?
+    @State
+    private var banners: IdentifiedArrayOf<BannerModel> = []
+    
+    private let timer = Timer.publish(
+        every: 5,
+        on: .main,
+        in: .default
+    )
+        
     
     var body: some View {
         ScrollView(content: content)
@@ -52,6 +66,8 @@ private extension MainView {
     func content() -> some View {
         VStack(spacing: 20) {
             todayFilterSection
+            
+            bannerList
             
             hotTrendSection
             
@@ -241,6 +257,32 @@ private extension MainView {
             .opacity(scrollOffset / CGFloat(160))
             .ignoresSafeArea()
     }
+    
+    var bannerList: some View {
+        BannerList(
+            selection: $currentBanner,
+            banners: banners.elements
+        ) { banner in
+            bannerCell(banner)
+        }
+        .frame(height: 100)
+        .padding(.horizontal, 20)
+    }
+    
+    func bannerCell(_ item: BannerModel) -> some View {
+        Button(action: bannerButtonAction) {
+            LazyImage(url: URL(string: item.imageURL)) { state in
+                lazyImageTransform(state) { image in
+                    image.aspectRatio(contentMode: .fill)
+                }
+                .frame(height: 100)
+                .frame(maxWidth: .infinity)
+            }
+            .clipRectangle(24)
+            .clipped()
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 // MARK: - Fuctions
@@ -253,9 +295,13 @@ private extension MainView {
             async let todayFilter = filterClientTodayFilter()
             async let hotTrends = filterClientHotTrend()
             async let todayAuthor = userClientTodayAuthor()
+            async let banners = bannerClientBannersMain()
             self.todayFilter = try await todayFilter
             self.hotTrends = try await hotTrends
             self.todayAuthor = try await todayAuthor
+            self.banners = try await banners
+            currentBanner = self.banners.first
+            await timerStream()
         } catch {
             print(error)
         }
@@ -266,6 +312,10 @@ private extension MainView {
             guard let id = todayFilter?.id else { return }
             navigation.push(.detail(id: id))
         }
+    }
+    
+    func bannerButtonAction() {
+        navigation.push(.bannerWeb)
     }
     
     func hotTrendButtonAction(id: String) {
@@ -282,6 +332,16 @@ private extension MainView {
     
     func profileButtonAction(_ author: ProfileModel) {
         navigation.push(.userDetail(user: author))
+    }
+    
+    func timerStream() async {
+        for await _ in timer.autoconnect().values {
+            guard let currentBanner else { return }
+            withAnimation(.easeInOut(duration: 10)) {
+                let index = banners.index(id: currentBanner.id) ?? 0
+                self.currentBanner = banners[(index + 1) % banners.count]
+            }
+        }
     }
 }
 

@@ -12,9 +12,11 @@ struct FilteeSearchTextFieldStyle: @preconcurrency TextFieldStyle {
     typealias Configuration = TextField<Self._Label>
     
     private let state: TextFieldState
+    private let isFloating: Bool
     
-    init(state: TextFieldState) {
+    init(state: TextFieldState, isFloating: Bool) {
         self.state = state
+        self.isFloating = isFloating
     }
     
     func _body(configuration: Configuration) -> some View {
@@ -49,7 +51,8 @@ struct FilteeSearchTextFieldStyle: @preconcurrency TextFieldStyle {
         .animation(.filteeSpring, value: state == .loading)
         .frame(height: 42)
         .padding(.horizontal, 12)
-        .background(.blackTurquoise)
+        .if(isFloating) { $0.background(.ultraThinMaterial) }
+        .if(!isFloating) { $0.background(.blackTurquoise) }
         .clipRectangle(9999)
     }
 }
@@ -57,9 +60,10 @@ struct FilteeSearchTextFieldStyle: @preconcurrency TextFieldStyle {
 @MainActor
 extension TextFieldStyle where Self == FilteeSearchTextFieldStyle {
     static func filteeSearch(
-        _ state: FilteeSearchTextFieldStyle.TextFieldState
+        _ state: FilteeSearchTextFieldStyle.TextFieldState,
+        isFloating: Bool = false
     ) -> Self {
-        FilteeSearchTextFieldStyle(state: state)
+        FilteeSearchTextFieldStyle(state: state, isFloating: isFloating)
     }
 }
 
@@ -84,7 +88,7 @@ extension FilteeSearchTextFieldStyle {
             Text("검색할 작가 이름을 입력해주세요.")
                 .foregroundStyle(.gray90)
         }
-        .textFieldStyle(.filteeSearch(.default))
+        .textFieldStyle(.filteeSearch(.default, isFloating: true))
         
         TextField(text: $text) {
             Text("검색할 작가 이름을 입력해주세요.")

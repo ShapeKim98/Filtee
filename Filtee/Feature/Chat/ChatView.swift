@@ -29,6 +29,8 @@ struct ChatView<Path: Hashable & Sendable>: View {
     private var chatClientWebSocketDisconnect
     @Environment(\.chatClient.webSocketStream)
     private var chatClientWebSocketStream
+    @Environment(\.pushClient.notificationsPushGroup)
+    private var pushClientNotificationsPushGroup
     @Environment(\.scenePhase)
     private var scenePhase
     
@@ -37,27 +39,45 @@ struct ChatView<Path: Hashable & Sendable>: View {
     @State
     private var sender: UserInfoModel?
     @State
-    private var chats: IdentifiedArrayOf<ChatGroupModel> = []
+    private var chats: IdentifiedArrayOf<ChatModel> = []
     @State
     private var input: String = ""
     @State
-    private var userId: String?
+    private var user: MyInfoModel?
     @State
     private var isLoading: Bool = true
     @State
-    private var cursor: Date?
-    @State
     private var hasNext: Bool = true
+    @State
+    private var searchKeyword: String?
+    @State
+    private var searchTextFieldState: FilteeSearchTextFieldStyle.TextFieldState = .default
+    @State
+    private var searchResult: IdentifiedArrayOf<ChatModel> = []
+    @State
+    private var searchTask: Task<Void, Never>?
+    @State
+    private var searchResultIndex = 0
+    @State
+    private var chatListProxy: ScrollViewProxy?
+    @State
+    private var nextButtonTask: Task<Void, Never>?
+    
+    @FocusState
+    private var searchFocused: Bool
     @FocusState
     private var inputFocused: Bool
     
     private let opponentId: String
     private var roomTitle: String {
         room?.participants
-            .filter { $0.id != userId }
+            .filter { $0.id != user?.userId }
             .compactMap(\.nick)
             .sorted(by: <)
             .joined(separator: ", ") ?? ""
+    }
+    private var isSearching: Bool {
+        searchKeyword != nil
     }
     
     init(opponentId: String) {
@@ -72,12 +92,23 @@ struct ChatView<Path: Hashable & Sendable>: View {
             
             messageInput
         }
+        .overlay(alignment: .top) {
+            if isSearching {
+                searchToolbar
+                    .filteeBlurReplace()
+                    .animation(.default, value: isSearching)
+            }
+        }
+        .if(isSearching) { $0.ignoresSafeArea(.keyboard, edges: .bottom) }
         .filteeNavigation(
             title: roomTitle,
-            leadingItems: toolbarLeading
+            leadingItems: toolbarLeading,
+            trailingItems: toolbarTrailing
         )
-        .dismissKeyboard(focused: $inputFocused)
+        .if(isSearching){ $0.dismissKeyboard(focused: $searchFocused) }
+        .if(!isSearching) { $0.dismissKeyboard(focused: $inputFocused) }
         .onChange(of: scenePhase, perform: onChangeScenePhase)
+        .onChange(of: searchKeyword, perform: onChangeSearchKeyword)
         .task(bodyTask)
         .onDisappear(perform: bodyOnDisappear)
     }
@@ -92,52 +123,136 @@ private extension ChatView {
         .buttonStyle(.filteeToolbar)
     }
     
-    var chatList: some View {
-        List(chats) { chat in
-            chatCell(chat)
-                .padding(.horizontal, 16)
-                .listRowInsets(.init(.zero))
-                .listRowSeparator(.hidden)
-                .id(chat.id)
+    func toolbarTrailing() -> some View {
+        Button(action: searchButtonAction) {
+            if isSearching {
+                Image(.plus)
+                    .resizable()
+                    .rotationEffect(.degrees(45))
+            } else {
+                Image(.searchEmpty)
+                    .resizable()
+            }
         }
-        .listRowSpacing(16)
-        .listStyle(.plain)
+        .buttonStyle(.filteeToolbar)
+    }
+    
+    var searchToolbar: some View {
+        VStack(spacing: 12) {
+            searchBar
+            
+            Text("\(searchResultIndex + 1) / \(searchResult.count)")
+                .contentTransition(.numericText())
+                .font(.pretendard(.body1(.bold)))
+                .foregroundStyle(.secondary)
+                .animation(.default, value: searchResultIndex )
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .clipRectangle(9999)
+        }
+    }
+    
+    var searchBar: some View {
+        HStack(spacing: 8) {
+            TextField(text: .init(
+                get: { searchKeyword ?? "" },
+                set: { searchKeyword = $0 }
+            )) {
+                Text("검색어를 입력해주세요.")
+                    .foregroundStyle(.secondary)
+            }
+            .textFieldStyle(.filteeSearch(searchTextFieldState, isFloating: true))
+            .focused($searchFocused)
+            
+            Button(action: nextSearchButtonAction) {
+                Image(.chevron)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 34, height: 34)
+                    .rotationEffect(.degrees(90))
+                    .foregroundStyle(.secondary)
+                    .padding(4)
+                    .background(.ultraThinMaterial)
+                    .clipRectangle(9999)
+            }
+            .buttonStyle(.plain)
+            
+            Button(action: previousSearchButtonAction) {
+                Image(.chevron)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 34, height: 34)
+                    .rotationEffect(.degrees(-90))
+                    .foregroundStyle(.secondary)
+                    .padding(4)
+                    .background(.ultraThinMaterial)
+                    .clipRectangle(9999)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 20)
+    }
+    
+    var chatList: some View {
+        ScrollViewReader { proxy in
+            List(chats) { chat in
+                chatCell(chat)
+                    .padding(.horizontal, 16)
+                    .listRowInsets(.init(.zero))
+                    .listRowSeparator(.hidden)
+                    .id(chat.id)
+            }
+            .listRowSpacing(4)
+            .listStyle(.plain)
+            .environment(\.defaultMinListRowHeight, 0)
+            .onAppear { self.chatListProxy = proxy }
+        }
     }
     
     @ViewBuilder
-    func chatCell(_ chat: ChatGroupModel) -> some View {
-        let isMe = userId == chat.sender?.id
+    func chatCell(_ chat: ChatModel) -> some View {
+        let isMe = user?.userId == chat.sender?.id
         let chatIndex = chats.index(id: chat.id) ?? 0
         let isLast = chatIndex == chats.count - 1
         let beforeChatIndex = chats.index(after: isLast ? chatIndex - 1 : chatIndex)
         let beforeChat = chats[beforeChatIndex]
         let calendar = Calendar.current
-        let currentDay = calendar.component(.day, from: chat.latestedAt)
-        let beforeDay = calendar.component(.day, from: beforeChat.latestedAt)
+        let currentDay = calendar.component(.day, from: chat.createdAt)
+        let beforeDay = calendar.component(.day, from: beforeChat.createdAt)
+        let isCurrent = searchResult.isEmpty
+        ? false
+        : chat.id == searchResult[searchResultIndex].id
         
-        ChatMessageView(chatGroup: chat, isMe: isMe)
-            .if(currentDay != beforeDay) { view in
-                VStack(spacing: 16) {
-                    dateDivider(chat.latestedAt)
-                    
-                    view
-                }
+        ChatMessageView(
+            chat: chat,
+            isMe: isMe,
+            keyword: searchKeyword,
+            isCurrent: isCurrent
+        )
+        .if(currentDay != beforeDay) { view in
+            VStack(spacing: 12) {
+                dateDivider(chat.createdAt)
+                
+                view
             }
-            .rotation3DEffect(
-                .degrees(-180),
-                axis: (0, 1, 0),
-                anchor: .center
-            )
-            .rotationEffect(.degrees(-180))
-            .if(!chats.isEmpty && hasNext && isLast) { view in
-                VStack(spacing: 20) {
-                    ProgressView()
-                        .controlSize(.large)
-                        .task(progressViewTask)
-                    
-                    view
-                }
+        }
+        .if(chat.isHead) { $0.padding(.top, 8) }
+        .rotation3DEffect(
+            .degrees(-180),
+            axis: (0, 1, 0),
+            anchor: .center
+        )
+        .rotationEffect(.degrees(-180))
+        .if(!chats.isEmpty && hasNext && isLast) { view in
+            VStack(spacing: 20) {
+                view
+                
+                ProgressView()
+                    .controlSize(.large)
+                    .task(progressViewTask)
             }
+        }
     }
     
     var messageInput: some View {
@@ -183,9 +298,8 @@ private extension ChatView {
 private extension ChatView {
     @Sendable
     func bodyTask() async {
-        defer { isLoading = false }
         do {
-            userId = try await userClientMeProfile().userId
+            user = try await userClientMeProfile()
             let room = try await chatClientCreateChats(opponentId)
             self.room = try await chatPersistenceManager.createRoom(room)
             await connectChatWebSocket()
@@ -232,42 +346,109 @@ private extension ChatView {
         navigation.pop()
     }
     
+    func searchButtonAction() {
+        withAnimation(.filteeDefault) {
+            if isSearching {
+                searchTask?.cancel()
+                searchTask = nil
+                searchResultIndex = 0
+                searchResult.removeAll(keepingCapacity: true)
+                searchKeyword = nil
+                searchFocused = false
+            } else {
+                searchKeyword = ""
+                searchFocused = true
+            }
+        }
+    }
+    
+    func onChangeSearchKeyword(_ newValue: String?) {
+        searchTask?.cancel()
+        
+        guard let newValue,
+              !newValue.isEmpty,
+              !newValue.filter({ !$0.isWhitespace }).isEmpty
+        else {
+            searchTextFieldState = .default
+            return
+        }
+        
+        if searchTextFieldState != .loading {
+            searchTextFieldState = .loading
+        }
+        
+        searchTask = Task {
+            do {
+                try await Task.sleep(for: .milliseconds(500))
+                await searchChats()
+            } catch {
+                print(error)
+            }
+        }
+    }
+    
+    func nextSearchButtonAction() {
+        guard searchResultIndex < searchResult.count - 1 else { return }
+        searchResultIndex += 1
+        nextButtonTask = Task {
+            await fetchChatGroupsFromDateToDate()
+            chatListProxy?.scrollTo(
+                searchResult[searchResultIndex].id,
+                anchor: .center
+            )
+        }
+    }
+    
+    func previousSearchButtonAction() {
+        guard searchResultIndex > 0 else { return }
+        searchResultIndex -= 1
+        chatListProxy?.scrollTo(
+            searchResult[searchResultIndex].id,
+            anchor: .center
+        )
+    }
+    
     func paginationChats() async throws {
         guard let roomId = room?.id else { return }
-        let chats = try await chatPersistenceManager.paginationChatGroups(
+        let chats = try await chatPersistenceManager.paginationChat(
             roomId: roomId,
-            cursor: cursor
+            cursor: chats.last?.createdAt
         )
-        guard let chats, let cursor = chats.last?.latestedAt else {
+        guard let chats, !chats.isEmpty else {
             hasNext = false
             return
         }
-        self.cursor = cursor
         self.chats.append(contentsOf: chats)
     }
     
-    func updateNewChats(roomId: String) async throws {
-        let next = chats.first?.latestedAt.toString(.chat)
-        let newChats = try await chatClientChats(roomId, next)
+    func updateNewChats(room: RoomModel) async throws {
+        let next = chats.first?.createdAt.toString(.chat)
+        let newChats = try await chatClientChats(room.id, next)
         for chat in newChats {
             await saveChat(chat: chat)
         }
     }
     
     func saveChat(chat: ChatModel) async {
+        guard let room else { return }
         do {
             let newChat = try await chatPersistenceManager.createChat(
                 chatModel: chat,
-                lastChatGroup: chats.first
+                roomModel: room
             )
             input = ""
             chats.updateOrInsert(newChat, at: 0)
+            if chats.count > 1 {
+                chats[1].isTail = newChat.isHead
+            }
+            
         } catch { print(error) }
     }
     
     func sendChat() async {
         guard let roomId = room?.id else { return }
         do {
+            let input = self.input
             try await chatClientSendChats(roomId, input)
         } catch {
             print(error)
@@ -289,8 +470,51 @@ private extension ChatView {
         do {
             try await chatClientWebSocketConnect(room.id)
             try await paginationChats()
-            try await updateNewChats(roomId: room.id)
+            try await updateNewChats(room: room)
             await observeChatStream()
+        } catch {
+            print(error)
+        }
+    }
+    
+    func searchChats() async {
+        guard let searchKeyword, let roomId = room?.id else { return }
+        do {
+            let result = try await chatPersistenceManager.searchChat(
+                searchKeyword,
+                roomId: roomId
+            )
+            searchResult.removeAll(keepingCapacity: true)
+            searchResult.append(contentsOf: result)
+            searchResultIndex = 0
+            await fetchChatGroupsFromDateToDate()
+            searchTextFieldState = .default
+            guard !searchResult.isEmpty else { return }
+            chatListProxy?.scrollTo(
+                searchResult[searchResultIndex].id,
+                anchor: .center
+            )
+        } catch {
+            print(error)
+        }
+    }
+    
+    func fetchChatGroupsFromDateToDate() async {
+        guard let roomId = room?.id,
+              let cursor = chats.last?.createdAt,
+              !searchResult.isEmpty,
+              cursor > searchResult[searchResultIndex].createdAt
+        else { return }
+        do {
+            let chats = try await chatPersistenceManager.fetchChatFromDateToDate(
+                from: cursor,
+                to: searchResult[searchResultIndex].createdAt,
+                in: roomId
+            )
+            self.chats.append(contentsOf: chats)
+            if chats.isEmpty {
+                try await Task.sleep(for: .milliseconds(300))
+            }
         } catch {
             print(error)
         }
@@ -298,6 +522,12 @@ private extension ChatView {
 }
 
 #Preview {
-    ChatView<MainPath>(opponentId: "")
-        .environment(\.managedObjectContext, PersistenceProvider(inMemory: true).container.viewContext)
+    let context = PersistenceProvider(inMemory: true).container.viewContext
+    
+    ChatView<MainPath>(opponentId: "dev_team")
+        .environment(\.userClient, .testValue)
+        .environment(\.chatClient, .testValue)
+        .task {
+            MockDataGenerator.createMassiveData(context: context)
+        }
 }

@@ -5,7 +5,7 @@
 //  Created by 김도형 on 5/16/25.
 //
 
-import Foundation
+import SwiftUICore
 
 final class KeychainManager: Sendable {
     private let service: String = "Filtee"
@@ -114,5 +114,16 @@ extension KeychainManager {
         case refreshToken
         case appleRefreshToken
         case appleAuthorizationCode
+    }
+}
+
+extension KeychainManager: EnvironmentKey {
+    static let defaultValue = shared
+}
+
+extension EnvironmentValues {
+    var keychainManager: KeychainManager {
+        get { self[KeychainManager.self] }
+        set { self[KeychainManager.self] = newValue }
     }
 }

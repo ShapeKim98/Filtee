@@ -16,6 +16,8 @@ struct LoginView: View {
     private var socialLoginClientKakaoLogin
     @Environment(\.socialLoginClient.appleLogin)
     private var socialLoginClientAppleLogin
+    @Environment(\.firebaseManager)
+    private var firebaseManager
     
     @EnvironmentObject
     private var rootRouter: FlowRouter<Root>
@@ -93,7 +95,11 @@ private extension LoginView {
             defer { isLoading = false }
             do {
                 let model = try await socialLoginClientKakaoLogin()
-                let kakaoLoginModel = KakaoLoginModel(oauthToken: model.token)
+                let deviceToken = try await firebaseManager.fetchFCMToken()
+                let kakaoLoginModel = KakaoLoginModel(
+                    oauthToken: model.token,
+                    deviceToken: deviceToken
+                )
                 try await userClientKakaoLogin(kakaoLoginModel)
                 rootRouter.switch(.tab)
             } catch {
@@ -109,8 +115,10 @@ private extension LoginView {
             do {
                 let model = try await socialLoginClientAppleLogin()
 //                try await socialLoginClient.appleToken()
+                let deviceToken = try await firebaseManager.fetchFCMToken()
                 let appleLoginModel = AppleLoginModel(
                     idToken: model.token,
+                    deviceToken: deviceToken,
                     nick: model.nick
                 )
                 try await userClientAppleLogin(appleLoginModel)

@@ -14,4 +14,6 @@ struct ChatModel: Identifiable {
     let createdAt: Date
     let updatedAt: Date
     let sender: UserInfoModel?
+    let isHead: Bool
+    var isTail: Bool
 }

@@ -13,8 +13,11 @@ actor WebSocketManager<Message: ResponseDTO> {
     private var manager: SocketManager?
     private var socket: SocketIOClient?
     private var isConnected = false
+    
     nonisolated(unsafe)
-    private var subject = CurrentValueSubject<Message?, Error>(nil)
+    private var queue = [Message]()
+    nonisolated(unsafe)
+    private var continuation: AsyncThrowingStream<Message, Error>.Continuation?
     
     func connect<E: Endpoint>(_ endPoint: E, event: String) async throws {
         let request = try endPoint.asURLRequest()
@@ -41,8 +44,12 @@ actor WebSocketManager<Message: ResponseDTO> {
         isConnected = true
     }
     
-    func stream() -> AsyncThrowingPublisher<AnyPublisher<Message, Error>> {
-        return subject.compactMap(\.self).eraseToAnyPublisher().values
+    func stream() -> AsyncThrowingStream<Message, Error> {
+        return AsyncThrowingStream { [weak self] continuation in
+            self?.queue.forEach { continuation.yield($0) }
+            self?.queue.removeAll()
+            self?.continuation = continuation
+        }
     }
     
     func disconnect() async {
@@ -59,7 +66,8 @@ actor WebSocketManager<Message: ResponseDTO> {
         socket = nil
         manager = nil
         isConnected = false
-        subject = CurrentValueSubject<Message?, Error>(nil)
+        continuation?.finish()
+        continuation = nil
     }
     
     func getConnectionStatus() -> Bool {
@@ -88,9 +96,14 @@ actor WebSocketManager<Message: ResponseDTO> {
                     )
                 }
                 let decodedMessage = try JSONDecoder().decode(Message.self, from: jsonData)
-                self?.subject.send(decodedMessage)
+                
+                if self?.continuation == nil {
+                    self?.queue.append(decodedMessage)
+                } else {
+                    self?.continuation?.yield(decodedMessage)
+                }
             } catch {
-                self?.subject.send(completion: .failure(error))
+                self?.continuation?.finish(throwing: error)
             }
         }
         
@@ -110,7 +123,7 @@ actor WebSocketManager<Message: ResponseDTO> {
                 code: -1,
                 userInfo: [NSLocalizedDescriptionKey: "Connection failed"]
             )
-            self?.subject.send(completion: .failure(error))
+            self?.continuation?.finish(throwing: error)
         }
         
         socket.onAny { event in
